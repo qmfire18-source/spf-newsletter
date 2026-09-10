@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -99,6 +100,31 @@ class TestEntryToItem:
         assert news_scraper._entry_to_item(make_entry(link=None), "Source", cutoff) is None
 
 
+class TestIsFinanceRelated:
+    @pytest.mark.parametrize("title", [
+        "La BCE relève ses taux directeurs",
+        "Le CAC 40 termine en hausse",
+        "Financement participatif en plein essor",
+        "Deal M&A record dans le luxe",
+        "Une levée de fonds pour la fintech",
+        "Wall Street ouvre en baisse",
+    ])
+    def test_keeps_finance_topics(self, title):
+        assert news_scraper._is_finance_related({"title": title})
+
+    @pytest.mark.parametrize("title", [
+        "Le nouvel iPhone pliable d'Apple",
+        "Grève des transports en Île-de-France",
+        "Un film américain rafle les récompenses",
+    ])
+    def test_drops_off_topic(self, title):
+        assert not news_scraper._is_finance_related({"title": title})
+
+    def test_matches_on_summary_when_title_is_vague(self):
+        item = {"title": "Coup de théâtre", "raw_summary": "Le rachat de la banque"}
+        assert news_scraper._is_finance_related(item)
+
+
 class TestStripSourceSuffix:
     def test_removes_google_news_media_suffix(self):
         assert news_scraper._strip_source_suffix("Titre - Le Monde", "Le Monde") == "Titre"
@@ -121,21 +147,66 @@ class TestFetchNews:
         assert news_scraper.fetch_news([{"type": "carrier-pigeon"}]) == []
 
     def test_aggregates_and_deduplicates_across_sources(self, monkeypatch):
-        monkeypatch.setattr(
-            news_scraper,
-            "_fetch_rss",
-            lambda url, cutoff: [{"title": "Sujet", "url": "https://a.fr/1"}],
-        )
+        article = {"title": "La BCE relève ses taux", "url": "https://a.fr/1"}
+        monkeypatch.setattr(news_scraper, "_fetch_rss", lambda url, cutoff: [article])
         monkeypatch.setattr(
             news_scraper,
             "_fetch_gnews",
-            lambda query, cutoff: [{"title": "Sujet", "url": "https://a.fr/1?utm_x=1"}],
+            lambda query, cutoff: [{**article, "url": "https://a.fr/1?utm_x=1"}],
         )
         result = news_scraper.fetch_news([
             {"type": "rss", "url": "https://a.fr"},
             {"type": "gnews", "query": "finance"},
         ])
         assert len(result) == 1
+
+    def test_drops_off_topic_articles(self, monkeypatch):
+        monkeypatch.setattr(
+            news_scraper,
+            "_fetch_rss",
+            lambda url, cutoff: [
+                {"title": "La BCE relève ses taux", "url": "https://a.fr/1"},
+                {"title": "Le nouvel iPhone pliable d'Apple", "url": "https://a.fr/2"},
+            ],
+        )
+        result = news_scraper.fetch_news([{"type": "rss", "url": "https://a.fr"}])
+        assert [i["url"] for i in result] == ["https://a.fr/1"]
+
+    def test_caps_and_sorts_by_recency(self, monkeypatch):
+        now = datetime.now(timezone.utc)
+        # Titres volontairement dissemblables : sinon la dédup par similarité
+        # les fusionne avant même le plafonnement.
+        rng = random.Random(0)
+        vocabulaire = [f"mot{i}" for i in range(300)]
+        articles = [
+            {
+                "title": "taux " + " ".join(rng.sample(vocabulaire, 10)),
+                "url": f"https://a.fr/{n}",
+                "published": (now - timedelta(hours=n)).isoformat(),
+            }
+            for n in range(news_scraper.MAX_NEWS_ITEMS + 10)
+        ]
+        monkeypatch.setattr(news_scraper, "_fetch_rss", lambda url, cutoff: articles)
+        result = news_scraper.fetch_news([{"type": "rss", "url": "https://a.fr"}])
+        assert len(result) == news_scraper.MAX_NEWS_ITEMS
+        assert result[0]["url"] == "https://a.fr/0"
+
+    def test_undated_articles_sort_last(self, monkeypatch):
+        now = datetime.now(timezone.utc)
+        monkeypatch.setattr(
+            news_scraper,
+            "_fetch_rss",
+            lambda url, cutoff: [
+                {"title": "Fusion dans la banque", "url": "https://a.fr/1"},
+                {
+                    "title": "Le CAC 40 progresse",
+                    "url": "https://a.fr/2",
+                    "published": now.isoformat(),
+                },
+            ],
+        )
+        result = news_scraper.fetch_news([{"type": "rss", "url": "https://a.fr"}])
+        assert [i["url"] for i in result] == ["https://a.fr/2", "https://a.fr/1"]
 
 
 class TestFetchNewsapi:

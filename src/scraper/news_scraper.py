@@ -24,6 +24,26 @@ REQUEST_DELAY_SECONDS = 1.0
 REQUEST_TIMEOUT_SECONDS = 15
 TITLE_SIMILARITY_THRESHOLD = 0.85
 MAX_SUMMARY_CHARS = 600
+MAX_NEWS_ITEMS = 60
+
+# Les flux généralistes économie ramènent ~40% de hors-sujet (tech, conso,
+# social). On préfiltre avant l'appel à Claude : lui faire trier 300 actus
+# pour en retenir 3 à 5 dilue la sélection.
+# Comparés à des titres normalisés (minuscules, sans accents), en début de mot
+# pour attraper les dérivés : "financ" → finance, financier, financement.
+FINANCE_KEYWORD_STEMS = (
+    "financ", "march", "bours", "action", "obligat", "taux", "bce", "fed",
+    "banqu", "fusion", "acquisit", "invest", "fonds", "trading", "cac",
+    "dette", "inflation", "credit", "assur", "capital", "valorisat", "rachat",
+    "dividende", "ipo", "cotation", "cote", "benefice", "resultat", "chiffre",
+    "introduction", "emprunt", "monnaie", "euro", "dollar", "trader",
+)
+# Expressions en plusieurs mots, cherchées comme tokens isolés pour éviter les
+# faux positifs ("m a" ne doit pas matcher "filM Américain").
+FINANCE_KEYWORD_PHRASES = (
+    "m a", "private equity", "wall street", "hedge fund", "gestion d actifs",
+    "asset management", "capital risque", "levee de fonds",
+)
 
 GNEWS_ENDPOINT = "https://news.google.com/rss/search"
 NEWSAPI_ENDPOINT = "https://newsapi.org/v2/everything"
@@ -39,7 +59,9 @@ def fetch_news(sources: list[dict]) -> list[dict]:
     """
     sources: [{"type": "rss", "url": "..."}, {"type": "gnews", "query": "..."},
               {"type": "newsapi", "query": "..."}]
-    Retourne une liste de dicts bruts, dédupliqués, limités aux 7 derniers jours :
+    Retourne une liste de dicts bruts, dédupliqués, limités aux 7 derniers jours,
+    filtrés sur les mots-clés finance et plafonnés aux MAX_NEWS_ITEMS plus
+    récents :
     [{"title": ..., "source": ..., "url": ..., "raw_summary": ..., "published": ...}]
     """
     items = []
@@ -61,7 +83,13 @@ def fetch_news(sources: list[dict]) -> list[dict]:
             # Un flux injoignable ne doit pas faire échouer la génération hebdomadaire.
             logger.exception("Source injoignable, ignorée : %r", src)
 
-    return _deduplicate(items)
+    relevant = [item for item in _deduplicate(items) if _is_finance_related(item)]
+    relevant.sort(key=_published_sort_key, reverse=True)
+    logger.info(
+        "Actus : %d collectées, %d pertinentes, %d retenues",
+        len(items), len(relevant), min(len(relevant), MAX_NEWS_ITEMS),
+    )
+    return relevant[:MAX_NEWS_ITEMS]
 
 
 def _fetch_rss(url: str, cutoff: datetime) -> list[dict]:
@@ -194,6 +222,26 @@ def _deduplicate(items: list[dict]) -> list[dict]:
         unique.append(item)
 
     return unique
+
+
+def _is_finance_related(item: dict) -> bool:
+    normalized = _normalize_title(f"{item['title']} {item.get('raw_summary', '')}")
+    tokens = normalized.split()
+    if any(token.startswith(FINANCE_KEYWORD_STEMS) for token in tokens):
+        return True
+    padded = f" {normalized} "
+    return any(f" {phrase} " in padded for phrase in FINANCE_KEYWORD_PHRASES)
+
+
+def _published_sort_key(item: dict) -> datetime:
+    published = item.get("published")
+    if published:
+        try:
+            return datetime.fromisoformat(published)
+        except ValueError:
+            pass
+    # Sans date exploitable, l'actu passe en fin de liste plutôt qu'en tête.
+    return datetime.min.replace(tzinfo=timezone.utc)
 
 
 def _titles_match(a: str, b: str) -> bool:
