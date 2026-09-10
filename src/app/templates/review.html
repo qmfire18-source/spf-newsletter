@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>Validation — Newsletter SPF</title></head>
+<body>
+  <h1>Brouillon de la semaine du {{ draft.week_of if draft else "—" }}</h1>
+  {% if draft %}
+  <form method="post" action="/draft/{{ draft.id }}/save">
+    <h2>Actus financières</h2>
+    <textarea name="news_content" rows="15" cols="80">{{ draft.news_content }}</textarea>
+    <h2>Stages de la semaine</h2>
+    <textarea name="stages_content" rows="15" cols="80">{{ draft.stages_content }}</textarea>
+    <br><button type="submit">Enregistrer les modifications</button>
+  </form>
+  <form method="post" action="/draft/{{ draft.id }}/send"
+        onsubmit="return confirm('Envoyer la newsletter à tous les abonnés ?');">
+    <button type="submit">Envoyer aux abonnés</button>
+  </form>
+  {% else %}
+  <p>Aucun brouillon en attente de validation.</p>
+  {% endif %}
+</body>
+</html>

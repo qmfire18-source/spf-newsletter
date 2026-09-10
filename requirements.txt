@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+jinja2
+sqlalchemy
+feedparser
+requests
+playwright
+anthropic
+python-dotenv
+itsdangerous
+python-multipart
