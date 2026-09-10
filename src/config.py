@@ -36,7 +36,12 @@ NEWS_SOURCES = [
     {"type": "gnews", "query": 'BCE OR "banque centrale" taux'},
 ]
 
+# JobTeaser est écarté : 403 sur toute requête automatisée (voir stage_scraper).
+# LinkedIn est exclu par ses CGU.
 STAGE_SOURCES = [
-    {"name": "jobteaser", "url": "TODO: url de recherche filtrée"},
-    {"name": "wttj", "url": "TODO: url de recherche filtrée"},
+    {
+        "type": "wttj_sitemap",
+        "name": "Welcome to the Jungle",
+        "sitemap_index": "https://www.welcometothejungle.com/sitemaps/index.xml.gz",
+    },
 ]

@@ -4,9 +4,10 @@ jinja2
 sqlalchemy
 feedparser
 requests
-playwright
+httpx
 anthropic
 python-dotenv
 itsdangerous
 python-multipart
 pytest
+pytest-asyncio
