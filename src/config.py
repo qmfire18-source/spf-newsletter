@@ -14,11 +14,26 @@ ALLOWED_REVIEWER_EMAILS = [
     e.strip() for e in os.getenv("ALLOWED_REVIEWER_EMAILS", "").split(",") if e
 ]
 
-# Sources par défaut — à ajuster
+# Sources par défaut — flux vérifiés le 2026-09-10.
+# Les Echos, Boursorama, Zonebourse, Boursier, AbcBourse et l'AGEFI ont été
+# écartés : leurs flux RSS renvoient 403 (anti-bot) ou 404.
 NEWS_SOURCES = [
-    {"type": "rss", "url": "https://www.lesechos.fr/rss/rss_finance_marches.xml"},
-    {"type": "rss", "url": "https://www.boursorama.com/rss/actualites/"},
-    # {"type": "newsapi", "query": "finance marchés M&A"},
+    # Généralistes économie (FR)
+    {"type": "rss", "url": "https://www.lemonde.fr/entreprises/rss_full.xml"},
+    {"type": "rss", "url": "https://www.lefigaro.fr/rss/figaro_economie.xml"},
+    {"type": "rss", "url": "https://www.bfmtv.com/rss/economie/"},
+    {"type": "rss", "url": "https://www.challenges.fr/rss.xml"},
+    {"type": "rss", "url": "https://www.francetvinfo.fr/economie.rss"},
+    # Banques centrales
+    {"type": "rss", "url": "https://www.ecb.europa.eu/rss/press.html"},
+    # Marchés (anglais)
+    {"type": "rss", "url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"},
+    # Couche mots-clés — Google News remplace NewsAPI (gratuit, sans clé,
+    # meilleure couverture francophone). La branche "newsapi" reste disponible
+    # si NEWSAPI_KEY est renseignée.
+    {"type": "gnews", "query": "finance marchés"},
+    {"type": "gnews", "query": '"M&A" OR "fusion-acquisition"'},
+    {"type": "gnews", "query": 'BCE OR "banque centrale" taux'},
 ]
 
 STAGE_SOURCES = [
