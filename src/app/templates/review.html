@@ -1,20 +1,83 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>Validation — Newsletter SPF</title></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validation — Newsletter SPF</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      max-width: 60rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5;
+    }
+    header {
+      display: flex; flex-wrap: wrap; gap: 1rem; align-items: baseline;
+      justify-content: space-between; border-bottom: 1px solid #8884;
+      padding-bottom: .75rem;
+    }
+    h1 { font-size: 1.4rem; margin: 0; }
+    .who { font-size: .85rem; opacity: .7; }
+    textarea {
+      width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .85rem; padding: .5rem; border: 1px solid #8888;
+      border-radius: .25rem; background: transparent; color: inherit;
+      box-sizing: border-box; min-height: 14rem;
+    }
+    .preview {
+      border: 1px solid #8884; border-radius: .25rem; padding: .75rem 1rem;
+      margin-top: .5rem; background: #8881;
+    }
+    button { padding: .6rem 1.2rem; font-size: 1rem; border: 0;
+             border-radius: .25rem; cursor: pointer; }
+    .primary { background: #1a4f8b; color: #fff; }
+    .danger  { background: #a12; color: #fff; }
+    .linkish { background: none; color: inherit; text-decoration: underline;
+               padding: 0; font-size: .85rem; }
+    .flash { padding: .6rem .8rem; border-radius: .25rem; margin-top: 1rem; }
+    .ok    { background: #dfd; color: #060; border: 1px solid #9c9; }
+    .error { background: #fdd; color: #900; border: 1px solid #c99; }
+    .send-zone { margin-top: 2rem; border-top: 1px solid #8884; padding-top: 1rem; }
+    .warn { font-size: .9rem; opacity: .8; }
+  </style>
+</head>
 <body>
-  <h1>Brouillon de la semaine du {{ draft.week_of if draft else "—" }}</h1>
+  <header>
+    <h1>Brouillon de la semaine du {{ draft.week_of if draft else "—" }}</h1>
+    <span class="who">
+      {{ reviewer }} ·
+      <form method="post" action="/logout" style="display:inline">
+        <button type="submit" class="linkish">se déconnecter</button>
+      </form>
+    </span>
+  </header>
+
+  {% if message %}<p class="flash ok">{{ message }}</p>{% endif %}
+  {% if error %}<p class="flash error">{{ error }}</p>{% endif %}
+
   {% if draft %}
   <form method="post" action="/draft/{{ draft.id }}/save">
     <h2>Actus financières</h2>
-    <textarea name="news_content" rows="15" cols="80">{{ draft.news_content }}</textarea>
+    <textarea name="news_content">{{ draft.news_content }}</textarea>
+    <div class="preview">{{ draft.news_content | safe }}</div>
+
     <h2>Stages de la semaine</h2>
-    <textarea name="stages_content" rows="15" cols="80">{{ draft.stages_content }}</textarea>
-    <br><button type="submit">Enregistrer les modifications</button>
+    <textarea name="stages_content">{{ draft.stages_content }}</textarea>
+    <div class="preview">{{ draft.stages_content | safe }}</div>
+
+    <p><button type="submit" class="primary">Enregistrer les modifications</button></p>
   </form>
-  <form method="post" action="/draft/{{ draft.id }}/send"
-        onsubmit="return confirm('Envoyer la newsletter à tous les abonnés ?');">
-    <button type="submit">Envoyer aux abonnés</button>
-  </form>
+
+  <div class="send-zone">
+    <p class="warn">
+      L'envoi est définitif et part à toute la liste d'abonnés. Enregistre tes
+      modifications avant d'envoyer : l'aperçu ci-dessus reflète la dernière
+      version enregistrée, pas le contenu en cours de saisie.
+    </p>
+    <form method="post" action="/draft/{{ draft.id }}/send"
+          onsubmit="return confirm('Envoyer la newsletter à tous les abonnés ? Cette action est irréversible.');">
+      <button type="submit" class="danger">Envoyer aux abonnés</button>
+    </form>
+  </div>
   {% else %}
   <p>Aucun brouillon en attente de validation.</p>
   {% endif %}

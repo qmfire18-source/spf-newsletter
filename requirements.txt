@@ -6,6 +6,7 @@ feedparser
 requests
 httpx
 anthropic
+nh3
 python-dotenv
 itsdangerous
 python-multipart

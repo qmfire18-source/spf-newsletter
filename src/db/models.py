@@ -47,7 +47,11 @@ class StageOffer(Base):
     draft = relationship("Draft", back_populates="stage_offers")
 
 
-engine = create_engine(DATABASE_URL)
+# FastAPI exécute les routes synchrones dans un pool de threads : sans
+# check_same_thread=False, SQLite refuse la connexion ouverte dans un autre
+# thread. Sans effet sur Postgres en production.
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine)
 
 

@@ -1,9 +1,43 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>Connexion — Newsletter SPF</title></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion — Newsletter SPF</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      max-width: 24rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5;
+    }
+    h1 { font-size: 1.5rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    input {
+      width: 100%; padding: .5rem; margin-top: .25rem; font-size: 1rem;
+      border: 1px solid #8888; border-radius: .25rem; background: transparent;
+      color: inherit; box-sizing: border-box;
+    }
+    button {
+      margin-top: 1.5rem; padding: .6rem 1.2rem; font-size: 1rem;
+      border: 0; border-radius: .25rem; background: #1a4f8b; color: #fff;
+      cursor: pointer;
+    }
+    .error {
+      margin-top: 1rem; padding: .6rem .8rem; border-radius: .25rem;
+      background: #fdd; color: #900; border: 1px solid #c99;
+    }
+  </style>
+</head>
 <body>
-  <h1>Connexion</h1>
-  <!-- TODO: remplacer par un vrai flow OAuth Google restreint au bureau -->
-  <p>Formulaire de connexion à implémenter (voir PLAN.md §4).</p>
+  <h1>Newsletter Sciences Po Finance</h1>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post" action="/login">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required autocomplete="username">
+    <label for="password">Mot de passe du bureau</label>
+    <input id="password" name="password" type="password" required
+           autocomplete="current-password">
+    <button type="submit">Se connecter</button>
+  </form>
 </body>
 </html>

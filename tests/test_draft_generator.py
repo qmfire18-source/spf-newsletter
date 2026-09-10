@@ -78,6 +78,30 @@ class TestGenerateDraft:
         assert len(client.calls) == 1
 
 
+class TestSanitization:
+    def test_strips_script_injected_through_scraped_content(self, use_client):
+        hostile = json.dumps({
+            "news_html": "<p>Actu</p><script>fetch('//pirate.fr')</script>",
+            "stages_html": "<p onclick=\"steal()\">Stage</p>",
+        })
+        use_client(fake_response(hostile))
+        draft = draft_generator.generate_draft([], [])
+        assert draft["news_html"] == "<p>Actu</p>"
+        assert "onclick" not in draft["stages_html"]
+
+    def test_keeps_legitimate_links_and_formatting(self, use_client):
+        rich = json.dumps({
+            "news_html": '<h3>BCE</h3><p><strong>Taux</strong> '
+                         '<a href="https://lemonde.fr/x">source</a></p>',
+            "stages_html": "<ul><li>Stage M&amp;A</li></ul>",
+        })
+        use_client(fake_response(rich))
+        draft = draft_generator.generate_draft([], [])
+        assert "<h3>BCE</h3>" in draft["news_html"]
+        assert 'href="https://lemonde.fr/x"' in draft["news_html"]
+        assert "<li>Stage M&amp;A</li>" in draft["stages_html"]
+
+
 class TestRequestShape:
     def test_requests_a_schema_constrained_json_object(self, use_client):
         client = use_client(fake_response(VALID_JSON))

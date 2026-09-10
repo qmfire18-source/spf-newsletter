@@ -5,6 +5,7 @@ import logging
 import anthropic
 
 from src.config import ANTHROPIC_API_KEY
+from src.sanitize import sanitize_html
 
 logger = logging.getLogger(__name__)
 
@@ -113,8 +114,8 @@ def _parse_response(response) -> dict:
     text = next(block.text for block in response.content if block.type == "text")
     draft = json.loads(text)
     return {
-        "news_html": draft["news_html"],
-        "stages_html": draft["stages_html"],
+        "news_html": sanitize_html(draft["news_html"]),
+        "stages_html": sanitize_html(draft["stages_html"]),
     }
 
 
