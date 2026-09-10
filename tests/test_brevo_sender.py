@@ -1,0 +1,136 @@
+from datetime import date
+
+import pytest
+import requests
+
+from src.email import brevo_sender
+
+
+class FakeResponse:
+    def __init__(self, status_code=201, payload=None, text=""):
+        self.status_code = status_code
+        self._payload = payload
+        self.text = text
+        self.content = b"x" if payload is not None else b""
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("pas de JSON")
+        return self._payload
+
+
+@pytest.fixture
+def configured(monkeypatch):
+    monkeypatch.setattr(brevo_sender, "BREVO_API_KEY", "cle-test")
+    monkeypatch.setattr(brevo_sender, "BREVO_LIST_ID", "7")
+    monkeypatch.setattr(brevo_sender, "BREVO_SENDER_EMAIL", "news@spf.fr")
+    monkeypatch.setattr(brevo_sender, "BREVO_SENDER_NAME", "Sciences Po Finance")
+
+
+@pytest.fixture
+def calls(monkeypatch):
+    recorded = []
+
+    def fake_post(url, json=None, headers=None, timeout=None):
+        recorded.append({"url": url, "json": json, "headers": headers, "timeout": timeout})
+        if url.endswith("/emailCampaigns"):
+            return FakeResponse(201, {"id": 4242})
+        return FakeResponse(204)
+
+    monkeypatch.setattr(brevo_sender.requests, "post", fake_post)
+    return recorded
+
+
+class TestSendCampaign:
+    def test_creates_then_triggers_the_campaign(self, configured, calls):
+        assert brevo_sender.send_campaign("Sujet", "<p>hello</p>") == "4242"
+        assert calls[0]["url"].endswith("/emailCampaigns")
+        assert calls[1]["url"].endswith("/emailCampaigns/4242/sendNow")
+
+    def test_targets_the_configured_list(self, configured, calls):
+        brevo_sender.send_campaign("Sujet", "<p>hello</p>")
+        assert calls[0]["json"]["recipients"] == {"listIds": [7]}
+
+    def test_explicit_list_id_wins(self, configured, calls):
+        brevo_sender.send_campaign("Sujet", "<p>x</p>", list_id=99)
+        assert calls[0]["json"]["recipients"] == {"listIds": [99]}
+
+    def test_every_request_has_a_timeout(self, configured, calls):
+        brevo_sender.send_campaign("Sujet", "<p>x</p>")
+        assert all(c["timeout"] == brevo_sender.REQUEST_TIMEOUT_SECONDS for c in calls)
+
+    def test_campaign_name_is_unique_per_send(self, configured, calls):
+        brevo_sender.send_campaign("Sujet", "<p>x</p>")
+        # Le sujet reste propre ; l'horodatage ne va que dans le nom interne.
+        assert calls[0]["json"]["subject"] == "Sujet"
+        assert calls[0]["json"]["name"].startswith("Sujet (")
+
+    def test_uses_the_configured_sender(self, configured, calls):
+        brevo_sender.send_campaign("Sujet", "<p>x</p>")
+        assert calls[0]["json"]["sender"] == {
+            "name": "Sciences Po Finance", "email": "news@spf.fr"
+        }
+
+
+class TestConfigurationErrors:
+    def test_missing_api_key(self, configured, monkeypatch):
+        monkeypatch.setattr(brevo_sender, "BREVO_API_KEY", "")
+        with pytest.raises(brevo_sender.BrevoError, match="BREVO_API_KEY"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+    def test_missing_sender_email(self, configured, monkeypatch):
+        monkeypatch.setattr(brevo_sender, "BREVO_SENDER_EMAIL", "")
+        with pytest.raises(brevo_sender.BrevoError, match="BREVO_SENDER_EMAIL"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+    def test_missing_list_id(self, configured, monkeypatch):
+        monkeypatch.setattr(brevo_sender, "BREVO_LIST_ID", None)
+        with pytest.raises(brevo_sender.BrevoError, match="BREVO_LIST_ID"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+    def test_non_numeric_list_id(self, configured, monkeypatch):
+        monkeypatch.setattr(brevo_sender, "BREVO_LIST_ID", "ma-liste")
+        with pytest.raises(brevo_sender.BrevoError, match="invalide"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+
+class TestApiErrors:
+    def test_http_error_surfaces_brevo_message(self, configured, monkeypatch):
+        monkeypatch.setattr(
+            brevo_sender.requests, "post",
+            lambda *a, **k: FakeResponse(400, text='{"message":"sender unknown"}'),
+        )
+        with pytest.raises(brevo_sender.BrevoError, match="sender unknown"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+    def test_network_failure_is_wrapped(self, configured, monkeypatch):
+        def boom(*a, **k):
+            raise requests.ConnectionError("réseau coupé")
+
+        monkeypatch.setattr(brevo_sender.requests, "post", boom)
+        with pytest.raises(brevo_sender.BrevoError, match="injoignable"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+    def test_response_without_campaign_id(self, configured, monkeypatch):
+        monkeypatch.setattr(
+            brevo_sender.requests, "post", lambda *a, **k: FakeResponse(201, {})
+        )
+        with pytest.raises(brevo_sender.BrevoError, match="identifiant"):
+            brevo_sender.send_campaign("s", "<p>x</p>")
+
+
+class TestRenderNewsletter:
+    def test_produces_a_full_document(self):
+        out = brevo_sender.render_newsletter("<p>A</p>", "<p>S</p>", date(2026, 9, 7))
+        assert out.startswith("<!DOCTYPE html>")
+        assert "<p>A</p>" in out
+        assert "<p>S</p>" in out
+
+    def test_shows_the_week(self):
+        out = brevo_sender.render_newsletter("", "", date(2026, 9, 7))
+        assert "2026-09-07" in out
+
+    def test_styles_are_inline_for_mail_clients(self):
+        out = brevo_sender.render_newsletter("", "", date(2026, 9, 7))
+        assert "<link" not in out
+        assert "style=" in out

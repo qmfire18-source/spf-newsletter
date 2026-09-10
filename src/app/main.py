@@ -24,7 +24,7 @@ from src.config import (
     SESSION_MAX_AGE_SECONDS,
 )
 from src.db.models import Draft, SessionLocal
-from src.email.brevo_sender import send_campaign
+from src.email.brevo_sender import render_newsletter, send_campaign
 from src.sanitize import sanitize_html
 
 logger = logging.getLogger(__name__)
@@ -186,7 +186,11 @@ def send_draft(
         return _redirect_home(error="Ce brouillon a déjà été envoyé.")
 
     subject = f"Newsletter SPF — semaine du {draft.week_of}"
-    html = f"{draft.news_content or ''}\n{draft.stages_content or ''}"
+    html = render_newsletter(
+        news_html=draft.news_content or "",
+        stages_html=draft.stages_content or "",
+        week_of=draft.week_of,
+    )
     try:
         campaign_id = send_campaign(subject=subject, html_content=html)
     except Exception:
