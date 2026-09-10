@@ -7,7 +7,6 @@ pending_review, l'éditer, l'envoyer.
 L'envoi n'est JAMAIS déclenché par le cron : il part d'ici, sur action humaine.
 """
 import logging
-from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
@@ -23,7 +22,7 @@ from src.config import (
     REVIEWER_PASSWORD_HASH,
     SESSION_MAX_AGE_SECONDS,
 )
-from src.db.models import Draft, SessionLocal
+from src.db.models import Draft, SessionLocal, utcnow
 from src.email.brevo_sender import render_newsletter, send_campaign
 from src.sanitize import sanitize_html
 
@@ -206,7 +205,7 @@ def send_draft(
         )
 
     db.query(Draft).filter(Draft.id == draft_id).update(
-        {"status": "sent", "sent_at": _utcnow()}
+        {"status": "sent", "sent_at": utcnow()}
     )
     db.commit()
     logger.info(
@@ -230,9 +229,3 @@ def _redirect_home(message: str = "", error: str = "") -> RedirectResponse:
 
 def _login_error(message: str) -> RedirectResponse:
     return RedirectResponse(f"/login?{urlencode({'error': message})}", status_code=303)
-
-
-def _utcnow() -> datetime:
-    # created_at/sent_at sont des DateTime naïfs côté SQLAlchemy : on stocke
-    # de l'UTC sans fuseau pour rester cohérent avec datetime.utcnow.
-    return datetime.now(timezone.utc).replace(tzinfo=None)

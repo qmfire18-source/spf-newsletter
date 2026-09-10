@@ -1,5 +1,5 @@
 """Modèles SQLAlchemy — voir PLAN.md §0 pour le détail des champs."""
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, String, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from src.config import DATABASE_URL
@@ -7,14 +7,25 @@ from src.config import DATABASE_URL
 Base = declarative_base()
 
 
+def utcnow() -> datetime:
+    """UTC sans fuseau : les colonnes DateTime ci-dessous sont naïves.
+
+    Remplace datetime.utcnow(), déprécié depuis Python 3.12.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class Draft(Base):
     __tablename__ = "drafts"
     id = Column(Integer, primary_key=True)
-    week_of = Column(Date, nullable=False)
+    # Unique : l'idempotence du cron ne peut pas reposer sur un simple SELECT
+    # suivi d'un INSERT, deux exécutions concurrentes passant toutes deux le
+    # test. C'est la base qui refuse le doublon.
+    week_of = Column(Date, nullable=False, unique=True)
     news_content = Column(Text)      # markdown/html généré par l'IA
     stages_content = Column(Text)    # markdown/html généré par l'IA
     status = Column(String, default="pending_review")  # pending_review | approved | sent
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     reviewed_by = Column(String, nullable=True)
     sent_at = Column(DateTime, nullable=True)
 
