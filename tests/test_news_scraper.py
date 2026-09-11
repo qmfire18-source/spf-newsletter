@@ -214,3 +214,83 @@ class TestFetchNewsapi:
         monkeypatch.setattr(news_scraper, "NEWSAPI_KEY", None)
         cutoff = datetime.now(timezone.utc) - timedelta(days=7)
         assert news_scraper._fetch_newsapi("finance", cutoff) == []
+
+
+class TestConsumerNoiseVeto:
+    def item(self, title, summary=""):
+        return {"title": title, "url": "https://x.fr/1", "raw_summary": summary}
+
+    @pytest.mark.parametrize("title", [
+        "Prix des carburants : la crise est loin d'être terminée",
+        "Pouvoir d'achat : les tomates à 9,95 euros, c'est du jamais-vu",
+        "Le changement climatique pourrait amputer le PIB français de 3,6%",
+        "Chômage, inflation, pouvoir d'achat : la douche froide",
+    ])
+    def test_drops_consumer_and_society_topics(self, title):
+        assert not news_scraper._is_finance_related(self.item(title))
+
+    @pytest.mark.parametrize("title", [
+        "La BCE relève ses taux d'intérêt à 2,5 % face à l'inflation",
+        "Les Etats-Unis se financent au coût le plus élevé en 25 ans",
+        "Le spread entre les taux d'emprunt français et allemands se creuse",
+        "Aublé Law accueille Patrick Dupuis comme associé en corporate/M&A",
+    ])
+    def test_keeps_macro_and_market_topics(self, title):
+        # Le macro reste dans le périmètre : c'est l'angle conso qui en sort.
+        assert news_scraper._is_finance_related(self.item(title))
+
+    def test_veto_applies_even_when_a_finance_word_is_present(self):
+        item = self.item(
+            "L'écologie est le poste le plus touché pour financer le plan d'aide"
+        )
+        assert not news_scraper._is_finance_related(item)
+
+    def test_veto_reads_the_summary_too(self):
+        item = self.item("Les Experts", summary="Chômage et prix à la pompe")
+        assert not news_scraper._is_finance_related(item)
+
+
+class TestSpreadAcrossSources:
+    def item(self, source, published):
+        return {"source": source, "published": published, "title": source}
+
+    def test_alternates_between_sources(self):
+        # Une source prolixe ne doit pas occuper toute la tête de liste.
+        items = [self.item("bfm", f"2026-09-11T1{i}:00:00+00:00") for i in range(5)]
+        items += [
+            self.item("agefi", "2026-09-10T09:00:00+00:00"),
+            self.item("echos", "2026-09-09T09:00:00+00:00"),
+        ]
+        ordered = news_scraper._spread_across_sources(items)
+        assert [i["source"] for i in ordered[:3]] == ["bfm", "agefi", "echos"]
+
+    def test_keeps_every_item(self):
+        items = [
+            self.item("a", "2026-09-11T10:00:00+00:00"),
+            self.item("a", "2026-09-10T10:00:00+00:00"),
+            self.item("b", "2026-09-09T10:00:00+00:00"),
+        ]
+        assert len(news_scraper._spread_across_sources(items)) == 3
+
+    def test_most_recent_source_leads(self):
+        items = [
+            self.item("vieux", "2026-09-01T10:00:00+00:00"),
+            self.item("recent", "2026-09-11T10:00:00+00:00"),
+        ]
+        ordered = news_scraper._spread_across_sources(items)
+        assert ordered[0]["source"] == "recent"
+
+    def test_within_a_source_the_newest_comes_first(self):
+        items = [
+            self.item("a", "2026-09-09T10:00:00+00:00"),
+            self.item("a", "2026-09-11T10:00:00+00:00"),
+        ]
+        ordered = news_scraper._spread_across_sources(items)
+        assert ordered[0]["published"].startswith("2026-09-11")
+
+    def test_empty_input(self):
+        assert news_scraper._spread_across_sources([]) == []
+
+    def test_tolerates_a_missing_source(self):
+        items = [self.item(None, "2026-09-11T10:00:00+00:00")]
+        assert len(news_scraper._spread_across_sources(items)) == 1

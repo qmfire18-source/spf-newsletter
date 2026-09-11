@@ -45,6 +45,18 @@ FINANCE_KEYWORD_PHRASES = (
     "asset management", "capital risque", "levee de fonds",
 )
 
+# Sujets grand public que les flux économie charrient en masse et qui n'ont pas
+# leur place dans une newsletter de finance : ils passaient le filtre par des
+# mots comme "financer le plan d'aide" ou "taux de chômage". Mesuré sur une
+# semaine réelle : 16 actus sur 60 (27 %) relevaient de cette catégorie.
+# Le veto s'applique même si un marqueur finance a été trouvé.
+CONSUMER_NOISE_MARKERS = (
+    "carburant", "essence", "diesel", "gazole", "prix a la pompe",
+    "pouvoir d achat", "tomate", "panier", "supermarche", "cantine",
+    "ticket restaurant", "chomage", "greve", "retraite", "sncf", "peage",
+    "changement climatique", "ecologie", "canicule",
+)
+
 GNEWS_ENDPOINT = "https://news.google.com/rss/search"
 NEWSAPI_ENDPOINT = "https://newsapi.org/v2/everything"
 
@@ -84,7 +96,7 @@ def fetch_news(sources: list[dict]) -> list[dict]:
             logger.exception("Source injoignable, ignorée : %r", src)
 
     relevant = [item for item in _deduplicate(items) if _is_finance_related(item)]
-    relevant.sort(key=_published_sort_key, reverse=True)
+    relevant = _spread_across_sources(relevant)
     logger.info(
         "Actus : %d collectées, %d pertinentes, %d retenues",
         len(items), len(relevant), min(len(relevant), MAX_NEWS_ITEMS),
@@ -226,11 +238,38 @@ def _deduplicate(items: list[dict]) -> list[dict]:
 
 def _is_finance_related(item: dict) -> bool:
     normalized = _normalize_title(f"{item['title']} {item.get('raw_summary', '')}")
+    padded = f" {normalized} "
+
+    # Le macro (BCE, dette, déficit, croissance) reste dans le périmètre : c'est
+    # l'angle consommateur qui ne l'est pas.
+    if any(marker in padded for marker in CONSUMER_NOISE_MARKERS):
+        return False
+
     tokens = normalized.split()
     if any(token.startswith(FINANCE_KEYWORD_STEMS) for token in tokens):
         return True
-    padded = f" {normalized} "
     return any(f" {phrase} " in padded for phrase in FINANCE_KEYWORD_PHRASES)
+
+
+def _spread_across_sources(items: list[dict]) -> list[dict]:
+    """Alterne les sources, du plus récent au plus ancien dans chacune.
+
+    Un tri par date seule laissait une source unique occuper 27 % de la liste
+    (mesuré : 16 actus sur 60 pour un même flux généraliste), et donc le haut
+    de ce que voit l'IA. On tourne entre flux pour que les têtes de liste
+    viennent d'autant de rédactions différentes que possible.
+    """
+    by_source: dict[str, list[dict]] = {}
+    for item in sorted(items, key=_published_sort_key, reverse=True):
+        by_source.setdefault(item.get("source") or "?", []).append(item)
+
+    queues = list(by_source.values())
+    ordered = []
+    while queues:
+        queues = [q for q in queues if q]
+        for queue in queues:
+            ordered.append(queue.pop(0))
+    return ordered
 
 
 def _published_sort_key(item: dict) -> datetime:

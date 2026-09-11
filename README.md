@@ -110,7 +110,7 @@ pytest
 
 ## Automatisation (GitHub Actions)
 
-Le fichier `.github/workflows/weekly.yml` (à créer, voir `PLAN.md` §6) déclenche
+Le fichier `.github/workflows/weekly.yml` déclenche
 `scripts/run_weekly.py` tous les lundis à 8h. Il ne fait QUE générer le brouillon
 et le mettre en attente — jamais l'envoi automatique.
 
@@ -152,6 +152,23 @@ spf-newsletter/
   recherche filtrée ne sont pas utilisées.
 - Délai de 3 s entre requêtes, User-Agent identifiant le robot avec une URL de
   contact, et arrêt immédiat de la boucle si le site signale une limitation.
+
+## Sélection des actualités
+
+Les flux économie généralistes ramènent beaucoup de hors-sujet et se répètent.
+Trois garde-fous, mesurés sur une semaine réelle (342 actus collectées) :
+
+1. **Préfiltre mots-clés finance**, puis **veto conso/société** — carburants,
+   pouvoir d'achat, climat, chômage, logement résidentiel. Ces sujets passaient
+   par des formules comme « financer le plan d'aide » ou « taux de chômage »,
+   soit 27 % des actus retenues. Le macro (BCE, dette, déficit, croissance)
+   reste dans le périmètre : c'est l'angle consommateur qui en sort.
+2. **Rotation entre sources** — un flux unique occupait 27 % de la liste, et
+   donc le haut de ce que voit l'IA. On alterne les rédactions, ce qui fait
+   remonter Les Echos, L'Agefi et Option Finance.
+3. **Un événement = un item**, imposé par le prompt de génération. Une semaine
+   chargée voit le même sujet couvert par une dizaine d'articles ; les
+   regrouper relève du jugement éditorial, pas d'un seuil de similarité.
 
 ## Sélection des offres de stage
 

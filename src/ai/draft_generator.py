@@ -22,6 +22,10 @@ finance. Pas de jargon non expliqué, pas d'emphase commerciale.
 Section actualités (news_html) :
 - Sélectionne les 3 à 5 actualités les plus pertinentes pour des étudiants en
   finance parmi celles fournies. Ignore le reste, y compris le hors-sujet.
+- Un événement = un item, même s'il est couvert par plusieurs articles. Les
+  sources fournies traitent souvent le même sujet en parallèle : regroupe-les
+  et cite l'article le plus complet. Les 3 à 5 items doivent porter sur des
+  sujets distincts.
 - 1 à 2 phrases par actualité, et un lien vers l'article source.
 - Privilégie marchés, banques centrales, M&A, régulation et grandes
   manœuvres d'entreprises.
