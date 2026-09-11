@@ -99,6 +99,12 @@ Puis ouvrir `http://localhost:8000`, se connecter avec un email de
 `ALLOWED_REVIEWER_EMAILS` et le mot de passe du bureau, relire/éditer le
 brouillon, cliquer sur "Envoyer".
 
+Le brouillon s'édite **directement dans le rendu** : gras, italique, lien,
+sous-titre et liste sont dans la barre d'outils. Le bouton « HTML » ouvre la
+source à côté pour les retouches fines ; les deux volets restent synchronisés.
+Tout est renettoyé par `sanitize_html` à l'enregistrement, donc une balise
+collée hors de la liste blanche est retirée.
+
 L'envoi est verrouillé : un brouillon déjà envoyé ne peut pas repartir, et un
 échec Brevo le rend à nouveau modifiable.
 

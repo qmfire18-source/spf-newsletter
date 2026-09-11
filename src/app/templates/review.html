@@ -34,7 +34,22 @@
     h2 { font-family:var(--serif); font-size:1.1rem; font-weight:600; margin:0; }
     .hint { font-size:.8rem; color:var(--fg-muted); }
 
-    .split { display:grid; grid-template-columns:1fr 1fr; }
+    .toolbar { display:flex; align-items:center; gap:.25rem; flex-wrap:wrap; }
+    .tool {
+      min-height:34px; min-width:34px; padding:.3rem .55rem; border-radius:var(--radius-sm);
+      border:1px solid transparent; background:transparent; color:var(--fg-muted);
+      font:inherit; font-size:.85rem; cursor:pointer; line-height:1;
+      transition:background-color .18s ease, color .18s ease;
+    }
+    .tool:hover { background:var(--surface); color:var(--fg); }
+    .tool[aria-pressed="true"] { background:var(--navy); color:#fff; }
+    .tool--sep { width:1px; min-width:1px; padding:0; height:22px;
+                 background:var(--border); margin:0 .35rem; pointer-events:none; }
+
+    .split { display:grid; grid-template-columns:1fr; }
+    .split[data-html="1"] { grid-template-columns:1fr 1fr; }
+    .pane--editor { display:none; }
+    .split[data-html="1"] .pane--editor { display:block; }
     .split > * { min-width:0; }
     .pane__label { font-size:.72rem; font-weight:500; letter-spacing:.07em;
                    text-transform:uppercase; color:var(--fg-muted);
@@ -46,7 +61,11 @@
       color:var(--fg); font-family:var(--mono); font-size:.82rem; line-height:1.7;
     }
     textarea:focus { outline:none; background:var(--surface-2); }
-    .preview { padding:0 1.25rem 1.25rem; font-size:.95rem; }
+    .preview { padding:.35rem 1.25rem 1.25rem; font-size:.95rem; min-height:18rem; }
+    .preview[contenteditable="true"]:focus { outline:none; background:var(--surface-2); }
+    .preview[contenteditable="true"]:empty::before {
+      content:"Écris ici…"; color:var(--fg-muted);
+    }
     .preview h3 { font-family:var(--serif); font-size:1.05rem; margin:1.1rem 0 .4rem; }
     .preview h3:first-child { margin-top:0; }
     .preview ul { padding-left:1.15rem; margin:.5rem 0; }
@@ -73,7 +92,7 @@
     .empty p { color:var(--fg-muted); margin:0 auto; max-width:32rem; }
 
     @media (max-width: 900px) {
-      .split { grid-template-columns:1fr; }
+      .split[data-html="1"] { grid-template-columns:1fr; }
       .pane--editor { border-right:0; border-bottom:1px solid var(--border); }
       textarea { min-height:16rem; }
       h1 { font-size:1.4rem; }
@@ -133,17 +152,35 @@
     <section class="block">
       <div class="block__head">
         <h2>Actus financières</h2>
-        <span class="hint">HTML à gauche, rendu à droite</span>
+        <div class="toolbar" role="toolbar" aria-label="Mise en forme — actus financières"
+             data-for="news_preview">
+          <button type="button" class="tool" data-cmd="bold" title="Gras"
+                  aria-label="Gras"><strong>G</strong></button>
+          <button type="button" class="tool" data-cmd="italic" title="Italique"
+                  aria-label="Italique"><em>I</em></button>
+          <button type="button" class="tool" data-cmd="createLink" title="Insérer un lien"
+                  aria-label="Insérer un lien">Lien</button>
+          <span class="tool tool--sep" aria-hidden="true"></span>
+          <button type="button" class="tool" data-block="h3" title="Sous-titre"
+                  aria-label="Sous-titre">Titre</button>
+          <button type="button" class="tool" data-cmd="insertUnorderedList" title="Liste à puces"
+                  aria-label="Liste à puces">Liste</button>
+          <span class="tool tool--sep" aria-hidden="true"></span>
+          <button type="button" class="tool" data-toggle-html title="Afficher le HTML"
+                  aria-pressed="false">HTML</button>
+        </div>
       </div>
-      <div class="split">
+      <div class="split" data-html="0">
         <div class="pane pane--editor">
-          <label class="pane__label" for="news_content">Contenu HTML</label>
+          <label class="pane__label" for="news_content">Source HTML</label>
           <textarea id="news_content" name="news_content" spellcheck="false"
                     data-preview="news_preview">{{ draft.news_content }}</textarea>
         </div>
         <div class="pane">
-          <p class="pane__label">Aperçu</p>
-          <div class="preview" id="news_preview">{{ draft.news_content | safe }}</div>
+          <p class="pane__label" id="news_preview_label">Contenu — modifiable directement</p>
+          <div class="preview" id="news_preview" contenteditable="true"
+               role="textbox" aria-multiline="true"
+               aria-labelledby="news_preview_label">{{ draft.news_content | safe }}</div>
         </div>
       </div>
     </section>
@@ -151,17 +188,35 @@
     <section class="block">
       <div class="block__head">
         <h2>Stages de la semaine</h2>
-        <span class="hint">HTML à gauche, rendu à droite</span>
+        <div class="toolbar" role="toolbar" aria-label="Mise en forme — stages de la semaine"
+             data-for="stages_preview">
+          <button type="button" class="tool" data-cmd="bold" title="Gras"
+                  aria-label="Gras"><strong>G</strong></button>
+          <button type="button" class="tool" data-cmd="italic" title="Italique"
+                  aria-label="Italique"><em>I</em></button>
+          <button type="button" class="tool" data-cmd="createLink" title="Insérer un lien"
+                  aria-label="Insérer un lien">Lien</button>
+          <span class="tool tool--sep" aria-hidden="true"></span>
+          <button type="button" class="tool" data-block="h3" title="Sous-titre"
+                  aria-label="Sous-titre">Titre</button>
+          <button type="button" class="tool" data-cmd="insertUnorderedList" title="Liste à puces"
+                  aria-label="Liste à puces">Liste</button>
+          <span class="tool tool--sep" aria-hidden="true"></span>
+          <button type="button" class="tool" data-toggle-html title="Afficher le HTML"
+                  aria-pressed="false">HTML</button>
+        </div>
       </div>
-      <div class="split">
+      <div class="split" data-html="0">
         <div class="pane pane--editor">
-          <label class="pane__label" for="stages_content">Contenu HTML</label>
+          <label class="pane__label" for="stages_content">Source HTML</label>
           <textarea id="stages_content" name="stages_content" spellcheck="false"
                     data-preview="stages_preview">{{ draft.stages_content }}</textarea>
         </div>
         <div class="pane">
-          <p class="pane__label">Aperçu</p>
-          <div class="preview" id="stages_preview">{{ draft.stages_content | safe }}</div>
+          <p class="pane__label" id="stages_preview_label">Contenu — modifiable directement</p>
+          <div class="preview" id="stages_preview" contenteditable="true"
+               role="textbox" aria-multiline="true"
+               aria-labelledby="stages_preview_label">{{ draft.stages_content | safe }}</div>
         </div>
       </div>
     </section>
@@ -212,18 +267,57 @@
     var dirty = false;
     var flag = document.getElementById("dirty");
 
-    // Aperçu vivant : l'ancienne version n'affichait que le contenu enregistré,
-    // ce qui obligeait à sauvegarder pour voir le rendu.
-    document.querySelectorAll("textarea[data-preview]").forEach(function (ta) {
-      var target = document.getElementById(ta.dataset.preview);
+    function markDirty() {
+      if (!dirty) { dirty = true; flag.dataset.on = "1"; }
+    }
+
+    // Entrée crée un <p> et non un <div> : nh3 retire les balises non
+    // autorisées à l'enregistrement, et un <div> emporterait le saut de ligne.
+    try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {}
+
+    document.querySelectorAll(".preview[contenteditable]").forEach(function (pane) {
+      var ta = document.querySelector('textarea[data-preview="' + pane.id + '"]');
+
+      // Le champ HTML reste la source soumise : on y recopie le rendu édité.
+      pane.addEventListener("input", function () {
+        ta.value = pane.innerHTML;
+        markDirty();
+      });
       ta.addEventListener("input", function () {
-        target.innerHTML = ta.value;
-        if (!dirty) { dirty = true; flag.dataset.on = "1"; }
+        pane.innerHTML = ta.value;
+        markDirty();
       });
     });
 
-    // L'envoi utilise la version enregistrée : refuser tant qu'il reste des
-    // modifications en cours plutôt que d'expédier un contenu périmé.
+    document.querySelectorAll(".toolbar").forEach(function (bar) {
+      var pane = document.getElementById(bar.dataset.for);
+      var split = pane.closest(".split");
+
+      bar.addEventListener("click", function (event) {
+        var button = event.target.closest("button");
+        if (!button) return;
+
+        if (button.hasAttribute("data-toggle-html")) {
+          var shown = split.dataset.html === "1";
+          split.dataset.html = shown ? "0" : "1";
+          button.setAttribute("aria-pressed", String(!shown));
+          return;
+        }
+
+        pane.focus();
+        if (button.dataset.block) {
+          document.execCommand("formatBlock", false, button.dataset.block);
+        } else if (button.dataset.cmd === "createLink") {
+          var url = prompt("Adresse du lien :", "https://");
+          if (url) document.execCommand("createLink", false, url);
+        } else {
+          document.execCommand(button.dataset.cmd, false, null);
+        }
+        // execCommand ne déclenche pas d'événement input.
+        pane.dispatchEvent(new Event("input"));
+      });
+    });
+
     document.getElementById("sendform").addEventListener("submit", function (e) {
       if (dirty) {
         e.preventDefault();
@@ -233,6 +327,10 @@
       if (!confirm("Envoyer la newsletter à tous les abonnés ? Cette action est irréversible.")) {
         e.preventDefault();
       }
+    });
+
+    document.getElementById("editor").addEventListener("submit", function () {
+      dirty = false;
     });
 
     window.addEventListener("beforeunload", function (e) {
