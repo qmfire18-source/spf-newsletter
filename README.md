@@ -204,4 +204,5 @@ Dépose le blason dans `src/app/static/logo.png` (ou `.svg`, `.jpg`, `.webp`) :
 l'interface le détecte au démarrage et l'affiche dans l'en-tête. Sans ce
 fichier, un monogramme typographique « SPF » le remplace — le blason n'est
 volontairement pas redessiné en SVG, une approximation valant moins que son
-absence. Le dossier `static/` n'est pas versionné pour ce fichier.
+absence. Le blason actuel est versionné (`src/app/static/logo.jpeg`) ;
+remplacer ce fichier suffit à changer l'identité de l'interface.
