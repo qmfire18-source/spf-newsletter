@@ -9,8 +9,11 @@ L'envoi n'est JAMAIS déclenché par le cron : il part d'ici, sur action humaine
 import logging
 from urllib.parse import urlencode
 
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
@@ -32,7 +35,27 @@ SESSION_COOKIE_NAME = "spf_session"
 SESSION_SALT = "reviewer-session"
 
 app = FastAPI()
+
+STATIC_DIR = Path(__file__).parent / "static"
+STATIC_DIR.mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 templates = Jinja2Templates(directory="src/app/templates")
+
+
+def _logo_url() -> str | None:
+    """URL du logo de l'asso, s'il a été déposé dans src/app/static/.
+
+    Le blason n'est pas versionné : à défaut, les gabarits affichent un
+    monogramme typographique plutôt qu'une reproduction approximative.
+    """
+    for name in ("logo.svg", "logo.png", "logo.jpg", "logo.jpeg", "logo.webp"):
+        if (STATIC_DIR / name).is_file():
+            return f"/static/{name}"
+    return None
+
+
+templates.env.globals["logo_url"] = _logo_url()
 
 
 class NotAuthenticated(Exception):

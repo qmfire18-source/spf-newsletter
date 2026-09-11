@@ -191,3 +191,11 @@ newsletter — pas le volume. Trois règles, toutes dans `stage_scraper.py` :
 3. **Rotation entre employeurs** — trois employeurs pèsent à eux seuls un
    tiers du sitemap. On tourne entre entreprises plutôt que de trier par date,
    ce qui garantit autant d'employeurs différents que d'offres récoltées.
+
+## Logo de l'association
+
+Dépose le blason dans `src/app/static/logo.png` (ou `.svg`, `.jpg`, `.webp`) :
+l'interface le détecte au démarrage et l'affiche dans l'en-tête. Sans ce
+fichier, un monogramme typographique « SPF » le remplace — le blason n'est
+volontairement pas redessiné en SVG, une approximation valant moins que son
+absence. Le dossier `static/` n'est pas versionné pour ce fichier.

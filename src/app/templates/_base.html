@@ -1,0 +1,94 @@
+{# Gabarit commun : identité, palette, typographie. #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Newsletter SPF{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Palette : marine institutionnel, repris du blason de l'association. */
+    :root {
+      --navy:#1E3A5F; --navy-700:#17304f; --navy-300:#4a6a94;
+      --bg:#F6F7F9; --surface:#FFFFFF; --surface-2:#F1F3F6;
+      --fg:#0F172A; --fg-muted:#55607A; --border:#DFE3EA;
+      --accent:#0F766E; --danger:#B42318; --danger-bg:#FEF3F2;
+      --ok:#0B6B4F; --ok-bg:#ECFDF3;
+      --ring:#1E3A5F;
+      --radius:10px; --radius-sm:6px;
+      --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+      --sans:"Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --serif:"Newsreader", Georgia, "Times New Roman", serif;
+      --mono:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --navy:#22456f; --navy-700:#1b3757; --navy-300:#8fb0d8;
+        --bg:#0B1220; --surface:#121A2A; --surface-2:#182134;
+        --fg:#E8ECF4; --fg-muted:#9AA6BF; --border:#26314A;
+        --accent:#34D3B5; --danger:#FF7A70; --danger-bg:#2A1614;
+        --ok:#5FD9A6; --ok-bg:#10241C;
+        --ring:#8fb0d8;
+        --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+        color-scheme: dark;
+      }
+    }
+    *,*::before,*::after { box-sizing:border-box; }
+    body {
+      margin:0; background:var(--bg); color:var(--fg);
+      font-family:var(--sans); font-size:16px; line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+    }
+    a { color:var(--navy); }
+    @media (prefers-color-scheme: dark) { a { color:var(--navy-300); } }
+
+    /* --- identité --- */
+    .brand { display:flex; align-items:center; gap:.75rem; min-width:0; }
+    .brand__logo { width:38px; height:38px; flex:none; border-radius:7px;
+                   object-fit:contain; background:#fff; }
+    .brand__mark { width:38px; height:38px; flex:none; }
+    .brand__name { font-family:var(--serif); font-weight:600; font-size:1.05rem;
+                   letter-spacing:.01em; line-height:1.15; }
+    .brand__sub { font-size:.76rem; color:var(--fg-muted); letter-spacing:.04em;
+                  text-transform:uppercase; }
+    .brand--onnavy .brand__name { color:#fff; }
+    .brand--onnavy .brand__sub { color:#C4D3E8; }
+
+    /* --- contrôles --- */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      min-height:44px; padding:.6rem 1.15rem; border:1px solid transparent;
+      border-radius:var(--radius-sm); font:inherit; font-weight:500;
+      cursor:pointer; text-decoration:none;
+      transition:background-color .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .btn:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible,
+    button:focus-visible { outline:3px solid var(--ring); outline-offset:2px; }
+    .btn--primary { background:var(--navy); color:#fff; }
+    .btn--primary:hover { background:var(--navy-700); }
+    .btn--ghost { background:transparent; color:var(--fg); border-color:var(--border); }
+    .btn--ghost:hover { background:var(--surface-2); }
+    .btn--danger { background:var(--danger); color:#fff; }
+    .btn--danger:hover { filter:brightness(.92); }
+    .btn[disabled] { opacity:.45; cursor:not-allowed; }
+
+    .flash { display:flex; gap:.6rem; align-items:flex-start; padding:.8rem 1rem;
+             border-radius:var(--radius-sm); margin:0 0 1rem; font-size:.94rem;
+             border:1px solid transparent; }
+    .flash svg { flex:none; margin-top:.15rem; }
+    .flash--ok { background:var(--ok-bg); color:var(--ok); border-color:currentColor; }
+    .flash--error { background:var(--danger-bg); color:var(--danger); border-color:currentColor; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { transition-duration:.01ms !important; animation-duration:.01ms !important; }
+    }
+    {% block style %}{% endblock %}
+  </style>
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>

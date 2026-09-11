@@ -1,85 +1,244 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Validation — Newsletter SPF</title>
-  <style>
-    :root { color-scheme: light dark; }
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      max-width: 60rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5;
-    }
-    header {
-      display: flex; flex-wrap: wrap; gap: 1rem; align-items: baseline;
-      justify-content: space-between; border-bottom: 1px solid #8884;
-      padding-bottom: .75rem;
-    }
-    h1 { font-size: 1.4rem; margin: 0; }
-    .who { font-size: .85rem; opacity: .7; }
-    textarea {
-      width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: .85rem; padding: .5rem; border: 1px solid #8888;
-      border-radius: .25rem; background: transparent; color: inherit;
-      box-sizing: border-box; min-height: 14rem;
-    }
-    .preview {
-      border: 1px solid #8884; border-radius: .25rem; padding: .75rem 1rem;
-      margin-top: .5rem; background: #8881;
-    }
-    button { padding: .6rem 1.2rem; font-size: 1rem; border: 0;
-             border-radius: .25rem; cursor: pointer; }
-    .primary { background: #1a4f8b; color: #fff; }
-    .danger  { background: #a12; color: #fff; }
-    .linkish { background: none; color: inherit; text-decoration: underline;
-               padding: 0; font-size: .85rem; }
-    .flash { padding: .6rem .8rem; border-radius: .25rem; margin-top: 1rem; }
-    .ok    { background: #dfd; color: #060; border: 1px solid #9c9; }
-    .error { background: #fdd; color: #900; border: 1px solid #c99; }
-    .send-zone { margin-top: 2rem; border-top: 1px solid #8884; padding-top: 1rem; }
-    .warn { font-size: .9rem; opacity: .8; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Brouillon de la semaine du {{ draft.week_of if draft else "—" }}</h1>
-    <span class="who">
-      {{ reviewer }} ·
-      <form method="post" action="/logout" style="display:inline">
-        <button type="submit" class="linkish">se déconnecter</button>
-      </form>
-    </span>
-  </header>
+{% extends "_base.html" %}
+{% block title %}Validation — Newsletter SPF{% endblock %}
+{% block style %}
+    .topbar { background:var(--navy); color:#fff; position:sticky; top:0; z-index:40; }
+    .topbar__in { max-width:78rem; margin:0 auto; padding:.85rem 1.25rem;
+                  display:flex; align-items:center; justify-content:space-between;
+                  gap:1rem; flex-wrap:wrap; }
+    .who { display:flex; align-items:center; gap:.75rem; font-size:.88rem;
+           color:#C4D3E8; }
+    .who form { margin:0; }
+    .btn--onnavy { background:transparent; color:#fff; border-color:#ffffff55;
+                   min-height:36px; padding:.35rem .8rem; font-size:.88rem; }
+    .btn--onnavy:hover { background:#ffffff1f; }
 
-  {% if message %}<p class="flash ok">{{ message }}</p>{% endif %}
-  {% if error %}<p class="flash error">{{ error }}</p>{% endif %}
+    main { max-width:78rem; margin:0 auto; padding:1.75rem 1.25rem 8rem; }
+    .pagehead { display:flex; align-items:flex-start; justify-content:space-between;
+                gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+    h1 { font-family:var(--serif); font-size:1.75rem; font-weight:600;
+         margin:0 0 .3rem; letter-spacing:-.01em; }
+    .sub { color:var(--fg-muted); font-size:.92rem; margin:0; }
+    .badge { display:inline-flex; align-items:center; gap:.4rem; font-size:.78rem;
+             font-weight:500; padding:.3rem .7rem; border-radius:999px;
+             background:var(--surface-2); color:var(--fg-muted);
+             border:1px solid var(--border); text-transform:uppercase;
+             letter-spacing:.05em; }
+    .badge__dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+
+    section.block { background:var(--surface); border:1px solid var(--border);
+                    border-radius:var(--radius); box-shadow:var(--shadow);
+                    margin-bottom:1.5rem; overflow:hidden; }
+    .block__head { display:flex; align-items:center; justify-content:space-between;
+                   gap:1rem; padding:.9rem 1.25rem; border-bottom:1px solid var(--border);
+                   background:var(--surface-2); }
+    h2 { font-family:var(--serif); font-size:1.1rem; font-weight:600; margin:0; }
+    .hint { font-size:.8rem; color:var(--fg-muted); }
+
+    .split { display:grid; grid-template-columns:1fr 1fr; }
+    .split > * { min-width:0; }
+    .pane__label { font-size:.72rem; font-weight:500; letter-spacing:.07em;
+                   text-transform:uppercase; color:var(--fg-muted);
+                   padding:.7rem 1.25rem .35rem; }
+    .pane--editor { border-right:1px solid var(--border); }
+    textarea {
+      display:block; width:100%; min-height:22rem; resize:vertical;
+      padding:0 1.25rem 1.25rem; border:0; background:transparent;
+      color:var(--fg); font-family:var(--mono); font-size:.82rem; line-height:1.7;
+    }
+    textarea:focus { outline:none; background:var(--surface-2); }
+    .preview { padding:0 1.25rem 1.25rem; font-size:.95rem; }
+    .preview h3 { font-family:var(--serif); font-size:1.05rem; margin:1.1rem 0 .4rem; }
+    .preview h3:first-child { margin-top:0; }
+    .preview ul { padding-left:1.15rem; margin:.5rem 0; }
+    .preview li { margin-bottom:.55rem; }
+    .preview a { overflow-wrap:anywhere; }
+
+    .actionbar { position:fixed; left:0; right:0; bottom:0; z-index:50;
+                 background:var(--surface); border-top:1px solid var(--border);
+                 box-shadow:0 -4px 20px rgba(15,23,42,.07); }
+    .actionbar__in { max-width:78rem; margin:0 auto; padding:.85rem 1.25rem;
+                     display:flex; align-items:center; justify-content:space-between;
+                     gap:1rem; flex-wrap:wrap; }
+    .actionbar form { margin:0; }
+    .dirty { font-size:.85rem; color:var(--danger); display:none;
+             align-items:center; gap:.4rem; }
+    .dirty[data-on="1"] { display:inline-flex; }
+    .actions { display:flex; gap:.7rem; align-items:center; flex-wrap:wrap; }
+    .sendwarn { font-size:.8rem; color:var(--fg-muted); max-width:34rem; }
+
+    .empty { background:var(--surface); border:1px solid var(--border);
+             border-radius:var(--radius); padding:3.5rem 1.5rem; text-align:center;
+             box-shadow:var(--shadow); }
+    .empty h2 { margin:.9rem 0 .4rem; }
+    .empty p { color:var(--fg-muted); margin:0 auto; max-width:32rem; }
+
+    @media (max-width: 900px) {
+      .split { grid-template-columns:1fr; }
+      .pane--editor { border-right:0; border-bottom:1px solid var(--border); }
+      textarea { min-height:16rem; }
+      h1 { font-size:1.4rem; }
+    }
+{% endblock %}
+
+{% block body %}
+<header class="topbar">
+  <div class="topbar__in">
+    <div class="brand brand--onnavy">
+      {% include "_brand.html" %}
+      <div>
+        <div class="brand__name">Sciences&nbsp;Po Finance</div>
+        <div class="brand__sub">Validation de la newsletter</div>
+      </div>
+    </div>
+    <div class="who">
+      <span>{{ reviewer }}</span>
+      <form method="post" action="/logout">
+        <button type="submit" class="btn btn--onnavy">Se déconnecter</button>
+      </form>
+    </div>
+  </div>
+</header>
+
+<main>
+  {% if message %}
+  <p class="flash flash--ok" role="status">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+    <span>{{ message }}</span>
+  </p>
+  {% endif %}
+  {% if error %}
+  <p class="flash flash--error" role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/>
+      <path d="M12 8v5M12 16.5v.01"/></svg>
+    <span>{{ error }}</span>
+  </p>
+  {% endif %}
 
   {% if draft %}
-  <form method="post" action="/draft/{{ draft.id }}/save">
-    <h2>Actus financières</h2>
-    <textarea name="news_content">{{ draft.news_content }}</textarea>
-    <div class="preview">{{ draft.news_content | safe }}</div>
+  <div class="pagehead">
+    <div>
+      <h1>Brouillon de la semaine du {{ draft.week_of }}</h1>
+      <p class="sub">
+        {{ draft.news_items | length }} actualité{{ "s" if draft.news_items | length > 1 else "" }}
+        et {{ draft.stage_offers | length }} offre{{ "s" if draft.stage_offers | length > 1 else "" }}
+        collectées pour cette édition.
+      </p>
+    </div>
+    <span class="badge"><span class="badge__dot"></span>En attente de validation</span>
+  </div>
 
-    <h2>Stages de la semaine</h2>
-    <textarea name="stages_content">{{ draft.stages_content }}</textarea>
-    <div class="preview">{{ draft.stages_content | safe }}</div>
+  <form method="post" action="/draft/{{ draft.id }}/save" id="editor">
+    <section class="block">
+      <div class="block__head">
+        <h2>Actus financières</h2>
+        <span class="hint">HTML à gauche, rendu à droite</span>
+      </div>
+      <div class="split">
+        <div class="pane pane--editor">
+          <label class="pane__label" for="news_content">Contenu HTML</label>
+          <textarea id="news_content" name="news_content" spellcheck="false"
+                    data-preview="news_preview">{{ draft.news_content }}</textarea>
+        </div>
+        <div class="pane">
+          <p class="pane__label">Aperçu</p>
+          <div class="preview" id="news_preview">{{ draft.news_content | safe }}</div>
+        </div>
+      </div>
+    </section>
 
-    <p><button type="submit" class="primary">Enregistrer les modifications</button></p>
+    <section class="block">
+      <div class="block__head">
+        <h2>Stages de la semaine</h2>
+        <span class="hint">HTML à gauche, rendu à droite</span>
+      </div>
+      <div class="split">
+        <div class="pane pane--editor">
+          <label class="pane__label" for="stages_content">Contenu HTML</label>
+          <textarea id="stages_content" name="stages_content" spellcheck="false"
+                    data-preview="stages_preview">{{ draft.stages_content }}</textarea>
+        </div>
+        <div class="pane">
+          <p class="pane__label">Aperçu</p>
+          <div class="preview" id="stages_preview">{{ draft.stages_content | safe }}</div>
+        </div>
+      </div>
+    </section>
   </form>
 
-  <div class="send-zone">
-    <p class="warn">
-      L'envoi est définitif et part à toute la liste d'abonnés. Enregistre tes
-      modifications avant d'envoyer : l'aperçu ci-dessus reflète la dernière
-      version enregistrée, pas le contenu en cours de saisie.
-    </p>
-    <form method="post" action="/draft/{{ draft.id }}/send"
-          onsubmit="return confirm('Envoyer la newsletter à tous les abonnés ? Cette action est irréversible.');">
-      <button type="submit" class="danger">Envoyer aux abonnés</button>
-    </form>
+  <div class="actionbar">
+    <div class="actionbar__in">
+      <div>
+        <span class="dirty" id="dirty">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/>
+            <path d="M12 8v5M12 16.5v.01"/></svg>
+          Modifications non enregistrées
+        </span>
+        <p class="sendwarn">
+          L'envoi part à toute la liste d'abonnés et n'est pas réversible.
+          C'est la dernière version <strong>enregistrée</strong> qui est envoyée.
+        </p>
+      </div>
+      <div class="actions">
+        <button type="submit" form="editor" class="btn btn--primary">
+          Enregistrer les modifications
+        </button>
+        <form method="post" action="/draft/{{ draft.id }}/send" id="sendform">
+          <button type="submit" class="btn btn--danger">Envoyer aux abonnés</button>
+        </form>
+      </div>
+    </div>
   </div>
   {% else %}
-  <p>Aucun brouillon en attente de validation.</p>
+  <div class="empty">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)"
+         stroke-width="1.5" aria-hidden="true">
+      <path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>
+    </svg>
+    <h2>Aucun brouillon en attente</h2>
+    <p>
+      Le prochain brouillon sera généré automatiquement lundi matin, ou
+      immédiatement en lançant <code>python scripts/run_weekly.py</code>.
+    </p>
+  </div>
   {% endif %}
-</body>
-</html>
+</main>
+
+{% if draft %}
+<script>
+  (function () {
+    var dirty = false;
+    var flag = document.getElementById("dirty");
+
+    // Aperçu vivant : l'ancienne version n'affichait que le contenu enregistré,
+    // ce qui obligeait à sauvegarder pour voir le rendu.
+    document.querySelectorAll("textarea[data-preview]").forEach(function (ta) {
+      var target = document.getElementById(ta.dataset.preview);
+      ta.addEventListener("input", function () {
+        target.innerHTML = ta.value;
+        if (!dirty) { dirty = true; flag.dataset.on = "1"; }
+      });
+    });
+
+    // L'envoi utilise la version enregistrée : refuser tant qu'il reste des
+    // modifications en cours plutôt que d'expédier un contenu périmé.
+    document.getElementById("sendform").addEventListener("submit", function (e) {
+      if (dirty) {
+        e.preventDefault();
+        alert("Enregistre d'abord tes modifications : l'envoi utilise la dernière version enregistrée.");
+        return;
+      }
+      if (!confirm("Envoyer la newsletter à tous les abonnés ? Cette action est irréversible.")) {
+        e.preventDefault();
+      }
+    });
+
+    window.addEventListener("beforeunload", function (e) {
+      if (dirty) { e.preventDefault(); e.returnValue = ""; }
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}
