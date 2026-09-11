@@ -159,6 +159,40 @@ spf-newsletter/
 - Délai de 3 s entre requêtes, User-Agent identifiant le robot avec une URL de
   contact, et arrêt immédiat de la boucle si le site signale une limitation.
 
+## Format de la newsletter
+
+La newsletter n'est pas une liste de liens : le lecteur doit comprendre la
+semaine sans ouvrir un article. Chaque édition comporte
+
+- **3 à 5 actualités développées** — titre d'accroche, deux à quatre
+  paragraphes, les chiffres, et pourquoi ça compte pour un étudiant en
+  finance ;
+- une section **« En bref »** — les autres sujets, une phrase chacun ;
+- les **stages de la semaine**.
+
+Cela suppose le texte des articles : les flux RSS ne livrent qu'un résumé de
+**86 caractères en médiane**, le plus souvent le titre répété. Sans lui, le
+modèle ne pourrait qu'inventer des chiffres — ce que la charte interdit
+formellement. `src/scraper/article_fetcher.py` va donc chercher le texte des
+articles retenus, et le prompt sépare explicitement les actualités
+développables (celles qui ont un `full_text`) de celles qui n'iront qu'en
+brève.
+
+**Ce qui limite le nombre d'items développés :**
+
+| Cause | Effet |
+|---|---|
+| Liens Google News | URL chiffrée, redirigée vers un mur de consentement — illisible, et on ne le contourne pas |
+| Pages rendues en JavaScript (Le Monde, BFMTV) | coquille vide ; on ne lance pas de navigateur |
+| Paywalls | texte partiel |
+
+En pratique, une semaine type donne **3 articles développables**. Les augmenter
+suppose d'ajouter des flux RSS *directs* (les liens Google News ne mènent nulle
+part) : les candidats testés le 2026-09-11 renvoyaient tous 403 ou 404.
+
+`robots.txt` fait foi avant chaque lecture, par domaine, et un `robots.txt`
+injoignable vaut refus.
+
 ## Sélection des actualités
 
 Les flux économie généralistes ramènent beaucoup de hors-sujet et se répètent.

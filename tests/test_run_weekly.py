@@ -44,7 +44,12 @@ def db(monkeypatch):
 
 @pytest.fixture
 def pipeline(monkeypatch):
-    calls = {"news": 0, "stages": 0, "draft": 0}
+    calls = {"news": 0, "stages": 0, "draft": 0, "enriched": 0}
+
+    def enrich(items, limit):
+        # Neutralisé : sans ça, la suite irait chercher les articles en ligne.
+        calls["enriched"] += 1
+        return items
 
     def fetch_news(sources):
         calls["news"] += 1
@@ -61,6 +66,7 @@ def pipeline(monkeypatch):
     monkeypatch.setattr(run_weekly, "fetch_news", fetch_news)
     monkeypatch.setattr(run_weekly, "run_fetch_stage_offers", fetch_stages)
     monkeypatch.setattr(run_weekly, "generate_draft", generate)
+    monkeypatch.setattr(run_weekly, "enrich_with_article_text", enrich)
     return calls
 
 
@@ -87,7 +93,7 @@ class TestIdempotence:
     def test_second_run_skips_scraping_and_the_ai_call(self, db, pipeline):
         run_weekly.main()
         run_weekly.main()
-        assert pipeline == {"news": 1, "stages": 1, "draft": 1}
+        assert pipeline == {"news": 1, "stages": 1, "draft": 1, "enriched": 1}
 
     def test_database_rejects_a_duplicate_week(self, db):
         from sqlalchemy.exc import IntegrityError

@@ -13,10 +13,15 @@ from sqlalchemy.exc import IntegrityError
 from src.ai.draft_generator import generate_draft
 from src.config import NEWS_SOURCES, STAGE_SOURCES
 from src.db.models import Draft, NewsItem, SessionLocal, StageOffer, init_db
+from src.scraper.article_fetcher import enrich_with_article_text
 from src.scraper.news_scraper import fetch_news
 from src.scraper.stage_scraper import run_fetch_stage_offers
 
 logger = logging.getLogger("run_weekly")
+
+# Nombre d'actualités dont on va chercher le texte intégral pour en faire des
+# items développés. Le reste alimente la section « en bref ».
+DEVELOPED_ITEMS = 5
 
 
 def current_week_of(today: date | None = None) -> date:
@@ -42,8 +47,16 @@ def main() -> int:
             return 0
 
         news = fetch_news(NEWS_SOURCES)
+        # Sans le texte des articles, l'IA ne peut produire qu'une liste de
+        # liens : les flux ne livrent qu'un résumé de 86 caractères en médiane.
+        enrich_with_article_text(news, limit=DEVELOPED_ITEMS)
         stages = run_fetch_stage_offers(STAGE_SOURCES)
-        logger.info("%d actus et %d offres récoltées.", len(news), len(stages))
+        logger.info(
+            "%d actus (%d développables) et %d offres récoltées.",
+            len(news),
+            sum(1 for item in news if item.get("full_text")),
+            len(stages),
+        )
 
         if not news and not stages:
             logger.error("Aucune source n'a répondu : pas de brouillon généré.")
