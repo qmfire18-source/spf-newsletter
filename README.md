@@ -78,6 +78,17 @@ python scripts/run_weekly.py
 Cela va : scraper les actus + les stages → générer le brouillon via Claude →
 l'enregistrer en base avec le statut `pending_review`.
 
+## Inspecter la sélection des stages
+
+```bash
+python scripts/preview_stages.py --plan   # vivier + ordre de visite (sitemaps seuls)
+python scripts/preview_stages.py          # exécution réelle, affiche les offres
+```
+
+Le mode `--plan` ne visite aucune page d'offre : il reste utilisable quand WTTJ
+limite le robot, puisque les sitemaps répondent toujours. C'est le moyen de
+vérifier ce que le scraper ramènerait avant de dépenser des requêtes.
+
 ## Lancer l'interface de validation
 
 ```bash
