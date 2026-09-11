@@ -12,7 +12,12 @@ annonce lui-même. Ce robots.txt interdit toute URL à query string
 (`Disallow: /*?`), donc les pages de recherche filtrée sont hors limites :
 on part du sitemap, on filtre sur le slug, puis on ne visite que les pages
 d'offres retenues. Chaque page expose un JSON-LD JobPosting (contrat SEO
-stable) qui contient déjà titre, entreprise, lieu et date limite.
+stable) qui contient déjà titre, entreprise, lieu, pays et date limite.
+
+Le site nous coupe (202 au corps vide) après une poignée de pages, pour un
+vivier d'environ 400 offres hebdomadaires : le budget de requêtes est la
+ressource rare, et l'ordre de visite compte donc plus que le volume. D'où le
+resserrement du vivier avant visite, puis une rotation entre employeurs.
 """
 import asyncio
 import gzip
@@ -40,16 +45,60 @@ USER_AGENT = (
 REQUEST_DELAY_SECONDS = 3.0
 REQUEST_TIMEOUT_SECONDS = 30
 MAX_OFFERS = 25
+# Garde-fou : le site nous coupe bien avant, mais une série de rejets ne doit
+# pas transformer la boucle en parcours intégral du sitemap.
+MAX_PAGE_VISITS = 60
 
-# Une offre doit porter un marqueur de stage ET un marqueur finance dans son
-# slug pour mériter une visite de page.
+# Le sitemap rend ~400 offres stage/finance sur 7 jours, mais WTTJ nous coupe
+# après une poignée de pages : l'ordre de visite est donc LA décision de ce
+# module. On resserre d'abord le vivier sur le coeur finance (ce que vise
+# l'asso), on écarte le bruit, puis on répartit le budget entre employeurs.
 STAGE_SLUG_MARKERS = ("stage", "stagiaire", "internship", "intern-")
+
+# Coeur finance : M&A, banque, investissement, audit, marchés, risque. Ni la
+# comptabilité, ni le contrôle de gestion, ni la fiscalité n'y figurent : les
+# retenir triplait le vivier (306 candidats au lieu de 136 sur une semaine
+# réelle) sans servir la ligne éditoriale de l'asso.
+# Marqueurs volontairement explicites : "banqu" attraperait "stage banquet" et
+# "capital" attraperait "capital humain" — deux faux positifs relevés en
+# production sur une semaine réelle.
 FINANCE_SLUG_MARKERS = (
-    "finance", "financier", "financement", "m-a", "audit", "asset", "invest",
-    "banqu", "bank", "trading", "risk", "risque", "comptab", "private-equity",
-    "gestion", "patrimoine", "credit", "assurance", "tresorerie", "fiscal",
-    "controle-de-gestion", "corporate", "actuar", "capital",
+    "finance", "financier", "financiere", "financement", "m-a", "fusion-acq",
+    "fusions-acq", "audit", "asset-manage", "invest", "banque", "banques",
+    "banquier", "banquiere", "bancaire", "banking", "trading", "risk-manage",
+    "risques-financiers", "private-equity", "venture-capital",
+    "capital-risque", "capital-invest", "capital-market",
+    "marches-de-capitaux", "equity", "transaction-services", "patrimoine",
+    "actuar", "controle-financier",
 )
+
+# Beaucoup d'offres IT et RH portent "services financiers" ou "SI finance"
+# dans leur slug (Sopra Steria, Vinci) : le métier n'a rien de financier.
+EXCLUDED_SLUG_MARKERS = (
+    "developpeur", "developpeuse", "ingenieur", "full-stack", "fullstack",
+    "java", "cobol", "-net-", "angular", "cybersecurite", "recrutement",
+    "sap", "informatique", "devops", "data-engineer",
+    # Maîtrise d'ouvrage SI : le domaine est la finance, le métier non.
+    "analyste-fonctionnel", "si-finance", "si-gestion",
+    # Le vocabulaire RH emprunte celui de la finance.
+    "capital-humain", "banquet",
+)
+
+# La langue de l'annonce ne dit rien du lieu : les meilleures offres parisiennes
+# du vivier (Naxicap, Clipperton, iBanFirst) sont publiées en anglais. C'est la
+# ville qui tranche. Le pays est vérifié après visite via le JSON-LD ; ces
+# marqueurs servent seulement à ne pas gaspiller le budget de requêtes, que le
+# site nous coupe après une poignée de pages.
+FOREIGN_CITY_MARKERS = (
+    "san-francisco", "new-york", "chicago", "providence", "boston",
+    "amsterdam", "barcelona", "madrid", "milano", "milan", "berlin",
+    "munich", "london", "casablanca", "luxembourg", "bruxelles",
+    "brussels", "seraing", "geneve", "zurich", "dublin", "lisbon",
+    "lisboa", "montreal", "singapore", "dubai", "tunis",
+)
+
+# Pays acceptés, tels que le JSON-LD les nomme (schema.org addressCountry).
+ACCEPTED_COUNTRIES = {"FR", "FRA", "FRANCE"}
 
 _LD_JSON_RE = re.compile(
     r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', re.S
@@ -95,14 +144,16 @@ async def _scrape_wttj(client, site: dict, cutoff: datetime) -> list[dict]:
             if modified and modified >= cutoff and _looks_like_finance_stage(url):
                 candidates.append((modified, url))
 
-    candidates.sort(reverse=True)
+    ranked = _prioritise(candidates)
     logger.info(
         "WTTJ : %d offres stage/finance récentes, %d pages visitées",
-        len(candidates), min(len(candidates), MAX_OFFERS),
+        len(ranked), min(len(ranked), MAX_OFFERS),
     )
 
     offers = []
-    for _, url in candidates[:MAX_OFFERS]:
+    for url in ranked[:MAX_PAGE_VISITS]:
+        if len(offers) >= MAX_OFFERS:
+            break
         await asyncio.sleep(REQUEST_DELAY_SECONDS)
         try:
             html = _decode(await _get(client, url))
@@ -152,9 +203,40 @@ def _decode(payload: bytes) -> str:
 
 def _looks_like_finance_stage(url: str) -> bool:
     slug = url.lower()
+    if any(m in slug for m in EXCLUDED_SLUG_MARKERS):
+        return False
+    if any(m in slug for m in FOREIGN_CITY_MARKERS):
+        return False
     return any(m in slug for m in STAGE_SLUG_MARKERS) and any(
         m in slug for m in FINANCE_SLUG_MARKERS
     )
+
+
+def _prioritise(candidates: list[tuple]) -> list[str]:
+    """Ordonne les pages à visiter : un employeur à la fois, plus récent d'abord.
+
+    Trois employeurs pèsent à eux seuls un tiers du sitemap ; un tri par date
+    seule leur ferait manger tout le budget de requêtes. On tourne donc entre
+    employeurs, ce qui garantit autant d'entreprises différentes que d'offres
+    récoltées.
+    """
+    by_company: dict[str, list] = {}
+    for modified, url in sorted(candidates, reverse=True):
+        by_company.setdefault(_company_slug(url), []).append(url)
+
+    # Les employeurs les plus fraîchement actifs passent en premier.
+    queues = list(by_company.values())
+    ordered = []
+    while queues:
+        queues = [q for q in queues if q]
+        for queue in queues:
+            ordered.append(queue.pop(0))
+    return ordered
+
+
+def _company_slug(url: str) -> str:
+    _, _, rest = url.partition("/companies/")
+    return rest.split("/")[0] or url
 
 
 def _offer_from_jsonld(html: str, url: str) -> dict | None:
@@ -167,6 +249,14 @@ def _offer_from_jsonld(html: str, url: str) -> dict | None:
     employment = posting.get("employmentType")
     employment = employment if isinstance(employment, list) else [employment]
     if not any(str(e).upper() in ("INTERN", "INTERNSHIP") for e in employment):
+        return None
+
+    # Le slug ne porte pas toujours la ville : le JSON-LD, lui, donne le pays.
+    # Une annonce hors de France n'a pas sa place dans la newsletter d'une
+    # asso parisienne. Un pays absent ne fait pas rejeter l'offre.
+    country = _first_country(posting.get("jobLocation"))
+    if country and country.upper() not in ACCEPTED_COUNTRIES:
+        logger.info("Offre hors de France (%s), ignorée : %s", country, url)
         return None
 
     return {
@@ -191,12 +281,26 @@ def _find_job_posting(html: str) -> dict | None:
 
 
 def _first_locality(job_location) -> str | None:
+    address = _first_address(job_location)
+    return address.get("addressLocality") if address else None
+
+
+def _first_country(job_location) -> str | None:
+    address = _first_address(job_location)
+    country = address.get("addressCountry") if address else None
+    # schema.org autorise soit le code pays, soit un objet Country.
+    if isinstance(country, dict):
+        country = country.get("name")
+    return country.strip() if isinstance(country, str) and country.strip() else None
+
+
+def _first_address(job_location) -> dict | None:
     if isinstance(job_location, list):
         job_location = job_location[0] if job_location else None
     if not isinstance(job_location, dict):
         return None
     address = job_location.get("address")
-    return address.get("addressLocality") if isinstance(address, dict) else None
+    return address if isinstance(address, dict) else None
 
 
 def _to_date(value) -> str | None:
@@ -215,10 +319,16 @@ def _parse_datetime(value) -> datetime | None:
 
 
 def _deduplicate(offers: list[dict]) -> list[dict]:
+    # WTTJ republie parfois une même annonce sous deux URL (identifiant de
+    # suivi différent) : c'est le couple titre/entreprise qui fait foi, pas
+    # l'URL, sinon le doublon occupe deux places dans la newsletter.
     seen = set()
     unique = []
     for offer in offers:
-        key = (offer["url"], offer["title"], offer["company"])
+        key = (
+            (offer["title"] or "").strip().casefold(),
+            (offer["company"] or "").strip().casefold(),
+        )
         if key not in seen:
             seen.add(key)
             unique.append(offer)

@@ -141,3 +141,25 @@ spf-newsletter/
   recherche filtrée ne sont pas utilisées.
 - Délai de 3 s entre requêtes, User-Agent identifiant le robot avec une URL de
   contact, et arrêt immédiat de la boucle si le site signale une limitation.
+
+## Sélection des offres de stage
+
+Le sitemap WTTJ expose environ 400 offres stage/finance sur 7 jours, mais le
+site nous limite après une poignée de pages. Le budget de requêtes est donc la
+ressource rare, et c'est l'**ordre de visite** qui détermine la qualité de la
+newsletter — pas le volume. Trois règles, toutes dans `stage_scraper.py` :
+
+1. **Périmètre « cœur finance »** — M&A, banque, investissement, private
+   equity, audit financier, gestion d'actifs, trading, risque, actuariat,
+   patrimoine. La comptabilité, le contrôle de gestion et la fiscalité en sont
+   absents : les inclure triplait le vivier sans servir la ligne éditoriale.
+   Une liste d'exclusion écarte les postes IT et RH que leur slug vend comme
+   financiers (« développeur services financiers », « analyste fonctionnel SI
+   finance », « capital humain »).
+2. **France uniquement** — filtrée sur la ville côté slug, puis confirmée par
+   le champ `addressCountry` du JSON-LD. La langue de l'annonce n'est *pas* un
+   critère : les meilleures offres parisiennes du vivier (Naxicap, Clipperton,
+   iBanFirst) sont publiées en anglais.
+3. **Rotation entre employeurs** — trois employeurs pèsent à eux seuls un
+   tiers du sitemap. On tourne entre entreprises plutôt que de trier par date,
+   ce qui garantit autant d'employeurs différents que d'offres récoltées.
