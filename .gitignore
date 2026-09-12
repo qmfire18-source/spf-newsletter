@@ -4,3 +4,10 @@ __pycache__/
 .env
 *.db
 .DS_Store
+
+brouillon_prompt.txt
+reponse*.json
+
+# Sorties de travail du mode manuel (voir scripts/export_prompt.py)
+brouillon_prompt.txt
+reponse*.json

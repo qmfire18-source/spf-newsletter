@@ -89,6 +89,46 @@ Le mode `--plan` ne visite aucune page d'offre : il reste utilisable quand WTTJ
 limite le robot, puisque les sitemaps répondent toujours. C'est le moyen de
 vérifier ce que le scraper ramènerait avant de dépenser des requêtes.
 
+## Générer le brouillon sans clé API
+
+L'appel à l'API Claude coûte environ 0,16 $ par édition (~8 $/an). Si tu
+préfères ne rien payer, la génération étant hebdomadaire et de toute façon
+relue à la main, elle peut passer par une conversation Claude ordinaire :
+
+```bash
+python scripts/export_prompt.py          # écrit brouillon_prompt.txt
+# coller son contenu dans Claude.ai, enregistrer la réponse JSON
+python scripts/import_draft.py reponse.json
+```
+
+`export_prompt.py` produit **exactement** ce que `generate_draft` enverrait :
+même charte, mêmes données, même séparation entre actualités développables et
+brèves. `import_draft.py` accepte une réponse bavarde (bloc Markdown, phrase
+d'introduction) et applique le même nettoyage HTML que la voie automatique.
+
+Le seul renoncement est l'automatisation : le cron du lundi ne peut pas faire
+cette étape à ta place.
+
+## Générer le brouillon sans clé API
+
+La génération est hebdomadaire et relue à la main : rien n'oblige à passer par
+l'API. Le mode manuel produit exactement le prompt que `generate_draft`
+enverrait, à coller dans une conversation Claude.ai — coût nul.
+
+```bash
+python scripts/export_prompt.py          # écrit brouillon_prompt.txt
+# coller son contenu dans Claude.ai, enregistrer la réponse dans reponse.json
+python scripts/import_draft.py reponse.json
+```
+
+`import_draft.py` accepte une réponse bavarde : le JSON peut être entouré de
+texte ou d'un bloc de code Markdown. Le HTML passe par le même nettoyage que la
+génération automatique. `--remplacer` écrase le brouillon de la semaine.
+
+Ce mode remplace l'étape IA, pas le reste : le scraping et l'interface de
+validation sont identiques. En revanche il ne peut pas tourner dans le cron
+GitHub Actions, qui n'a personne pour copier-coller.
+
 ## Lancer l'interface de validation
 
 ```bash
