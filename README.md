@@ -106,6 +106,31 @@ le `PATH`, puis dans les extensions VS Code.
 Claude Code authentifiée, que le runner n'a pas. Pour une exécution
 automatique, voir la programmation locale ci-dessous.
 
+## Génération automatique chaque lundi (sans clé API)
+
+```bash
+./scripts/install_schedule.sh            # tous les lundis à 8h00
+./scripts/install_schedule.sh --heure 9  # à une autre heure
+./scripts/install_schedule.sh --retirer  # désactiver
+```
+
+Un LaunchAgent macOS lance `scripts/weekly_local.sh`, qui génère le brouillon
+avec le CLI local, journalise dans `logs/weekly.log` et affiche une
+notification. **L'envoi n'est jamais automatique** : il reste déclenché à la
+main depuis l'interface de validation.
+
+launchd rattrape un rendez-vous manqué au réveil : si le Mac dort le lundi à
+8h, la génération part au réveil plutôt que d'être sautée. En revanche, elle ne
+tourne pas si la machine est éteinte toute la journée — c'est la limite de
+cette approche par rapport au cron GitHub Actions, qui lui demande une clé API.
+
+Vérifier ou déclencher à la main :
+
+```bash
+launchctl print gui/$(id -u)/com.sciencespofinance.newsletter | head -20
+launchctl kickstart -p gui/$(id -u)/com.sciencespofinance.newsletter
+```
+
 ## Mode manuel (copier-coller)
 
 L'appel à l'API Claude coûte environ 0,16 $ par édition (~8 $/an). Si tu

@@ -11,3 +11,6 @@ reponse*.json
 # Sorties de travail du mode manuel (voir scripts/export_prompt.py)
 brouillon_prompt.txt
 reponse*.json
+
+# Journaux de la programmation locale
+logs/
