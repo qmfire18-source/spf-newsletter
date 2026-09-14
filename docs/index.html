@@ -106,6 +106,19 @@
     .grid{grid-template-columns:1fr}
     .hero{padding:3rem 0 2.2rem}
   }
+  @media (max-width:480px){
+    body{font-size:16px}
+    .wrap{padding:0 1.1rem}
+    .hero{padding:2.4rem 0 2rem}
+    .lede{font-size:1rem}
+    /* Le champ et le bouton empilés : côte à côte, chacun devient trop
+       étroit pour être lisible et confortable au doigt. */
+    form{flex-direction:column}
+    input[type=email],button{width:100%}
+    .card{padding:1.3rem}
+    .mock__body{padding:1.15rem}
+    .fade{max-height:14rem}
+  }
   @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
 </style>
 </head>

@@ -134,3 +134,52 @@ class TestRenderNewsletter:
         out = brevo_sender.render_newsletter("", "", date(2026, 9, 7))
         assert "<link" not in out
         assert "style=" in out
+
+
+class TestNewsletterBranding:
+    def rendu(self):
+        return brevo_sender.render_newsletter("<p>A</p>", "<p>S</p>", date(2026, 9, 14))
+
+    def test_carries_the_association_logo(self):
+        # Un mail ne peut pas pointer vers un fichier local.
+        out = self.rendu()
+        assert brevo_sender.LOGO_URL in out
+        assert out.count("<img") == 1
+        assert 'alt="Sciences Po Finance"' in out
+
+    def test_uses_the_association_navy(self):
+        assert brevo_sender.MARINE in self.rendu()
+
+    def test_week_is_written_out_in_french(self):
+        # "2026-09-14" dans un en-tête de mail fait brut.
+        assert "Semaine du 14 septembre 2026" in self.rendu()
+
+    def test_week_falls_back_when_not_a_date(self):
+        out = brevo_sender.render_newsletter("", "", "2026-W38")
+        assert "2026-W38" in out
+
+    def test_has_a_preheader(self):
+        out = self.rendu()
+        assert "preheader" in out
+        assert "stages de la semaine" in out
+
+    def test_is_responsive_on_phones(self):
+        out = self.rendu()
+        assert "max-width:620px" in out
+        assert 'name="viewport"' in out
+
+    def test_width_is_capped_for_mail_clients(self):
+        assert "max-width:600px" in self.rendu()
+
+    def test_no_external_stylesheet(self):
+        # Les clients mail ignorent les feuilles externes.
+        out = self.rendu()
+        assert "<link" not in out
+        assert "@import" not in out
+
+    def test_mentions_the_unsubscribe_link(self):
+        assert "désabonnement" in self.rendu().lower()
+
+    def test_escapes_the_title(self):
+        out = brevo_sender.render_newsletter("", "", "<script>x</script>")
+        assert "<script>x</script>" not in out.split("<body")[0]

@@ -97,6 +97,27 @@
       textarea { min-height:16rem; }
       h1 { font-size:1.4rem; }
     }
+
+    @media (max-width: 640px) {
+      main { padding:1.25rem .9rem 13rem; }
+      .topbar__in, .actionbar__in { padding:.75rem .9rem; }
+      .block__head { flex-wrap:wrap; gap:.5rem; }
+      .hint { display:none; }
+
+      /* Sous 16px, iOS zoome sur le champ dès qu'on le touche et la mise en
+         page saute. Le confort de lecture compte autant que le zoom évité. */
+      textarea { font-size:16px; padding:0 .9rem 1rem; }
+      .preview, .pane__label { padding-left:.9rem; padding-right:.9rem; }
+      .preview { font-size:16px; }
+
+      /* Deux boutons côte à côte deviennent illisibles sur un téléphone :
+         on les empile, pleine largeur, l'envoi en dernier pour éviter le
+         clic réflexe. */
+      .actionbar__in { flex-direction:column; align-items:stretch; gap:.6rem; }
+      .actions { flex-direction:column-reverse; width:100%; gap:.5rem; }
+      .actions .btn { width:100%; }
+      .sendwarn { font-size:.85rem; }
+    }
 {% endblock %}
 
 {% block body %}

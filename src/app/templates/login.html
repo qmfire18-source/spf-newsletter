@@ -23,6 +23,13 @@
     .btn--primary { width:100%; }
     .foot { margin-top:1.25rem; font-size:.82rem; color:var(--fg-muted);
             text-align:center; }
+    @media (max-width: 480px) {
+      .shell { padding:1.25rem .9rem; align-items:start; }
+      .card__head { padding:1.25rem 1.15rem; }
+      .card__body { padding:1.35rem 1.15rem; }
+      /* 16px minimum, sinon iOS zoome à la saisie. */
+      input { font-size:16px; }
+    }
 {% endblock %}
 {% block body %}
 <main class="shell">
