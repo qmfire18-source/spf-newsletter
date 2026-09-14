@@ -106,15 +106,35 @@ le `PATH`, puis dans les extensions VS Code.
 Claude Code authentifiée, que le runner n'a pas. Pour une exécution
 automatique, voir la programmation locale ci-dessous.
 
+## Collecte des offres de stage
+
+WTTJ coupe le scraper après quelques pages : une visite unique ne ramène que
+six offres sur les ~190 du vivier hebdomadaire. La collecte est donc
+**incrémentale** — chaque exécution écarte ce qui est déjà en stock et va
+chercher du nouveau :
+
+```bash
+python scripts/collect_stages.py
+```
+
+Les offres s'accumulent dans la table `collected_offers` et la newsletter puise
+dans les sept derniers jours. Une offre dont la date limite est passée n'est
+jamais publiée. Au-delà de 30 jours, elles sont purgées.
+
+Lancée chaque jour, la collecte porte le stock d'environ 6 offres à une
+quarantaine — sans jamais forcer la limitation du site, au contraire : sept
+petites visites la ménagent davantage qu'une grosse.
+
 ## Génération automatique chaque lundi (sans clé API)
 
 ```bash
-./scripts/install_schedule.sh            # tous les lundis à 8h00
-./scripts/install_schedule.sh --heure 9  # à une autre heure
+./scripts/install_schedule.sh            # lundi 10h30 + collecte quotidienne
+./scripts/install_schedule.sh --a 9:15   # autre heure pour la newsletter
 ./scripts/install_schedule.sh --retirer  # désactiver
 ```
 
-Un LaunchAgent macOS lance `scripts/weekly_local.sh`, qui génère le brouillon
+Deux LaunchAgents sont installés : la collecte d'offres chaque jour à 7h15, et
+la newsletter le lundi à 10h30. Le second lance `scripts/weekly_local.sh`, qui génère le brouillon
 avec le CLI local, journalise dans `logs/weekly.log` et affiche une
 notification. **L'envoi n'est jamais automatique** : il reste déclenché à la
 main depuis l'interface de validation.
@@ -179,7 +199,12 @@ uvicorn src.app.main:app --reload
 
 Puis ouvrir `http://localhost:8000`, se connecter avec un email de
 `ALLOWED_REVIEWER_EMAILS` et le mot de passe du bureau, relire/éditer le
-brouillon, cliquer sur "Envoyer".
+brouillon, puis « Valider et envoyer aux abonnés ».
+
+Ce bouton **enregistre et expédie en une seule action** : ce qui part est la
+version affichée à l'écran. Une confirmation est demandée avant l'envoi, qui
+est irréversible. « Enregistrer sans envoyer » reste disponible pour reprendre
+plus tard.
 
 Le brouillon s'édite **directement dans le rendu** : gras, italique, lien,
 sous-titre et liste sont dans la barre d'outils. Le bouton « HTML » ouvre la

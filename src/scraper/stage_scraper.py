@@ -107,9 +107,14 @@ _SITEMAP_ENTRY_RE = re.compile(r"<loc>(.*?)</loc>\s*<lastmod>(.*?)</lastmod>", r
 _SITEMAP_LOC_RE = re.compile(r"<loc>(.*?)</loc>", re.S)
 
 
-async def fetch_stage_offers(target_sites: list[dict]) -> list[dict]:
+async def fetch_stage_offers(
+    target_sites: list[dict], known_urls: set[str] | None = None
+) -> list[dict]:
     """
     target_sites: [{"type": "wttj_sitemap", "name": ..., "sitemap_index": ...}]
+    known_urls: offres déjà en stock, écartées avant toute visite — c'est ce
+        qui permet à des exécutions successives de rapporter du nouveau plutôt
+        que de redépenser le budget de requêtes sur les mêmes pages.
     Retourne : [{"title", "company", "location", "deadline", "url"}]
     """
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
@@ -123,7 +128,9 @@ async def fetch_stage_offers(target_sites: list[dict]) -> list[dict]:
         for site in target_sites:
             try:
                 if site["type"] == "wttj_sitemap":
-                    results.extend(await _scrape_wttj(client, site, cutoff))
+                    results.extend(
+                        await _scrape_wttj(client, site, cutoff, known_urls or set())
+                    )
                 else:
                     logger.warning("Type de source inconnu, ignoré : %r", site["type"])
             except Exception:
@@ -133,7 +140,9 @@ async def fetch_stage_offers(target_sites: list[dict]) -> list[dict]:
     return _deduplicate(results)
 
 
-async def _scrape_wttj(client, site: dict, cutoff: datetime) -> list[dict]:
+async def _scrape_wttj(
+    client, site: dict, cutoff: datetime, known_urls: set[str]
+) -> list[dict]:
     shards = await _wttj_job_shards(client, site["sitemap_index"])
     candidates = []
     for shard_url in shards:
@@ -144,10 +153,11 @@ async def _scrape_wttj(client, site: dict, cutoff: datetime) -> list[dict]:
             if modified and modified >= cutoff and _looks_like_finance_stage(url):
                 candidates.append((modified, url))
 
-    ranked = _prioritise(candidates)
+    ranked = [url for url in _prioritise(candidates) if url not in known_urls]
     logger.info(
-        "WTTJ : %d offres stage/finance récentes, %d pages visitées",
-        len(ranked), min(len(ranked), MAX_OFFERS),
+        "WTTJ : %d offres stage/finance récentes, %d déjà en stock, "
+        "%d pages à visiter au plus",
+        len(candidates), len(candidates) - len(ranked), min(len(ranked), MAX_OFFERS),
     )
 
     offers = []
@@ -335,6 +345,8 @@ def _deduplicate(offers: list[dict]) -> list[dict]:
     return unique
 
 
-def run_fetch_stage_offers(target_sites: list[dict]) -> list[dict]:
+def run_fetch_stage_offers(
+    target_sites: list[dict], known_urls: set[str] | None = None
+) -> list[dict]:
     """Wrapper synchrone pour appel depuis un script non-async."""
-    return asyncio.run(fetch_stage_offers(target_sites))
+    return asyncio.run(fetch_stage_offers(target_sites, known_urls))

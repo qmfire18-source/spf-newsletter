@@ -190,10 +190,19 @@ def save_draft(
 @app.post("/draft/{draft_id}/send")
 def send_draft(
     draft_id: int,
+    news_content: str = Form(...),
+    stages_content: str = Form(...),
     reviewer: str = Depends(get_current_reviewer),
     db=Depends(get_db),
 ):
     draft = _get_editable_draft(db, draft_id)
+
+    # Le bouton de validation envoie ce qui est à l'écran : on enregistre
+    # d'abord, sinon une relecture non sauvegardée partirait dans le vide et
+    # les abonnés recevraient la version précédente.
+    draft.news_content = sanitize_html(news_content)
+    draft.stages_content = sanitize_html(stages_content)
+    db.commit()
 
     # Verrou anti-double-envoi : on passe le brouillon à "approved" en exigeant
     # qu'il soit encore "pending_review". Si deux clics arrivent en parallèle,

@@ -19,6 +19,7 @@ from sqlalchemy.exc import IntegrityError
 from src.ai.draft_generator import generate_draft
 from src.ai.local_generator import find_cli, generate_draft_locally
 from src.config import ANTHROPIC_API_KEY, NEWS_SOURCES, STAGE_SOURCES
+from src.db import offer_store
 from src.db.models import Draft, NewsItem, SessionLocal, StageOffer, init_db
 from src.scraper.article_fetcher import enrich_with_article_text
 from src.scraper.news_scraper import fetch_news
@@ -29,6 +30,10 @@ logger = logging.getLogger("run_weekly")
 # Nombre d'actualités dont on va chercher le texte intégral pour en faire des
 # items développés. Le reste alimente la section « en bref ».
 DEVELOPED_ITEMS = 5
+
+# Offres puisées dans le stock accumulé par scripts/collect_stages.py.
+STAGE_POOL_DAYS = 7
+MAX_STAGES_PER_EDITION = 40
 
 
 def choose_generator(mode: str):
@@ -91,7 +96,20 @@ def main(argv: list[str] | None = None) -> int:
         # Sans le texte des articles, l'IA ne peut produire qu'une liste de
         # liens : les flux ne livrent qu'un résumé de 86 caractères en médiane.
         enrich_with_article_text(news, limit=DEVELOPED_ITEMS)
-        stages = run_fetch_stage_offers(STAGE_SOURCES)
+        # Le stock accumulé jour après jour contient bien plus que ce qu'une
+        # visite unique peut ramener : WTTJ nous coupe après quelques pages.
+        stages = offer_store.recent_offers(
+            db, days=STAGE_POOL_DAYS, limit=MAX_STAGES_PER_EDITION
+        )
+        if not stages:
+            logger.info("Stock d'offres vide : collecte immédiate.")
+            fresh = run_fetch_stage_offers(
+                STAGE_SOURCES, known_urls=offer_store.known_urls(db)
+            )
+            offer_store.store_offers(db, fresh)
+            stages = offer_store.recent_offers(
+                db, days=STAGE_POOL_DAYS, limit=MAX_STAGES_PER_EDITION
+            )
         logger.info(
             "%d actus (%d développables) et %d offres récoltées.",
             len(news),

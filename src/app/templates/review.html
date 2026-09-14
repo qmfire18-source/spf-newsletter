@@ -149,6 +149,7 @@
   </div>
 
   <form method="post" action="/draft/{{ draft.id }}/save" id="editor">
+
     <section class="block">
       <div class="block__head">
         <h2>Actus financières</h2>
@@ -220,8 +221,6 @@
         </div>
       </div>
     </section>
-  </form>
-
   <div class="actionbar">
     <div class="actionbar__in">
       <div>
@@ -232,20 +231,24 @@
           Modifications non enregistrées
         </span>
         <p class="sendwarn">
-          L'envoi part à toute la liste d'abonnés et n'est pas réversible.
-          C'est la dernière version <strong>enregistrée</strong> qui est envoyée.
+          « Valider et envoyer » expédie <strong>immédiatement</strong> la
+          version affichée ci-dessus à toute la liste d'abonnés. C'est
+          irréversible.
         </p>
       </div>
       <div class="actions">
-        <button type="submit" form="editor" class="btn btn--primary">
-          Enregistrer les modifications
+        <button type="submit" form="editor" class="btn btn--ghost"
+                formaction="/draft/{{ draft.id }}/save">
+          Enregistrer sans envoyer
         </button>
-        <form method="post" action="/draft/{{ draft.id }}/send" id="sendform">
-          <button type="submit" class="btn btn--danger">Envoyer aux abonnés</button>
-        </form>
+        <button type="submit" form="editor" class="btn btn--danger" id="sendbtn"
+                formaction="/draft/{{ draft.id }}/send">
+          Valider et envoyer aux abonnés
+        </button>
       </div>
     </div>
   </div>
+  </form>
   {% else %}
   <div class="empty">
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)"
@@ -318,19 +321,32 @@
       });
     });
 
-    document.getElementById("sendform").addEventListener("submit", function (e) {
-      if (dirty) {
+    // L'envoi part avec le contenu du formulaire : plus besoin d'enregistrer
+    // d'abord. Reste la confirmation — l'action est irréversible et touche
+    // toute la liste d'abonnés.
+    var form = document.getElementById("editor");
+    var sendBtn = document.getElementById("sendbtn");
+    var sending = false;
+
+    sendBtn.addEventListener("click", function (e) {
+      var question =
+        "Envoyer la newsletter maintenant à tous les abonnés ?\n\n" +
+        "C'est irréversible : une fois partie, elle ne peut plus être rappelée.";
+      if (!confirm(question)) {
         e.preventDefault();
-        alert("Enregistre d'abord tes modifications : l'envoi utilise la dernière version enregistrée.");
         return;
       }
-      if (!confirm("Envoyer la newsletter à tous les abonnés ? Cette action est irréversible.")) {
-        e.preventDefault();
-      }
+      sending = true;
+      dirty = false;
+      // Un second clic pendant l'appel à Brevo ne doit pas repartir.
+      requestAnimationFrame(function () {
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Envoi en cours…";
+      });
     });
 
-    document.getElementById("editor").addEventListener("submit", function () {
-      dirty = false;
+    form.addEventListener("submit", function () {
+      if (!sending) { dirty = false; }
     });
 
     window.addEventListener("beforeunload", function (e) {

@@ -55,7 +55,7 @@ def pipeline(monkeypatch):
         calls["news"] += 1
         return NEWS
 
-    def fetch_stages(sources):
+    def pool(db, days=7, limit=40):
         calls["stages"] += 1
         return STAGES
 
@@ -64,7 +64,9 @@ def pipeline(monkeypatch):
         return GENERATED
 
     monkeypatch.setattr(run_weekly, "fetch_news", fetch_news)
-    monkeypatch.setattr(run_weekly, "run_fetch_stage_offers", fetch_stages)
+    monkeypatch.setattr(run_weekly.offer_store, "recent_offers", pool)
+    monkeypatch.setattr(run_weekly.offer_store, "known_urls", lambda db: set())
+    monkeypatch.setattr(run_weekly, "run_fetch_stage_offers", lambda s, known_urls=None: [])
     monkeypatch.setattr(run_weekly, "generate_draft", generate)
     monkeypatch.setattr(run_weekly, "enrich_with_article_text", enrich)
     # Le choix automatique du moteur irait sinon chercher le CLI Claude Code
@@ -124,8 +126,8 @@ class TestPersistence:
 
     def test_offer_without_deadline_is_accepted(self, db, monkeypatch, pipeline):
         monkeypatch.setattr(
-            run_weekly, "run_fetch_stage_offers",
-            lambda s: [{**STAGES[0], "deadline": None}],
+            run_weekly.offer_store, "recent_offers",
+            lambda db, days=7, limit=40: [{**STAGES[0], "deadline": None}],
         )
         assert run_weekly.main() == 0
         assert db.query(StageOffer).one().deadline is None
@@ -134,7 +136,8 @@ class TestPersistence:
 class TestFailureModes:
     def test_fails_when_every_source_is_empty(self, db, monkeypatch, pipeline):
         monkeypatch.setattr(run_weekly, "fetch_news", lambda s: [])
-        monkeypatch.setattr(run_weekly, "run_fetch_stage_offers", lambda s: [])
+        monkeypatch.setattr(run_weekly.offer_store, "recent_offers", lambda db, **kw: [])
+        monkeypatch.setattr(run_weekly.offer_store, "store_offers", lambda db, o: 0)
         assert run_weekly.main() == 1
         assert db.query(Draft).count() == 0
 
@@ -142,7 +145,8 @@ class TestFailureModes:
         self, db, monkeypatch, pipeline
     ):
         monkeypatch.setattr(run_weekly, "fetch_news", lambda s: [])
-        monkeypatch.setattr(run_weekly, "run_fetch_stage_offers", lambda s: [])
+        monkeypatch.setattr(run_weekly.offer_store, "recent_offers", lambda db, **kw: [])
+        monkeypatch.setattr(run_weekly.offer_store, "store_offers", lambda db, o: 0)
         run_weekly.main()
         assert pipeline["draft"] == 0
 

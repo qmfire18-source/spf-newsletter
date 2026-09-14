@@ -200,6 +200,9 @@ class TestSaveDraft:
         assert response.status_code == 404
 
 
+ENVOI = {"news_content": "<p>Actu relue</p>", "stages_content": "<p>Stage</p>"}
+
+
 class TestSendDraft:
     def test_sends_and_marks_as_sent(self, client, db_session, draft, monkeypatch):
         sent = []
@@ -208,12 +211,13 @@ class TestSendDraft:
             lambda subject, html_content: sent.append((subject, html_content)) or "42",
         )
         login(client)
-        client.post(f"/draft/{draft.id}/send")
+        client.post(f"/draft/{draft.id}/send", data=ENVOI)
         db_session.refresh(draft)
         assert draft.status == "sent"
         assert draft.sent_at is not None
         assert len(sent) == 1
-        assert "Actu" in sent[0][1]
+        # Ce qui part est la version relue à l'écran, pas celle en base avant.
+        assert "Actu relue" in sent[0][1]
 
     def test_second_send_does_not_call_brevo_again(
         self, client, db_session, draft, monkeypatch
@@ -224,8 +228,8 @@ class TestSendDraft:
             lambda subject, html_content: calls.append(subject) or "42",
         )
         login(client)
-        client.post(f"/draft/{draft.id}/send")
-        client.post(f"/draft/{draft.id}/send")
+        client.post(f"/draft/{draft.id}/send", data=ENVOI)
+        client.post(f"/draft/{draft.id}/send", data=ENVOI)
         assert len(calls) == 1
 
     def test_failed_send_leaves_the_draft_editable(
@@ -236,7 +240,7 @@ class TestSendDraft:
 
         monkeypatch.setattr(main, "send_campaign", boom)
         login(client)
-        response = client.post(f"/draft/{draft.id}/send")
+        response = client.post(f"/draft/{draft.id}/send", data=ENVOI)
         db_session.refresh(draft)
         assert draft.status == "pending_review"
         assert "error" in response.headers["location"]
@@ -249,3 +253,51 @@ class TestSendDraft:
         response = client.post(f"/draft/{draft.id}/send")
         assert response.headers["location"] == "/login"
         assert calls == []
+
+
+class TestValidationSendsWhatIsOnScreen:
+    def test_edits_are_saved_before_sending(self, client, db_session, draft, monkeypatch):
+        sent = []
+        monkeypatch.setattr(
+            main, "send_campaign",
+            lambda subject, html_content: sent.append(html_content) or "42",
+        )
+        login(client)
+        client.post(
+            f"/draft/{draft.id}/send",
+            data={"news_content": "<p>Version corrigée</p>", "stages_content": "<p>S</p>"},
+        )
+        db_session.refresh(draft)
+        assert draft.news_content == "<p>Version corrigée</p>"
+        assert "Version corrigée" in sent[0]
+
+    def test_edits_survive_a_failed_send(self, client, db_session, draft, monkeypatch):
+        # L'envoi échoue, mais la relecture ne doit pas être perdue.
+        def boom(subject, html_content):
+            raise RuntimeError("Brevo indisponible")
+
+        monkeypatch.setattr(main, "send_campaign", boom)
+        login(client)
+        client.post(
+            f"/draft/{draft.id}/send",
+            data={"news_content": "<p>À conserver</p>", "stages_content": "<p>S</p>"},
+        )
+        db_session.refresh(draft)
+        assert draft.news_content == "<p>À conserver</p>"
+        assert draft.status == "pending_review"
+
+    def test_dangerous_html_is_stripped_on_send(self, client, db_session, draft, monkeypatch):
+        sent = []
+        monkeypatch.setattr(
+            main, "send_campaign",
+            lambda subject, html_content: sent.append(html_content) or "42",
+        )
+        login(client)
+        client.post(
+            f"/draft/{draft.id}/send",
+            data={
+                "news_content": '<p>ok</p><script>alert(1)</script>',
+                "stages_content": "<p>S</p>",
+            },
+        )
+        assert "script" not in sent[0]

@@ -58,6 +58,25 @@ class StageOffer(Base):
     draft = relationship("Draft", back_populates="stage_offers")
 
 
+class CollectedOffer(Base):
+    """Stock d'offres accumulé au fil des jours, indépendant des brouillons.
+
+    WTTJ nous limite à une poignée de pages par exécution : une seule visite
+    hebdomadaire ne ramènerait que six offres sur les ~190 disponibles. On
+    collecte donc un peu chaque jour et la newsletter puise dans ce stock.
+    L'URL est unique : une offre déjà connue n'est ni revisitée ni dupliquée.
+    """
+
+    __tablename__ = "collected_offers"
+    id = Column(Integer, primary_key=True)
+    url = Column(String, nullable=False, unique=True)
+    title = Column(String)
+    company = Column(String)
+    location = Column(String)
+    deadline = Column(Date, nullable=True)
+    collected_at = Column(DateTime, default=utcnow, nullable=False)
+
+
 # FastAPI exécute les routes synchrones dans un pool de threads : sans
 # check_same_thread=False, SQLite refuse la connexion ouverte dans un autre
 # thread. Sans effet sur Postgres en production.
