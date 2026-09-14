@@ -107,42 +107,57 @@
     .hero{padding:3rem 0 2.2rem}
   }
   @media (max-width:560px){
+    /* Rythme vertical unique : 1,4rem entre éléments liés, 2,6rem entre
+       sections. Les écarts inégaux étaient le principal défaut. */
     body{font-size:16px}
-    .wrap{padding:0 1.2rem}
+    .wrap{padding:0 1.25rem}
 
-    /* Le bandeau prenait la moitié de la hauteur utile avant que le
-       formulaire n'apparaisse : sur un téléphone, s'abonner doit être
-       visible sans faire défiler. */
-    .hero{padding:2rem 0 1.8rem;text-align:left}
-    .kicker{margin-bottom:.7rem}
-    h1{line-height:1.12;margin-bottom:.7rem}
-    .lede{font-size:1.02rem;margin:0 0 1.5rem;max-width:none}
+    .hero{padding:1.9rem 0 0;text-align:left}
+    .kicker{font-size:.75rem;letter-spacing:.12em;margin-bottom:.55rem}
+    h1{line-height:1.13;margin-bottom:.6rem}
+    .lede{font-size:1.02rem;line-height:1.5;margin:0 0 1.4rem;max-width:none}
 
-    /* Champ et bouton empilés : côte à côte, chacun devient trop étroit
-       pour être lisible et confortable au doigt. */
-    form{flex-direction:column;gap:.55rem}
+    /* En colonne, flex-basis porte sur la HAUTEUR : le 16rem prévu pour la
+       largeur en ligne rendait le champ haut de 256 px. */
+    form{flex-direction:column;gap:.5rem}
+    input[type=email]{flex:0 0 auto}
     input[type=email],button{width:100%;min-height:54px}
-    .note{text-align:left;margin-top:.8rem}
+    .note{text-align:left;font-size:.87rem;line-height:1.45;margin-top:.75rem}
 
-    /* Les trois arguments deviennent une liste compacte : empilés tels
-       quels, ils imposaient trois écrans de défilement. */
-    .inside{padding:2.2rem 0}
-    .grid{gap:.7rem}
-    .card{padding:1.05rem 1.15rem;display:grid;
-          grid-template-columns:auto 1fr;column-gap:1rem;align-items:baseline}
-    .card .num{font-size:1.5rem;margin:0;grid-row:1/3;align-self:center}
-    .card h3{font-size:1.05rem;margin:0}
-    .card p{font-size:.97rem;grid-column:2}
+    /* Les trois arguments perdent leur carte : empilées, trois boîtes
+       bordées créaient un effet de bandes et mangeaient la hauteur. Un
+       filet doré suffit à les séparer. */
+    .inside{padding:2.6rem 0 0}
+    .grid{gap:0}
+    .card{
+      background:none;border:0;border-radius:0;
+      border-top:1px solid var(--border);
+      padding:1.15rem 0 1.2rem;
+      display:grid;grid-template-columns:4.9rem 1fr;column-gap:.85rem;
+    }
+    .card:first-child{border-top:0;padding-top:0}
+    .card .num{
+      font-size:1.45rem;margin:0;grid-row:1/3;line-height:1.2;
+      padding-top:.08em;text-align:right;white-space:nowrap;
+    }
+    .card h3{font-size:1.04rem;margin:0 0 .15rem;line-height:1.3}
+    .card p{font-size:.97rem;line-height:1.5;grid-column:2}
 
-    .preview{padding:.5rem 0 2.5rem}
-    .sectitle{font-size:1.3rem}
-    .subtitle{margin-bottom:1.2rem}
-    .mock__top{padding:.85rem 1.1rem;font-size:.92rem}
-    .mock__body{padding:1.15rem}
-    .mock__body h4{font-size:1.08rem}
-    .fade{max-height:16rem}
-    footer{padding:1.8rem 0}
+    .preview{padding:1.7rem 0 2.2rem}
+    .sectitle{font-size:1.3rem;text-align:left}
+    .subtitle{text-align:left;margin-bottom:1.1rem;font-size:.95rem}
+    .mock__top{padding:.8rem 1.1rem;font-size:.9rem}
+    .mock__body{padding:1.2rem 1.1rem}
+    .mock__body h4{font-size:1.06rem;line-height:1.3;margin-bottom:.45rem}
+    .mock__body p{font-size:.97rem;line-height:1.55;margin-bottom:.85rem}
+    /* Le dégradé coupait une phrase en plein milieu sur une hauteur fixe :
+       il se déclenche plus bas et s'étale, la coupure devient un fondu. */
+    .fade{max-height:19rem}
+    .fade::after{height:8rem}
+
+    footer{padding:1.6rem 0;font-size:.87rem;text-align:left}
   }
+
   @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
 </style>
 </head>
