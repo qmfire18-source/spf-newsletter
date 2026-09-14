@@ -141,7 +141,7 @@
                placeholder="ton.email@sciencespo.fr" autocomplete="email">
         <button type="submit">Je m'abonne</button>
       </form>
-      <p class="note">
+      <p class="note" id="note">
         Un email par semaine, le lundi. Désabonnement en un clic, lien dans
         chaque envoi. Ton adresse ne sert qu'à ça.
       </p>
@@ -209,6 +209,27 @@
     </div>
   </section>
 </main>
+
+<script>
+  // Tant que l'URL Brevo n'est pas branchée, le formulaire posterait dans le
+  // vide : on le neutralise plutôt que d'afficher une erreur du navigateur.
+  (function () {
+    var form = document.querySelector("form");
+    if (!form || form.getAttribute("action") !== "REMPLACER_PAR_URL_BREVO") return;
+
+    var note = document.getElementById("note");
+    var bouton = form.querySelector("button");
+    bouton.textContent = "Bientôt";
+    bouton.disabled = true;
+    bouton.style.opacity = ".5";
+    bouton.style.cursor = "not-allowed";
+    form.querySelector("input").disabled = true;
+    note.innerHTML =
+      "<strong>Les inscriptions ouvrent dans quelques jours.</strong><br>" +
+      "Reviens très vite \u2014 ou demande le lien au bureau de l'association.";
+    form.addEventListener("submit", function (e) { e.preventDefault(); });
+  })();
+</script>
 
 <footer class="wrap">
   Newsletter de l'association Sciences&nbsp;Po Finance.<br>
