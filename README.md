@@ -197,6 +197,41 @@ Ce mode remplace l'étape IA, pas le reste : le scraping et l'interface de
 validation sont identiques. En revanche il ne peut pas tourner dans le cron
 GitHub Actions, qui n'a personne pour copier-coller.
 
+## Page d'abonnement publique
+
+`docs/index.html` est publiée par GitHub Pages sur
+<https://qmfire18-source.github.io/spf-newsletter/> — URL stable, gratuite,
+accessible même quand la machine qui génère la newsletter est éteinte. Un
+`git push` suffit à la mettre à jour.
+
+Le formulaire est inactif tant que le compte Brevo n'existe pas : son `action`
+vaut `REMPLACER_PAR_URL_BREVO`. Brevo fournit une URL de formulaire hébergé qui
+gère l'inscription, la confirmation et le désabonnement — c'est elle qu'il faut
+coller là.
+
+## Partager l'interface de validation avec le bureau
+
+```bash
+./scripts/partager.sh
+```
+
+Démarre le serveur si besoin, puis un tunnel Cloudflare qui lui donne une
+adresse HTTPS publique à transmettre au bureau. Sans les identifiants,
+personne ne peut lire ni envoyer le brouillon.
+
+Deux limites à connaître :
+
+- **La machine doit rester allumée**, avec le tunnel lancé. `Ctrl+C` referme
+  l'accès extérieur immédiatement.
+- **L'adresse change à chaque lancement** (tunnel gratuit, sans compte). Une
+  URL fixe suppose un compte Cloudflare et un nom de domaine.
+
+Une fois l'interface exposée, passer `COOKIE_SECURE=true` dans le `.env` :
+`http://localhost` cessera de fonctionner, mais le cookie de session ne
+circulera plus qu'en HTTPS. Le blocage après cinq échecs de connexion
+s'applique par IP réelle, l'en-tête du tunnel étant lu — mais uniquement quand
+la requête vient de la machine elle-même, pour qu'il ne soit pas falsifiable.
+
 ## Lancer l'interface de validation
 
 ```bash

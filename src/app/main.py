@@ -105,7 +105,7 @@ def login_page(request: Request, error: str | None = None):
 
 @app.post("/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
-    client_ip = request.client.host if request.client else "inconnu"
+    client_ip = _client_ip(request)
 
     if security.is_locked_out(client_ip):
         logger.warning("Connexion bloquée (trop d'échecs) depuis %s", client_ip)
@@ -245,6 +245,30 @@ def send_draft(
         draft_id, reviewer, campaign_id,
     )
     return _redirect_home(message="Newsletter envoyée aux abonnés.")
+
+
+def _client_ip(request: Request) -> str:
+    """IP réelle du visiteur, même derrière un tunnel ou un proxy.
+
+    Sans ça, toutes les requêtes arrivant par le tunnel portent l'adresse
+    127.0.0.1 : le blocage après cinq échecs deviendrait global, et un seul
+    intrus verrouillerait le bureau entier.
+
+    L'en-tête n'est lu que si la requête vient d'une adresse locale — c'est le
+    cas d'un tunnel qui tourne sur la même machine. Exposer l'app directement
+    à Internet rendrait cet en-tête falsifiable, donc on ne le croit jamais
+    venant d'ailleurs.
+    """
+    direct = request.client.host if request.client else "inconnu"
+    if direct not in ("127.0.0.1", "::1", "localhost"):
+        return direct
+
+    forwarded = request.headers.get("cf-connecting-ip") or request.headers.get(
+        "x-forwarded-for", ""
+    )
+    # x-forwarded-for est une liste ; le premier élément est le client d'origine.
+    first = forwarded.split(",")[0].strip()
+    return first or direct
 
 
 def _get_editable_draft(db, draft_id: int) -> Draft:
