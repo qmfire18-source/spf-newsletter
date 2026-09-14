@@ -215,16 +215,21 @@ coller là.
 ./scripts/partager.sh
 ```
 
-Démarre le serveur si besoin, puis un tunnel Cloudflare qui lui donne une
-adresse HTTPS publique à transmettre au bureau. Sans les identifiants,
-personne ne peut lire ni envoyer le brouillon.
+Démarre le serveur si besoin, puis un tunnel qui lui donne une adresse HTTPS
+publique à transmettre au bureau. Sans les identifiants, personne ne peut lire
+ni envoyer le brouillon.
+
+Le script tente Cloudflare, puis retombe sur un tunnel SSH via `localhost.run`.
+Cette bascule n'est pas théorique : **Cloudflare passe par le port 7844, bloqué
+sur beaucoup de réseaux d'école et d'entreprise** — c'était le cas ici. Le
+tunnel SSH n'utilise que le port 22 et ne demande rien à installer.
 
 Deux limites à connaître :
 
 - **La machine doit rester allumée**, avec le tunnel lancé. `Ctrl+C` referme
   l'accès extérieur immédiatement.
-- **L'adresse change à chaque lancement** (tunnel gratuit, sans compte). Une
-  URL fixe suppose un compte Cloudflare et un nom de domaine.
+- **L'adresse change à chaque lancement** (tunnels gratuits, sans compte). Une
+  URL fixe suppose un compte et un nom de domaine.
 
 Une fois l'interface exposée, passer `COOKIE_SECURE=true` dans le `.env` :
 `http://localhost` cessera de fonctionner, mais le cookie de session ne
