@@ -92,14 +92,22 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 0
 
-        news = fetch_news(NEWS_SOURCES)
+        # Rien de ce qui est déjà paru ne ressort : une newsletter qui répète
+        # l'édition précédente ne vaut pas la peine d'être ouverte.
+        deja_parues = offer_store.already_published_urls(db, before_week=week_of)
+
+        news = [
+            item for item in fetch_news(NEWS_SOURCES)
+            if item.get("url") not in deja_parues
+        ]
         # Sans le texte des articles, l'IA ne peut produire qu'une liste de
         # liens : les flux ne livrent qu'un résumé de 86 caractères en médiane.
         enrich_with_article_text(news, limit=DEVELOPED_ITEMS)
         # Le stock accumulé jour après jour contient bien plus que ce qu'une
         # visite unique peut ramener : WTTJ nous coupe après quelques pages.
         stages = offer_store.recent_offers(
-            db, days=STAGE_POOL_DAYS, limit=MAX_STAGES_PER_EDITION
+            db, days=STAGE_POOL_DAYS, limit=MAX_STAGES_PER_EDITION,
+            exclude_urls=deja_parues,
         )
         if not stages:
             logger.info("Stock d'offres vide : collecte immédiate.")
@@ -108,10 +116,11 @@ def main(argv: list[str] | None = None) -> int:
             )
             offer_store.store_offers(db, fresh)
             stages = offer_store.recent_offers(
-                db, days=STAGE_POOL_DAYS, limit=MAX_STAGES_PER_EDITION
+                db, days=STAGE_POOL_DAYS, limit=MAX_STAGES_PER_EDITION,
+                exclude_urls=deja_parues,
             )
         logger.info(
-            "%d actus (%d développables) et %d offres récoltées.",
+            "%d actus inédites (%d développables) et %d offres inédites.",
             len(news),
             sum(1 for item in news if item.get("full_text")),
             len(stages),

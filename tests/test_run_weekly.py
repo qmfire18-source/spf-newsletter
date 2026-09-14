@@ -55,9 +55,9 @@ def pipeline(monkeypatch):
         calls["news"] += 1
         return NEWS
 
-    def pool(db, days=7, limit=40):
+    def pool(db, days=7, limit=40, exclude_urls=None):
         calls["stages"] += 1
-        return STAGES
+        return [o for o in STAGES if o["url"] not in (exclude_urls or set())]
 
     def generate(news, stages):
         calls["draft"] += 1
@@ -127,7 +127,9 @@ class TestPersistence:
     def test_offer_without_deadline_is_accepted(self, db, monkeypatch, pipeline):
         monkeypatch.setattr(
             run_weekly.offer_store, "recent_offers",
-            lambda db, days=7, limit=40: [{**STAGES[0], "deadline": None}],
+            lambda db, days=7, limit=40, exclude_urls=None: [
+                {**STAGES[0], "deadline": None}
+            ],
         )
         assert run_weekly.main() == 0
         assert db.query(StageOffer).one().deadline is None

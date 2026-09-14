@@ -48,14 +48,18 @@ def store_offers(db, offers: list[dict]) -> int:
     return added
 
 
-def recent_offers(db, days: int = 7, limit: int = 40) -> list[dict]:
+def recent_offers(
+    db, days: int = 7, limit: int = 40, exclude_urls: set[str] | None = None
+) -> list[dict]:
     """Offres collectées récemment, les plus fraîches d'abord.
 
-    Une offre dont la date limite est passée est écartée : la publier
-    enverrait les lecteurs vers une candidature close.
+    Deux écartées d'office : celle dont la date limite est passée — la publier
+    enverrait les lecteurs vers une candidature close — et celle déjà parue
+    dans une édition précédente, via `exclude_urls`.
     """
     cutoff = utcnow() - timedelta(days=days)
     today = utcnow().date()
+    exclude_urls = exclude_urls or set()
 
     rows = (
         db.query(CollectedOffer)
@@ -72,7 +76,8 @@ def recent_offers(db, days: int = 7, limit: int = 40) -> list[dict]:
             "url": row.url,
         }
         for row in rows
-        if row.deadline is None or row.deadline >= today
+        if (row.deadline is None or row.deadline >= today)
+        and row.url not in exclude_urls
     ][:limit]
 
 
@@ -99,3 +104,24 @@ def _as_date(value):
         except ValueError:
             return None
     return None
+
+
+def already_published_urls(db, before_week=None) -> set[str]:
+    """URL parues dans les éditions ANTÉRIEURES — actualités et offres.
+
+    Une newsletter hebdomadaire qui reproduit la précédente n'a aucun intérêt :
+    ce qui est déjà sorti ne ressort pas.
+
+    `before_week` exclut du calcul l'édition en cours de rédaction. Sans ce
+    garde-fou, régénérer le brouillon de la semaine ferait considérer son
+    propre contenu comme déjà paru, et produirait une édition vide.
+    """
+    from src.db.models import Draft, NewsItem, StageOffer
+
+    def urls(model):
+        query = db.query(model.url).join(Draft, model.draft_id == Draft.id)
+        if before_week is not None:
+            query = query.filter(Draft.week_of < before_week)
+        return [url for (url,) in query.all() if url]
+
+    return set(urls(StageOffer)) | set(urls(NewsItem))

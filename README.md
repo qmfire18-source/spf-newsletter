@@ -118,8 +118,14 @@ python scripts/collect_stages.py
 ```
 
 Les offres s'accumulent dans la table `collected_offers` et la newsletter puise
-dans les sept derniers jours. Une offre dont la date limite est passée n'est
-jamais publiée. Au-delà de 30 jours, elles sont purgées.
+dans les sept derniers jours. Trois écartées d'office : celle dont la date
+limite est passée, celle déjà parue dans une édition précédente, et — au-delà
+de 30 jours — celles purgées du stock.
+
+**Pas de répétition d'une semaine sur l'autre** : actualités comme offres, tout
+ce qui figure dans une édition antérieure est exclu de la suivante. L'édition
+en cours ne se bloque pas elle-même, donc régénérer le brouillon de la semaine
+reste possible.
 
 Lancée chaque jour, la collecte porte le stock d'environ 6 offres à une
 quarantaine — sans jamais forcer la limitation du site, au contraire : sept

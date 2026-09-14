@@ -117,3 +117,61 @@ class TestPurge:
     def test_keeps_everything_recent(self, db):
         offer_store.store_offers(db, [offre("u1")])
         assert offer_store.purge_old(db, days=30) == 0
+
+
+class TestNoRepeatBetweenEditions:
+    def test_an_offer_already_published_is_excluded(self, db):
+        offer_store.store_offers(db, [offre("u1"), offre("u2")])
+        restant = offer_store.recent_offers(db, exclude_urls={"u1"})
+        assert [o["url"] for o in restant] == ["u2"]
+
+    def test_excluding_everything_returns_nothing(self, db):
+        offer_store.store_offers(db, [offre("u1"), offre("u2")])
+        assert offer_store.recent_offers(db, exclude_urls={"u1", "u2"}) == []
+
+    def test_no_exclusion_keeps_everything(self, db):
+        offer_store.store_offers(db, [offre("u1")])
+        assert len(offer_store.recent_offers(db, exclude_urls=None)) == 1
+
+    def test_published_urls_cover_news_and_offers(self, db):
+        from src.db.models import Draft, NewsItem, StageOffer
+        from datetime import date
+
+        draft = Draft(week_of=date(2026, 9, 7))
+        draft.news_items = [NewsItem(title="a", url="https://actu/1")]
+        draft.stage_offers = [StageOffer(title="s", url="https://offre/1")]
+        db.add(draft)
+        db.commit()
+
+        assert offer_store.already_published_urls(db) == {
+            "https://actu/1", "https://offre/1"
+        }
+
+    def test_the_edition_being_written_does_not_block_itself(self, db):
+        # Régénérer le brouillon de la semaine ne doit pas vider la newsletter.
+        from src.db.models import Draft, NewsItem
+        from datetime import date
+
+        ancienne = Draft(week_of=date(2026, 9, 7))
+        ancienne.news_items = [NewsItem(title="a", url="https://actu/ancienne")]
+        courante = Draft(week_of=date(2026, 9, 14))
+        courante.news_items = [NewsItem(title="b", url="https://actu/courante")]
+        db.add_all([ancienne, courante])
+        db.commit()
+
+        assert offer_store.already_published_urls(
+            db, before_week=date(2026, 9, 14)
+        ) == {"https://actu/ancienne"}
+
+    def test_ignores_rows_without_url(self, db):
+        from src.db.models import Draft, NewsItem
+        from datetime import date
+
+        draft = Draft(week_of=date(2026, 9, 7))
+        draft.news_items = [NewsItem(title="sans lien", url=None)]
+        db.add(draft)
+        db.commit()
+        assert offer_store.already_published_urls(db) == set()
+
+    def test_empty_history(self, db):
+        assert offer_store.already_published_urls(db) == set()
