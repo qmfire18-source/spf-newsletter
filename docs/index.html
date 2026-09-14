@@ -48,10 +48,10 @@
 
   /* ---------- hero ---------- */
   .hero{padding:4.5rem 0 3rem;text-align:center}
-  .kicker{display:inline-block;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+  .kicker{display:inline-block;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
           color:var(--gold);font-weight:500;margin-bottom:1.1rem}
   h1{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;line-height:1.1;
-     font-size:clamp(2.1rem,5.5vw,3.6rem);margin:0 0 1.1rem}
+     font-size:clamp(1.75rem,7.5vw,3.6rem);margin:0 0 1rem}
   h1 em{font-style:italic;color:var(--navy)}
   @media (prefers-color-scheme:dark){h1 em{color:var(--navy-300)}}
   .lede{font-size:clamp(1.02rem,2.2vw,1.2rem);color:var(--fg-muted);
@@ -69,7 +69,7 @@
     background:var(--navy);color:#fff;font:inherit;font-weight:500;cursor:pointer;
     transition:background-color .18s ease}
   button:hover{background:var(--navy-700)}
-  .note{font-size:.82rem;color:var(--fg-muted);margin:.9rem 0 0}
+  .note{font-size:.88rem;color:var(--fg-muted);margin:.9rem 0 0}
 
   /* ---------- ce qu'il y a dedans ---------- */
   .inside{padding:3.5rem 0}
@@ -79,45 +79,69 @@
   .card .num{font-family:var(--serif);font-size:2rem;font-weight:600;color:var(--gold);
              line-height:1;display:block;margin-bottom:.5rem}
   .card h3{font-family:var(--serif);font-size:1.12rem;font-weight:600;margin:0 0 .4rem}
-  .card p{margin:0;color:var(--fg-muted);font-size:.95rem}
+  .card p{margin:0;color:var(--fg-muted);font-size:1rem}
 
   /* ---------- aperçu ---------- */
   .preview{padding:1rem 0 4rem}
   .sectitle{font-family:var(--serif);font-size:1.5rem;font-weight:600;
             text-align:center;margin:0 0 .5rem}
-  .subtitle{text-align:center;color:var(--fg-muted);margin:0 0 2rem;font-size:.95rem}
+  .subtitle{text-align:center;color:var(--fg-muted);margin:0 0 2rem;font-size:1rem}
   .mock{background:var(--surface);border:1px solid var(--border);border-radius:12px;
         overflow:hidden;max-width:44rem;margin:0 auto}
   .mock__top{background:var(--navy);padding:1rem 1.5rem;color:#fff;
              font-family:var(--serif);font-size:1rem}
   .mock__body{padding:1.5rem}
   .mock__body h4{font-family:var(--serif);font-size:1.15rem;font-weight:600;margin:0 0 .5rem}
-  .mock__body p{margin:0 0 1rem;font-size:.95rem}
-  .mock__body .src{font-size:.8rem;color:var(--fg-muted)}
+  .mock__body p{margin:0 0 1rem;font-size:1rem}
+  .mock__body .src{font-size:.85rem;color:var(--fg-muted)}
   .fade{position:relative;max-height:17rem;overflow:hidden}
   .fade::after{content:"";position:absolute;inset:auto 0 0 0;height:6rem;
     background:linear-gradient(to bottom,transparent,var(--surface))}
 
   /* ---------- pied ---------- */
   footer{border-top:1px solid var(--border);padding:2.2rem 0;text-align:center;
-         color:var(--fg-muted);font-size:.85rem}
+         color:var(--fg-muted);font-size:.9rem}
 
   @media (max-width:760px){
     .grid{grid-template-columns:1fr}
     .hero{padding:3rem 0 2.2rem}
   }
-  @media (max-width:480px){
+  @media (max-width:560px){
     body{font-size:16px}
-    .wrap{padding:0 1.1rem}
-    .hero{padding:2.4rem 0 2rem}
-    .lede{font-size:1rem}
-    /* Le champ et le bouton empilés : côte à côte, chacun devient trop
-       étroit pour être lisible et confortable au doigt. */
-    form{flex-direction:column}
-    input[type=email],button{width:100%}
-    .card{padding:1.3rem}
+    .wrap{padding:0 1.2rem}
+
+    /* Le bandeau prenait la moitié de la hauteur utile avant que le
+       formulaire n'apparaisse : sur un téléphone, s'abonner doit être
+       visible sans faire défiler. */
+    .hero{padding:2rem 0 1.8rem;text-align:left}
+    .kicker{margin-bottom:.7rem}
+    h1{line-height:1.12;margin-bottom:.7rem}
+    .lede{font-size:1.02rem;margin:0 0 1.5rem;max-width:none}
+
+    /* Champ et bouton empilés : côte à côte, chacun devient trop étroit
+       pour être lisible et confortable au doigt. */
+    form{flex-direction:column;gap:.55rem}
+    input[type=email],button{width:100%;min-height:54px}
+    .note{text-align:left;margin-top:.8rem}
+
+    /* Les trois arguments deviennent une liste compacte : empilés tels
+       quels, ils imposaient trois écrans de défilement. */
+    .inside{padding:2.2rem 0}
+    .grid{gap:.7rem}
+    .card{padding:1.05rem 1.15rem;display:grid;
+          grid-template-columns:auto 1fr;column-gap:1rem;align-items:baseline}
+    .card .num{font-size:1.5rem;margin:0;grid-row:1/3;align-self:center}
+    .card h3{font-size:1.05rem;margin:0}
+    .card p{font-size:.97rem;grid-column:2}
+
+    .preview{padding:.5rem 0 2.5rem}
+    .sectitle{font-size:1.3rem}
+    .subtitle{margin-bottom:1.2rem}
+    .mock__top{padding:.85rem 1.1rem;font-size:.92rem}
     .mock__body{padding:1.15rem}
-    .fade{max-height:14rem}
+    .mock__body h4{font-size:1.08rem}
+    .fade{max-height:16rem}
+    footer{padding:1.8rem 0}
   }
   @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
 </style>
