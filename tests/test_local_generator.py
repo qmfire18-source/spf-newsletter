@@ -86,8 +86,29 @@ class TestGenerateDraftLocally:
         assert local_generator.generate_draft_locally(
             [{"title": "BCE", "url": "https://x", "full_text": "texte"}], []
         ) == VALIDE
-        assert seen["cmd"] == ["/bin/claude", "-p"]
+        assert seen["cmd"][:2] == ["/bin/claude", "-p"]
         assert "DÉVELOPPABLES" in seen["input"]
+
+    def test_runs_the_cli_as_a_generator_not_an_agent(self, monkeypatch):
+        # Laissé agentique, le CLI écrit un fichier au lieu de répondre.
+        seen = {}
+
+        def fake_run(cmd, **kwargs):
+            seen["cmd"] = cmd
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(VALIDE), "")
+
+        monkeypatch.setattr(local_generator, "find_cli", lambda: "/bin/claude")
+        monkeypatch.setattr(local_generator.subprocess, "run", fake_run)
+        local_generator.generate_draft_locally([], [])
+
+        assert "--system-prompt" in seen["cmd"]
+        charte = seen["cmd"][seen["cmd"].index("--system-prompt") + 1]
+        assert "N'écris aucun fichier" in charte
+
+        assert "--disallowed-tools" in seen["cmd"]
+        interdits = seen["cmd"][seen["cmd"].index("--disallowed-tools") + 1]
+        for outil in ("Write", "Bash", "Edit"):
+            assert outil in interdits
 
     def test_reports_a_failing_cli(self, monkeypatch):
         monkeypatch.setattr(local_generator, "find_cli", lambda: "/bin/claude")

@@ -27,6 +27,22 @@ logger = logging.getLogger(__name__)
 
 TIMEOUT_SECONDS = 900
 
+# `claude -p` est un agent, pas un moteur de complétion : laissé à lui-même il
+# se sert de ses outils. Observé en production — au lieu de répondre, il a
+# écrit le brouillon dans un fichier et renvoyé le chemin. On le ramène donc à
+# une génération de texte : notre charte remplace son prompt système, et les
+# outils d'écriture et d'exécution lui sont retirés.
+BLOCKED_TOOLS = (
+    "Bash", "Write", "Edit", "Read", "Glob", "Grep", "NotebookEdit",
+    "WebFetch", "WebSearch", "Task", "TodoWrite",
+)
+
+_OUTPUT_RULE = (
+    "\n\nRéponds UNIQUEMENT par l'objet JSON demandé, directement dans ta "
+    "réponse. N'écris aucun fichier, n'utilise aucun outil, n'ajoute aucun "
+    "commentaire avant ou après le JSON."
+)
+
 # Le CLI est parfois absent du PATH : l'extension VS Code embarque son propre
 # binaire, dans un dossier versionné qui change à chaque mise à jour.
 _BUNDLED_GLOB = os.path.expanduser(
@@ -60,12 +76,18 @@ def generate_draft_locally(news_items: list[dict], stage_items: list[dict]) -> d
             "extensions VS Code. Installe-le, ou utilise --generator api."
         )
 
-    prompt = f"{SYSTEM_PROMPT}\n\n{_build_user_prompt(news_items, stage_items)}"
+    prompt = _build_user_prompt(news_items, stage_items)
     logger.info("Génération via le CLI local (%s), %d caractères.", cli, len(prompt))
+
+    command = [
+        cli, "-p",
+        "--system-prompt", SYSTEM_PROMPT + _OUTPUT_RULE,
+        "--disallowed-tools", ",".join(BLOCKED_TOOLS),
+    ]
 
     try:
         completed = subprocess.run(
-            [cli, "-p"],
+            command,
             input=prompt,
             capture_output=True,
             text=True,
