@@ -4,14 +4,21 @@ Génère UNIQUEMENT le brouillon et le met en attente de validation.
 Ne déclenche jamais l'envoi : celui-ci part de l'interface web, sur action
 humaine. Ce module n'importe volontairement rien de src.email.
 """
+import argparse
 import logging
 import sys
 from datetime import date, datetime, timedelta
+from pathlib import Path
+
+# Exécuté directement (`python scripts/run_weekly.py`), le dossier du script
+# est sur sys.path mais pas la racine du projet : sans ça, `src` est introuvable.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy.exc import IntegrityError
 
 from src.ai.draft_generator import generate_draft
-from src.config import NEWS_SOURCES, STAGE_SOURCES
+from src.ai.local_generator import find_cli, generate_draft_locally
+from src.config import ANTHROPIC_API_KEY, NEWS_SOURCES, STAGE_SOURCES
 from src.db.models import Draft, NewsItem, SessionLocal, StageOffer, init_db
 from src.scraper.article_fetcher import enrich_with_article_text
 from src.scraper.news_scraper import fetch_news
@@ -24,16 +31,50 @@ logger = logging.getLogger("run_weekly")
 DEVELOPED_ITEMS = 5
 
 
+def choose_generator(mode: str):
+    """Retourne la fonction de génération, et le nom du moteur retenu.
+
+    `auto` privilégie l'API si une clé est configurée — c'est le seul moteur
+    utilisable sans intervention humaine, donc le seul qui convienne au cron.
+    À défaut, le CLI Claude Code local prend le relais, sans clé ni frais.
+    """
+    if mode == "api":
+        return generate_draft, "API Anthropic"
+    if mode == "local":
+        return generate_draft_locally, "CLI Claude Code local"
+
+    if ANTHROPIC_API_KEY:
+        return generate_draft, "API Anthropic"
+    if find_cli():
+        logger.info("Pas de clé API : génération via le CLI Claude Code local.")
+        return generate_draft_locally, "CLI Claude Code local"
+    return generate_draft, "API Anthropic"
+
+
 def current_week_of(today: date | None = None) -> date:
     """Lundi de la semaine en cours."""
     today = today or date.today()
     return today - timedelta(days=today.weekday())
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--generator",
+        choices=("auto", "api", "local"),
+        default="auto",
+        help="moteur de rédaction : API Anthropic, CLI Claude Code local, "
+             "ou choix automatique selon les identifiants disponibles",
+    )
+    # Appelé sans arguments (tests, import), on ne lit PAS sys.argv : il
+    # contient ceux de l'appelant. Le point d'entrée les passe explicitement.
+    args = parser.parse_args(argv if argv is not None else [])
+
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
+    generate, engine = choose_generator(args.generator)
+    logger.info("Moteur de rédaction : %s", engine)
     init_db()
     week_of = current_week_of()
     db = SessionLocal()
@@ -62,7 +103,7 @@ def main() -> int:
             logger.error("Aucune source n'a répondu : pas de brouillon généré.")
             return 1
 
-        generated = generate_draft(news, stages)
+        generated = generate(news, stages)
 
         draft = Draft(
             week_of=week_of,
@@ -124,4 +165,4 @@ def _parse_date(value) -> date | None:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

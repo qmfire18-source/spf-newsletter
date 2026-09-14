@@ -67,6 +67,9 @@ def pipeline(monkeypatch):
     monkeypatch.setattr(run_weekly, "run_fetch_stage_offers", fetch_stages)
     monkeypatch.setattr(run_weekly, "generate_draft", generate)
     monkeypatch.setattr(run_weekly, "enrich_with_article_text", enrich)
+    # Le choix automatique du moteur irait sinon chercher le CLI Claude Code
+    # installé sur la machine, et lancerait une vraie génération.
+    monkeypatch.setattr(run_weekly, "choose_generator", lambda mode: (generate, "test"))
     return calls
 
 
@@ -157,3 +160,36 @@ class TestNeverSends:
         run_weekly.main()
         assert db.query(Draft).one().status == "pending_review"
         assert db.query(Draft).one().sent_at is None
+
+
+class TestGeneratorChoice:
+    def test_api_is_forced_when_asked(self, monkeypatch):
+        monkeypatch.setattr(run_weekly, "ANTHROPIC_API_KEY", None)
+        generate, engine = run_weekly.choose_generator("api")
+        assert generate is run_weekly.generate_draft
+        assert "API" in engine
+
+    def test_local_is_forced_when_asked(self, monkeypatch):
+        monkeypatch.setattr(run_weekly, "ANTHROPIC_API_KEY", "sk-ant-xxx")
+        generate, _ = run_weekly.choose_generator("local")
+        assert generate is run_weekly.generate_draft_locally
+
+    def test_auto_prefers_the_api_when_a_key_exists(self, monkeypatch):
+        # Seul moteur utilisable sans humain : c'est celui du cron.
+        monkeypatch.setattr(run_weekly, "ANTHROPIC_API_KEY", "sk-ant-xxx")
+        monkeypatch.setattr(run_weekly, "find_cli", lambda: "/bin/claude")
+        generate, _ = run_weekly.choose_generator("auto")
+        assert generate is run_weekly.generate_draft
+
+    def test_auto_falls_back_to_the_local_cli(self, monkeypatch):
+        monkeypatch.setattr(run_weekly, "ANTHROPIC_API_KEY", "")
+        monkeypatch.setattr(run_weekly, "find_cli", lambda: "/bin/claude")
+        generate, _ = run_weekly.choose_generator("auto")
+        assert generate is run_weekly.generate_draft_locally
+
+    def test_auto_keeps_the_api_when_nothing_is_available(self, monkeypatch):
+        # L'erreur de l'API est plus parlante que « CLI introuvable ».
+        monkeypatch.setattr(run_weekly, "ANTHROPIC_API_KEY", "")
+        monkeypatch.setattr(run_weekly, "find_cli", lambda: None)
+        generate, _ = run_weekly.choose_generator("auto")
+        assert generate is run_weekly.generate_draft

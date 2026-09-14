@@ -91,6 +91,23 @@ vérifier ce que le scraper ramènerait avant de dépenser des requêtes.
 
 ## Générer le brouillon sans clé API
 
+Le CLI Claude Code installé sur la machine sert de moteur de rédaction, avec
+les identifiants de l'abonnement — sans clé API ni frais supplémentaires :
+
+```bash
+python scripts/run_weekly.py --generator local
+```
+
+Sans `--generator`, le moteur est choisi tout seul : l'API si
+`ANTHROPIC_API_KEY` est renseignée, le CLI local sinon. Le CLI est cherché dans
+le `PATH`, puis dans les extensions VS Code.
+
+**Ce moteur ne convient pas au cron GitHub Actions** : il exige une session
+Claude Code authentifiée, que le runner n'a pas. Pour une exécution
+automatique, voir la programmation locale ci-dessous.
+
+## Mode manuel (copier-coller)
+
 L'appel à l'API Claude coûte environ 0,16 $ par édition (~8 $/an). Si tu
 préfères ne rien payer, la génération étant hebdomadaire et de toute façon
 relue à la main, elle peut passer par une conversation Claude ordinaire :
