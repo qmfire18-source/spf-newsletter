@@ -171,6 +171,31 @@ def review_draft(
     )
 
 
+@app.get("/draft/{draft_id}/apercu", response_class=HTMLResponse)
+def preview_draft(
+    draft_id: int,
+    reviewer: str = Depends(get_current_reviewer),
+    db=Depends(get_db),
+):
+    """Le brouillon tel qu'il arrivera dans une boîte mail.
+
+    L'interface de relecture montre les fragments ; seul cet aperçu montre
+    l'enveloppe — en-tête, blason, pied de page. C'est la dernière chose à
+    regarder avant d'envoyer.
+    """
+    draft = db.query(Draft).filter(Draft.id == draft_id).first()
+    if not draft:
+        raise HTTPException(status_code=404, detail="Brouillon introuvable.")
+
+    return HTMLResponse(
+        render_newsletter(
+            news_html=draft.news_content or "",
+            stages_html=draft.stages_content or "",
+            week_of=draft.week_of,
+        )
+    )
+
+
 @app.post("/draft/{draft_id}/save")
 def save_draft(
     draft_id: int,

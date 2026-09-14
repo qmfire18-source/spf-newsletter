@@ -247,8 +247,14 @@ Puis ouvrir `http://localhost:8000`, se connecter avec un email de
 `ALLOWED_REVIEWER_EMAILS` et le mot de passe du bureau, relire/éditer le
 brouillon, puis « Valider et envoyer aux abonnés ».
 
-Ce bouton **enregistre et expédie en une seule action** : ce qui part est la
-version affichée à l'écran. Une confirmation est demandée avant l'envoi, qui
+Le bouton « Voir l'email » ouvre le brouillon dans son enveloppe complète —
+en-tête, blason, pied de page — tel qu'il arrivera dans une boîte mail.
+L'interface de relecture ne montre que les fragments ; c'est la dernière chose
+à regarder avant d'envoyer. L'aperçu reste accessible après l'envoi et sert
+alors d'archive.
+
+Le bouton de validation **enregistre et expédie en une seule action** : ce qui
+part est la version affichée à l'écran. Une confirmation est demandée avant l'envoi, qui
 est irréversible. « Enregistrer sans envoyer » reste disponible pour reprendre
 plus tard.
 

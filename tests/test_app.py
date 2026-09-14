@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from src.app import main, security
 from src.db.models import Base, Draft
+from src.email import brevo_sender
 
 REVIEWER = "bureau@sciencespo.fr"
 PASSWORD = "un-mot-de-passe-du-bureau"
@@ -301,3 +302,28 @@ class TestValidationSendsWhatIsOnScreen:
             },
         )
         assert "script" not in sent[0]
+
+
+class TestEmailPreview:
+    def test_shows_the_draft_inside_the_mail_wrapper(self, client, draft):
+        login(client)
+        page = client.get(f"/draft/{draft.id}/apercu")
+        assert page.status_code == 200
+        assert "Sciences Po Finance" in page.text
+        assert brevo_sender.LOGO_URL in page.text
+        assert draft.news_content in page.text
+
+    def test_requires_authentication(self, client, draft):
+        response = client.get(f"/draft/{draft.id}/apercu")
+        assert response.headers["location"] == "/login"
+
+    def test_unknown_draft_is_a_404(self, client):
+        login(client)
+        assert client.get("/draft/9999/apercu").status_code == 404
+
+    def test_a_sent_draft_can_still_be_reviewed(self, client, db_session, draft):
+        # L'aperçu sert aussi d'archive de ce qui est parti.
+        draft.status = "sent"
+        db_session.commit()
+        login(client)
+        assert client.get(f"/draft/{draft.id}/apercu").status_code == 200
