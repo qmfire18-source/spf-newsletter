@@ -6,7 +6,7 @@ import anthropic
 
 from src.config import ANTHROPIC_API_KEY
 from src.scraper.sectors import group_by_sector
-from src.sanitize import sanitize_html
+from src.sanitize import remove_dashes, sanitize_html
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +72,13 @@ mémoire. En cas de doute sur un fait, ne l'écris pas.
 Tu peux en revanche interpréter et mettre en perspective : expliquer un
 mécanisme, relier deux actualités, dire ce que ça implique. Ces passages
 d'analyse doivent rester visiblement des analyses, pas des faits rapportés.
+
+PONCTUATION
+N'utilise jamais le tiret cadratin (—) ni le demi-cadratin (–). C'est la
+ponctuation signature des textes générés, et elle se repère immédiatement.
+Le français a tout ce qu'il faut : la virgule, les deux-points, la
+parenthèse, ou deux phrases séparées par un point. Le trait d'union (-) des
+mots composés reste normal.
 
 FORME
 HTML simple compatible email, limité à h3, h4, p, ul, ol, li, a, strong, em
@@ -150,8 +157,8 @@ def _parse_response(response) -> dict:
     text = next(block.text for block in response.content if block.type == "text")
     draft = json.loads(text)
     return {
-        "news_html": sanitize_html(draft["news_html"]),
-        "stages_html": sanitize_html(draft["stages_html"]),
+        "news_html": sanitize_html(remove_dashes(draft["news_html"])),
+        "stages_html": sanitize_html(remove_dashes(draft["stages_html"])),
     }
 
 

@@ -21,7 +21,7 @@ from src.ai.draft_generator import (
     DraftGenerationError,
     _build_user_prompt,
 )
-from src.sanitize import sanitize_html
+from src.sanitize import remove_dashes, sanitize_html
 
 logger = logging.getLogger(__name__)
 
@@ -132,8 +132,8 @@ def parse_cli_output(raw: str) -> dict:
         )
 
     return {
-        "news_html": sanitize_html(draft["news_html"]),
-        "stages_html": sanitize_html(draft["stages_html"]),
+        "news_html": sanitize_html(remove_dashes(draft["news_html"])),
+        "stages_html": sanitize_html(remove_dashes(draft["stages_html"])),
     }
 
 

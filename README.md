@@ -181,6 +181,19 @@ international, pas la province. TalentSoft ne publie que le pays, pas la
 ville : une annonce française sans ville est conservée, comme partout dans le
 projet une donnée absente ne fait pas rejeter une offre.
 
+## Ponctuation
+
+Le tiret cadratin (—) est la ponctuation signature des textes générés : le
+modèle en plaçait **114 dans une seule édition**. La charte l'interdit, et
+`remove_dashes()` le remplace avant l'enregistrement, parce qu'une consigne de
+prompt ne garantit rien.
+
+Quatre cas, du plus spécifique au plus général : entre deux balises il
+disparaît ; après une ponctuation il est redondant et disparaît aussi ; collé
+entre deux mots il devient un trait d'union, car il y marque un lien et non
+une énumération (« Paris—Londres » est un trajet) ; partout ailleurs il
+devient une virgule.
+
 ## Classement des stages par secteur
 
 `src/scraper/sectors.py` range chaque offre dans un segment de la finance —

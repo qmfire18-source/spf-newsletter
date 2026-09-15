@@ -118,7 +118,7 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
     Le logo est chargé depuis GitHub Pages : un email ne peut pas référencer
     un fichier local, il lui faut une URL publique et stable.
     """
-    titre = f"Newsletter Sciences Po Finance — semaine du {week_of}"
+    titre = f"Newsletter Sciences Po Finance : semaine du {week_of}"
     semaine = html.escape(_semaine_en_lettres(week_of))
 
     return f"""<!DOCTYPE html>
@@ -152,7 +152,7 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
 </head>
 <body style="margin:0;padding:0;background:{FOND};
              -webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<div class="preheader">{semaine} — l'actu finance décryptée et les stages de la semaine.</div>
+<div class="preheader">{semaine}. L'actu finance décryptée et les stages de la semaine.</div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
        style="background:{FOND};">
