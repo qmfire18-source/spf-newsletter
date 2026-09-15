@@ -61,7 +61,18 @@
       color:var(--fg); font-family:var(--mono); font-size:.82rem; line-height:1.7;
     }
     textarea:focus { outline:none; background:var(--surface-2); }
-    .preview { padding:.35rem 1.25rem 1.25rem; font-size:.95rem; min-height:18rem; }
+    /* Largeur du gabarit email : relire sur 1160 px donnait des coupures de
+       ligne qui n'existent pas dans la boîte de réception. */
+    /* Centré : à gauche, la largeur email laissait la moitié de l'écran vide
+       et donnait l'impression d'une mise en page cassée. */
+    .preview { padding:.35rem 1.25rem 1.5rem; font-size:.95rem; min-height:18rem;
+               max-width:40rem; margin-inline:auto; }
+    .split[data-html="1"] .preview { max-width:none; margin-inline:0; }
+    .pane__label, .pane__hint { max-width:40rem; margin-inline:auto; }
+    .split[data-html="1"] .pane__label,
+    .split[data-html="1"] .pane__hint { max-width:none; margin-inline:0; }
+    .pane__hint { font-size:.72rem; color:var(--fg-muted); padding:0 1.25rem .6rem;
+                  font-style:italic; }
     .preview[contenteditable="true"]:focus { outline:none; background:var(--surface-2); }
     .preview[contenteditable="true"]:empty::before {
       content:"Écris ici…"; color:var(--fg-muted);
@@ -71,6 +82,23 @@
     .preview ul { padding-left:1.15rem; margin:.5rem 0; }
     .preview li { margin-bottom:.55rem; }
     .preview a { overflow-wrap:anywhere; }
+
+    /* Sommaire : la page fait plusieurs écrans, les stages sont tout en bas. */
+    .toc { position:sticky; top:4.2rem; z-index:30; background:var(--surface);
+           border:1px solid var(--border); border-radius:var(--radius);
+           box-shadow:var(--shadow); padding:.7rem 1rem; margin-bottom:1.25rem;
+           display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; }
+    .toc a { font-size:.88rem; text-decoration:none; color:var(--fg);
+             padding:.25rem .6rem; border-radius:var(--radius-sm); }
+    .toc a:hover { background:var(--surface-2); }
+    .toc__stats { margin-left:auto; display:flex; gap:1.1rem; font-size:.8rem;
+                  color:var(--fg-muted); flex-wrap:wrap; }
+    .toc__stats b { color:var(--fg); font-weight:600;
+                    font-variant-numeric:tabular-nums; }
+    .toc__sep { width:1px; height:18px; background:var(--border); }
+
+    .saved { font-size:.82rem; color:var(--fg-muted); display:none; }
+    .saved[data-on="1"] { display:inline; }
 
     .actionbar { position:fixed; left:0; right:0; bottom:0; z-index:50;
                  background:var(--surface); border-top:1px solid var(--border);
@@ -159,7 +187,7 @@
   {% if draft %}
   <div class="pagehead">
     <div>
-      <h1>Brouillon de la semaine du {{ draft.week_of }}</h1>
+      <h1>{{ semaine }}</h1>
       <p class="sub">
         {{ draft.news_items | length }} actualité{{ "s" if draft.news_items | length > 1 else "" }}
         et {{ draft.stage_offers | length }} offre{{ "s" if draft.stage_offers | length > 1 else "" }}
@@ -169,9 +197,22 @@
     <span class="badge"><span class="badge__dot"></span>En attente de validation</span>
   </div>
 
+  <nav class="toc" aria-label="Sommaire du brouillon">
+    <a href="#bloc-actus">Actus financières</a>
+    <a href="#bloc-stages">Stages</a>
+    <span class="toc__sep" aria-hidden="true"></span>
+    <a href="/draft/{{ draft.id }}/apercu" target="_blank" rel="noopener">Aperçu email</a>
+    <span class="toc__stats">
+      <span><b id="stat-items">—</b> actualités</span>
+      <span><b id="stat-offres">—</b> offres</span>
+      <span><b id="stat-mots">—</b> mots</span>
+      <span><b id="stat-taille">—</b> Ko</span>
+    </span>
+  </nav>
+
   <form method="post" action="/draft/{{ draft.id }}/save" id="editor">
 
-    <section class="block">
+    <section class="block" id="bloc-actus">
       <div class="block__head">
         <h2>Actus financières</h2>
         <div class="toolbar" role="toolbar" aria-label="Mise en forme — actus financières"
@@ -199,7 +240,8 @@
                     data-preview="news_preview">{{ draft.news_content }}</textarea>
         </div>
         <div class="pane">
-          <p class="pane__label" id="news_preview_label">Contenu — modifiable directement</p>
+          <p class="pane__label" id="news_preview_label">Contenu, modifiable directement</p>
+          <p class="pane__hint">Affiché à la largeur réelle de l'email.</p>
           <div class="preview" id="news_preview" contenteditable="true"
                role="textbox" aria-multiline="true"
                aria-labelledby="news_preview_label">{{ draft.news_content | safe }}</div>
@@ -207,7 +249,7 @@
       </div>
     </section>
 
-    <section class="block">
+    <section class="block" id="bloc-stages">
       <div class="block__head">
         <h2>Stages de la semaine</h2>
         <div class="toolbar" role="toolbar" aria-label="Mise en forme — stages de la semaine"
@@ -235,7 +277,8 @@
                     data-preview="stages_preview">{{ draft.stages_content }}</textarea>
         </div>
         <div class="pane">
-          <p class="pane__label" id="stages_preview_label">Contenu — modifiable directement</p>
+          <p class="pane__label" id="stages_preview_label">Contenu, modifiable directement</p>
+          <p class="pane__hint">Affiché à la largeur réelle de l'email.</p>
           <div class="preview" id="stages_preview" contenteditable="true"
                role="textbox" aria-multiline="true"
                aria-labelledby="stages_preview_label">{{ draft.stages_content | safe }}</div>
@@ -251,6 +294,7 @@
             <path d="M12 8v5M12 16.5v.01"/></svg>
           Modifications non enregistrées
         </span>
+        <span class="saved" id="saved">Brouillon local conservé dans ce navigateur.</span>
         <p class="sendwarn">
           « Valider et envoyer » expédie <strong>immédiatement</strong> la
           version affichée ci-dessus à toute la liste d'abonnés. C'est
@@ -373,6 +417,92 @@
     form.addEventListener("submit", function () {
       if (!sending) { dirty = false; }
     });
+
+    // --- statistiques vivantes -------------------------------------------
+    // Le relecteur ne voyait pas ce qu'il envoyait : combien d'items, quelle
+    // longueur. La taille compte : Gmail tronque au-delà de 102 Ko.
+    var champActus = document.getElementById("news_content");
+    var champStages = document.getElementById("stages_content");
+    var apercuActus = document.getElementById("news_preview");
+    var apercuStages = document.getElementById("stages_preview");
+
+    function majStats() {
+      var items = apercuActus.querySelectorAll("h3").length;
+      var offres = apercuStages.querySelectorAll("li").length;
+      var mots = (apercuActus.innerText + " " + apercuStages.innerText)
+        .trim().split(/\s+/).filter(Boolean).length;
+      // L'enveloppe du mail pèse environ 6 Ko en plus du contenu.
+      var octets = new Blob([champActus.value + champStages.value]).size + 6000;
+
+      document.getElementById("stat-items").textContent = items;
+      document.getElementById("stat-offres").textContent = offres;
+      document.getElementById("stat-mots").textContent = mots.toLocaleString("fr-FR");
+      document.getElementById("stat-taille").textContent = Math.round(octets / 1024);
+    }
+
+    // --- filet de sécurité local ------------------------------------------
+    // L'onglet fermé par erreur emportait la relecture. On garde une copie
+    // dans le navigateur, proposée au retour. Rien ne quitte la machine.
+    var CLE = "spf-brouillon-{{ draft.id }}";
+    var indicateur = document.getElementById("saved");
+
+    function sauvegardeLocale() {
+      try {
+        localStorage.setItem(CLE, JSON.stringify({
+          news: champActus.value, stages: champStages.value, date: Date.now(),
+        }));
+        indicateur.dataset.on = "1";
+      } catch (e) { /* navigation privée, quota : sans gravité */ }
+    }
+
+    function restaurer() {
+      var brut;
+      try { brut = localStorage.getItem(CLE); } catch (e) { return; }
+      if (!brut) return;
+      var copie;
+      try { copie = JSON.parse(brut); } catch (e) { return; }
+      if (copie.news === champActus.value && copie.stages === champStages.value) return;
+
+      var quand = new Date(copie.date).toLocaleString("fr-FR");
+      if (confirm(
+        "Une version non enregistrée de ce brouillon existe dans ce navigateur " +
+        "(" + quand + ").\n\nLa restaurer ? Annuler garde la version du serveur."
+      )) {
+        champActus.value = copie.news;
+        champStages.value = copie.stages;
+        apercuActus.innerHTML = copie.news;
+        apercuStages.innerHTML = copie.stages;
+        markDirty();
+        majStats();
+      } else {
+        try { localStorage.removeItem(CLE); } catch (e) {}
+      }
+    }
+
+    var minuterie;
+    [apercuActus, apercuStages, champActus, champStages].forEach(function (el) {
+      el.addEventListener("input", function () {
+        majStats();
+        clearTimeout(minuterie);
+        minuterie = setTimeout(sauvegardeLocale, 800);
+      });
+    });
+
+    // Cmd+S / Ctrl+S enregistre au lieu d'ouvrir la boîte du navigateur.
+    document.addEventListener("keydown", function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        form.requestSubmit(form.querySelector('[formaction$="/save"]'));
+      }
+    });
+
+    // Une fois enregistré côté serveur, la copie locale n'a plus d'objet.
+    form.addEventListener("submit", function () {
+      try { localStorage.removeItem(CLE); } catch (e) {}
+    });
+
+    majStats();
+    restaurer();
 
     window.addEventListener("beforeunload", function (e) {
       if (dirty) { e.preventDefault(); e.returnValue = ""; }

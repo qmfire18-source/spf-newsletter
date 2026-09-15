@@ -322,6 +322,18 @@ Puis ouvrir `http://localhost:8000`, se connecter avec un email de
 `ALLOWED_REVIEWER_EMAILS` et le mot de passe du bureau, relire/éditer le
 brouillon, puis « Valider et envoyer aux abonnés ».
 
+Un sommaire en haut permet de sauter entre les actus et les stages, et affiche
+en continu ce que pèse l'édition : nombre d'actualités, nombre d'offres, mots,
+et taille de l'email. Cette dernière compte : Gmail tronque au-delà de 102 Ko.
+
+L'aperçu s'affiche à la **largeur réelle de l'email**. Relire sur toute la
+largeur de l'écran donnait des coupures de ligne qui n'existent pas dans la
+boîte de réception.
+
+`Cmd+S` enregistre. Une copie de la relecture est gardée dans le navigateur et
+proposée au retour si l'onglet a été fermé avant l'enregistrement ; elle ne
+quitte jamais la machine et disparaît dès que le serveur a reçu la version.
+
 Le bouton « Voir l'email » ouvre le brouillon dans son enveloppe complète —
 en-tête, blason, pied de page — tel qu'il arrivera dans une boîte mail.
 L'interface de relecture ne montre que les fragments ; c'est la dernière chose

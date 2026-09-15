@@ -158,7 +158,8 @@ class TestReviewPage:
     def test_shows_the_pending_draft(self, client, draft):
         login(client)
         body = client.get("/").text
-        assert "2026-09-07" in body
+        # La semaine est écrite en toutes lettres, comme dans l'email.
+        assert "Semaine du 7 septembre 2026" in body
         assert "Actu" in body
 
     def test_ignores_already_sent_drafts(self, client, db_session, draft):
@@ -327,3 +328,33 @@ class TestEmailPreview:
         db_session.commit()
         login(client)
         assert client.get(f"/draft/{draft.id}/apercu").status_code == 200
+
+
+class TestReviewPageTooling:
+    def test_offers_a_summary_to_jump_between_sections(self, client, draft):
+        # La page fait plusieurs écrans : les stages sont tout en bas.
+        login(client)
+        page = client.get("/").text
+        assert 'href="#bloc-actus"' in page
+        assert 'href="#bloc-stages"' in page
+        assert 'id="bloc-stages"' in page
+
+    def test_links_to_the_email_preview(self, client, draft):
+        login(client)
+        assert f"/draft/{draft.id}/apercu" in client.get("/").text
+
+    def test_shows_live_counters(self, client, draft):
+        login(client)
+        page = client.get("/").text
+        for compteur in ("stat-items", "stat-offres", "stat-mots", "stat-taille"):
+            assert compteur in page
+
+    def test_the_preview_is_capped_at_the_email_width(self, client, draft):
+        # Relire sur 1160 px donnait des coupures de ligne qui n'existent pas
+        # dans la boîte de réception.
+        login(client)
+        assert "max-width:40rem" in client.get("/").text
+
+    def test_keeps_a_local_copy_scoped_to_the_draft(self, client, draft):
+        login(client)
+        assert f'"spf-brouillon-{draft.id}"' in client.get("/").text

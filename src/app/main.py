@@ -26,7 +26,7 @@ from src.config import (
     SESSION_MAX_AGE_SECONDS,
 )
 from src.db.models import Draft, SessionLocal, utcnow
-from src.email.brevo_sender import render_newsletter, send_campaign
+from src.email.brevo_sender import _semaine_en_lettres, render_newsletter, send_campaign
 from src.sanitize import sanitize_html
 
 logger = logging.getLogger(__name__)
@@ -164,6 +164,8 @@ def review_draft(
         "review.html",
         {
             "draft": draft,
+            # La même formulation que dans l'email, plutôt qu'une date ISO.
+            "semaine": _semaine_en_lettres(draft.week_of) if draft else "",
             "reviewer": reviewer,
             "message": message,
             "error": error,
