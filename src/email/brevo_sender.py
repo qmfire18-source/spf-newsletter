@@ -25,6 +25,8 @@ ENCRE = "#141B2B"
 GRIS = "#5A6478"
 FOND = "#F4F5F7"
 FILET = "#E3E7ED"
+# Or assombri : l'or clair de l'en-tête ne passe pas le contraste sur blanc.
+OR_FONCE = "#8A6B22"
 LIEN = "#183050"
 # Un mail ne peut pas pointer vers un fichier local : le blason est servi par
 # GitHub Pages, à une adresse publique et stable.
@@ -139,9 +141,16 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
   .preheader {{ display:none !important; visibility:hidden; opacity:0;
                 height:0; width:0; overflow:hidden; mso-hide:all; }}
   a {{ color:{LIEN}; }}
-  .contenu h3 {{ font-family:Georgia,'Times New Roman',serif; font-size:19px;
-                 line-height:1.3; color:{ENCRE}; margin:28px 0 10px; }}
-  .contenu h4 {{ font-size:16px; color:{ENCRE}; margin:20px 0 8px; }}
+  /* h3 = nom de rubrique : une étiquette, précédée d'un filet qui sépare
+     les blocs. h4 = titre de l'article. Cette hiérarchie remplace le mur de
+     titres de même niveau, où l'on ne savait plus ce qui commençait où. */
+  .contenu h3 {{ font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+                 color:{OR_FONCE}; margin:34px 0 0; padding-top:18px;
+                 border-top:1px solid {FILET}; font-weight:700; }}
+  .contenu h3:first-child {{ margin-top:8px; border-top:0; padding-top:0; }}
+  .contenu h4 {{ font-family:Georgia,'Times New Roman',serif; font-size:19px;
+                 line-height:1.3; color:{ENCRE}; margin:10px 0 10px;
+                 font-weight:600; }}
   .contenu p  {{ margin:0 0 14px; }}
   .contenu ul {{ margin:0 0 16px; padding-left:20px; }}
   .contenu li {{ margin-bottom:10px; }}
@@ -152,7 +161,8 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
        portait à 20px, ce qui le coupait en deux lignes sur un téléphone :
        « Semaine du 14 septembre » / « 2026 ». Il rétrécit au contraire. */
     .titre     {{ font-size:13px !important; letter-spacing:0 !important; }}
-    .contenu h3 {{ font-size:17px !important; }}
+    .contenu h3 {{ font-size:11px !important; }}
+    .contenu h4 {{ font-size:17px !important; }}
     .contenu, .contenu p, .contenu li {{ font-size:16px !important; }}
   }}
 </style>

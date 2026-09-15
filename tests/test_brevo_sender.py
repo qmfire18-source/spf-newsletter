@@ -207,3 +207,31 @@ class TestWeekBandOnPhones:
     def test_the_week_is_written_on_one_line(self):
         out = brevo_sender.render_newsletter("", "", date(2026, 9, 14))
         assert "Semaine du 14 septembre 2026" in out
+
+
+class TestSectionHierarchy:
+    def rendu(self):
+        return brevo_sender.render_newsletter(
+            "<h3>MARCHÉS</h3><h4>Un titre</h4><p>Texte</p>", "<p>S</p>",
+            date(2026, 9, 14),
+        )
+
+    def test_the_rubric_is_a_label_not_a_title(self):
+        # h3 nomme la rubrique, h4 l'article : sans cette hiérarchie, tous les
+        # titres avaient le même poids et l'on ne savait plus où commençait quoi.
+        bloc = self.rendu()
+        regle = bloc[bloc.index(".contenu h3"):bloc.index(".contenu h4")]
+        assert "text-transform:uppercase" in regle
+        assert "border-top" in regle
+
+    def test_the_article_title_keeps_the_serif(self):
+        bloc = self.rendu()
+        regle = bloc[bloc.index(".contenu h4"):bloc.index("@media")]
+        assert "Georgia" in regle
+
+    def test_the_first_rubric_has_no_rule_above(self):
+        assert ".contenu h3:first-child" in self.rendu()
+
+    def test_the_label_colour_reads_on_white(self):
+        # L'or clair de l'en-tête ne passe pas le contraste sur fond blanc.
+        assert brevo_sender.OR_FONCE == "#8A6B22"

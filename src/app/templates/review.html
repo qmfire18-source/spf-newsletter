@@ -83,8 +83,13 @@
     .preview[contenteditable="true"]:empty::before {
       content:"Écris ici…"; color:var(--fg-muted);
     }
-    .preview h3 { font-family:var(--serif); font-size:1.05rem; margin:1.1rem 0 .4rem; }
-    .preview h3:first-child { margin-top:0; }
+    /* Même hiérarchie que l'email : h3 nomme la rubrique, h4 l'article. */
+    .preview h3 { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+                  color:#8A6B22; font-weight:700; margin:1.6rem 0 0;
+                  padding-top:.9rem; border-top:1px solid var(--border); }
+    .preview h3:first-child { margin-top:0; padding-top:0; border-top:0; }
+    .preview h4 { font-family:var(--serif); font-size:1.08rem; font-weight:600;
+                  margin:.5rem 0 .4rem; line-height:1.3; }
     .preview ul { padding-left:1.15rem; margin:.5rem 0; }
     .preview li { margin-bottom:.55rem; }
     .preview a { overflow-wrap:anywhere; }

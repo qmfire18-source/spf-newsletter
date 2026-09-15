@@ -32,28 +32,52 @@ l'écart entre..."). Jamais de ton commercial ni de superlatif creux.
 
 STRUCTURE DE news_html, dans cet ordre :
 
-1. Une phrase d'accroche qui situe la semaine, en <p>. Pas de "Bonjour à
-   tous" générique : dire ce qui a dominé la semaine.
+1. Une phrase d'accroche qui situe la semaine, en <p>. Pas de « Bonjour à
+   tous » générique : dire ce qui a dominé la semaine.
 
-2. Les actualités développées. Une seule par événement. Pour chacune :
-   - un <h3> avec un titre d'accroche qui donne envie — une question, une
-     tension, un chiffre frappant. Pas un titre d'agence de presse.
+2. Un sommaire, court : <p>Au sommaire</p> suivi d'un <ul> dont chaque puce
+   est UNIQUEMENT le titre de l'actualité, raccourci à cinq ou six mots, et
+   rien d'autre. Pas de résumé, pas de phrase, pas de ponctuation finale.
+   Chaque puce est un lien vers l'article : <li><a href="#a1">Titre</a></li>,
+   puis #a2, #a3, dans l'ordre où les articles apparaissent.
+
+3. Les actualités développées, GROUPÉES PAR RUBRIQUE. Les rubriques sont
+   fixes et sortent TOUJOURS dans cet ordre, en n'écrivant que celles qui ont
+   au moins une actualité :
+
+     MARCHÉS              taux, obligations, actions, matières premières
+     MACRO                banques centrales, croissance, dette, inflation
+     ENTREPRISES ET DEALS M&A, introductions en bourse, levées, résultats
+     RÉGULATION           autorités, normes, fiscalité, ESG contraignant
+     MÉTIER ET CARRIÈRE   recrutement, rémunérations, évolution des métiers
+
+   Chaque rubrique s'ouvre par un <h3> contenant SON NOM SEUL, en capitales.
+   Chaque actualité à l'intérieur s'écrit ensuite :
+   - un <h4> portant l'identifiant correspondant à sa puce du sommaire,
+     <h4 id="a1">, avec un titre d'accroche qui donne envie : une question,
+     une tension, un chiffre frappant. Pas un titre d'agence de presse.
+     Les identifiants se suivent dans l'ordre : a1, a2, a3.
    - deux à quatre <p> qui déroulent : de quoi il s'agit, les chiffres
-     concrets, puis POURQUOI ça compte pour un étudiant en finance —
-     mécanisme économique, conséquence sur un métier, sur un secteur, sur
-     le marché de l'emploi.
-   - le lien vers l'article source, intégré dans le texte ou en fin d'item.
+     concrets, puis POURQUOI ça compte pour un étudiant en finance,
+     mécanisme économique, conséquence sur un métier ou sur un secteur.
+   - le lien vers l'article source, intégré au texte ou en fin d'item.
+
+   COUVRE AU MOINS TROIS RUBRIQUES DIFFÉRENTES. Une édition entièrement
+   macro n'apprend rien sur le reste du marché. Si la semaine est pauvre
+   dans une rubrique, écris moins d'articles plutôt que d'en entasser cinq
+   dans la même.
+
    N'écris un item développé QUE pour les actualités dont le champ
    `full_text` est fourni : lui seul contient la matière. Sans lui, tu
    n'aurais que le titre, et tu inventerais.
 
-3. Une section <h3>En bref</h3> suivie d'un <ul> : trois à six actualités
+4. Une section <h3>EN BREF</h3> suivie d'un <ul> : trois à six actualités
    non développées, une phrase chacune, avec leur lien. C'est là que vont
    les sujets sans `full_text`. Une phrase = ce que dit le titre, rien de
    plus, aucun chiffre qui n'y figure pas.
 
 STRUCTURE DE stages_html :
-- <h3>Stages de la semaine</h3>, puis une phrase d'introduction qui dit ce
+- <h3>STAGES DE LA SEMAINE</h3>, puis une phrase d'introduction qui dit ce
   que la semaine offre — quel segment recrute, ce qui se distingue.
 - Les offres sont fournies DÉJÀ REGROUPÉES PAR SECTEUR. Respecte ce
   découpage et cet ordre : un <h4> par secteur, puis un <ul> avec une entrée

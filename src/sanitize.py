@@ -11,7 +11,12 @@ import re
 import nh3
 
 ALLOWED_TAGS = {"h3", "h4", "p", "ul", "ol", "li", "a", "strong", "em", "br"}
-ALLOWED_ATTRIBUTES = {"a": {"href", "title"}}
+# `id` sur les titres d'article : c'est la cible des liens du sommaire. Un
+# identifiant ne peut rien exécuter, le risque est nul. Les clients mail qui
+# ignorent les ancres affichent simplement un lien sans effet, jamais une
+# erreur ; Gmail, lui, réécrit identifiants et liens de concert et les fait
+# fonctionner.
+ALLOWED_ATTRIBUTES = {"a": {"href", "title"}, "h4": {"id"}, "h3": {"id"}}
 
 
 def sanitize_html(html: str) -> str:
