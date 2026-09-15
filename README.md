@@ -144,6 +144,30 @@ se refermant en quelques heures — la collecte porte le stock d'environ 6 offre
 à une quarantaine — sans jamais forcer la limitation du site, au contraire : sept
 petites visites la ménagent davantage qu'une grosse.
 
+## Employeurs interrogés directement
+
+Welcome to the Jungle ne référence qu'une partie des employeurs que vise
+l'association. `src/scraper/employer_scraper.py` va chercher les autres chez
+eux, un connecteur par famille de système de recrutement, et renvoie la même
+forme d'offre — le reste du pipeline ne fait aucune différence entre les deux
+origines.
+
+| Employeur | Système | État |
+|---|---|---|
+| Eight Advisory | Recruitee (API JSON) | branché — 8 stages sur 78 annonces |
+| Lazard | Oracle Recruiting Cloud (API JSON) | identifié, à brancher |
+| Euronext | site propre | identifié, à brancher |
+| Amundi | TalentSoft | identifié, à brancher |
+| Rothschild & Co | Workday (API JSON) | identifié, vide au dernier test |
+
+Deux employeurs sont hors d'atteinte : **Bpifrance** répond 403 à toute
+requête automatisée — blocage délibéré, même famille que JobTeaser, on
+renonce — et **Natixis** interdit ses chemins de recherche dans son
+`robots.txt` tout en rendant ses listes en JavaScript.
+
+La même règle géographique qu'ailleurs s'applique : Paris, Île-de-France et
+international, pas la province.
+
 ## Classement des stages par secteur
 
 `src/scraper/sectors.py` range chaque offre dans un segment de la finance —

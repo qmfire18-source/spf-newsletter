@@ -53,3 +53,12 @@ STAGE_SOURCES = [
         "sitemap_index": "https://www.welcometothejungle.com/sitemaps/index.xml.gz",
     },
 ]
+
+
+# Employeurs interrogés directement, faute d'être sur Welcome to the Jungle.
+# Chaque entrée nomme le connecteur qui sait lire leur système de recrutement.
+# Bpifrance (403 délibéré) et Natixis (robots.txt + rendu JavaScript) sont
+# hors d'atteinte : voir src/scraper/employer_scraper.py.
+EMPLOYER_SOURCES = [
+    {"type": "recruitee", "slug": "8advisory", "name": "Eight Advisory"},
+]

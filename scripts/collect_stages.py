@@ -13,9 +13,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.config import STAGE_SOURCES
+from src.config import EMPLOYER_SOURCES, STAGE_SOURCES
 from src.db import offer_store
 from src.db.models import SessionLocal, init_db
+from src.scraper.employer_scraper import fetch_employer_offers
 from src.scraper.stage_scraper import run_fetch_stage_offers
 
 logger = logging.getLogger("collect_stages")
@@ -30,6 +31,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         deja = offer_store.known_urls(db)
         offers = run_fetch_stage_offers(STAGE_SOURCES, known_urls=deja)
+        # Les employeurs absents de WTTJ sont interrogés chez eux. Leurs
+        # portails ne nous limitent pas : on peut les lire à chaque passage.
+        offers += fetch_employer_offers(EMPLOYER_SOURCES)
         added = offer_store.store_offers(db, offers)
         purged = offer_store.purge_old(db)
         total = len(offer_store.recent_offers(db, limit=10_000))
