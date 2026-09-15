@@ -69,5 +69,11 @@ EMPLOYER_SOURCES = [
         "name": "Lazard",
     },
     {"type": "euronext", "name": "Euronext"},
+    # Fintechs : absentes de WTTJ, et la rubrique restait vide faute d'offres.
+    {"type": "lever", "finance_only": True, "slug": "qonto", "name": "Qonto"},
+    {"type": "lever", "finance_only": True, "slug": "agicap", "name": "Agicap"},
+    {"type": "lever", "finance_only": True, "slug": "younited", "name": "Younited"},
+    {"type": "lever", "finance_only": True, "slug": "ledger", "name": "Ledger"},
+    {"type": "recruitee", "finance_only": True, "slug": "ibanfirst", "name": "iBanFirst"},
     {"type": "talentsoft", "host": "jobs.amundi.com", "name": "Amundi"},
 ]

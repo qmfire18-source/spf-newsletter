@@ -336,3 +336,75 @@ class TestFetchTalentsoft:
     def test_an_unreachable_site_yields_nothing(self, monkeypatch):
         monkeypatch.setattr(employer_scraper, "_get_html", lambda url: None)
         assert employer_scraper.fetch_talentsoft("h", "Amundi") == []
+
+
+def lever_annonce(text="Regulatory Reporting Intern", commitment="Internship",
+                  location="Paris", country="FR", url="https://jobs.lever.co/x/1"):
+    return {"text": text, "country": country, "hostedUrl": url,
+            "categories": {"commitment": commitment, "location": location}}
+
+
+class TestFetchLever:
+    def test_the_commitment_field_decides(self, monkeypatch):
+        # Plus sûr qu'un mot-clé : « Internal Auditor » ne doit pas passer.
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: [
+            lever_annonce(text="Regulatory Reporting Intern", commitment="Internship"),
+            lever_annonce(text="Internal Auditor", commitment="Full-time"),
+        ])
+        offres = employer_scraper.fetch_lever("qonto", "Qonto")
+        assert [o["title"] for o in offres] == ["Regulatory Reporting Intern"]
+
+    def test_a_french_title_without_commitment_still_counts(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: [
+            lever_annonce(text="Alternance - Data Analyst Credit Risk", commitment=None),
+        ])
+        assert len(employer_scraper.fetch_lever("younited", "Younited")) == 1
+
+    def test_finance_only_drops_commercial_roles(self, monkeypatch):
+        # Chez une fintech, tout n'est pas de la finance.
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: [
+            lever_annonce(text="Regulatory Reporting Intern"),
+            lever_annonce(text="Sales Development Intern"),
+            lever_annonce(text="Office Manager Intern"),
+        ])
+        offres = employer_scraper.fetch_lever("qonto", "Qonto", finance_only=True)
+        assert [o["title"] for o in offres] == ["Regulatory Reporting Intern"]
+
+    def test_without_the_flag_everything_relevant_stays(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: [
+            lever_annonce(text="Sales Development Intern"),
+        ])
+        assert len(employer_scraper.fetch_lever("x", "X")) == 1
+
+    def test_flags_are_stripped_from_the_location(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: [
+            lever_annonce(location="Milan 🇮🇹", country="IT"),
+        ])
+        assert employer_scraper.fetch_lever("x", "X")[0]["location"] == "Milan"
+
+    def test_french_provinces_are_dropped(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: [
+            lever_annonce(location="Lyon", country="FR"),
+        ])
+        assert employer_scraper.fetch_lever("x", "X") == []
+
+    def test_an_unreachable_board_yields_nothing(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: None)
+        assert employer_scraper.fetch_lever("x", "X") == []
+
+
+class TestFinanceRoleDetection:
+    @pytest.mark.parametrize("titre", [
+        "Regulatory Reporting Intern", "Stage contrôle de gestion",
+        "Credit Risk Analyst", "Compliance Intern", "Stage M&A",
+        "Treasury Intern", "Alternance comptabilité",
+    ])
+    def test_finance_roles(self, titre):
+        assert employer_scraper._is_finance_role(titre)
+
+    @pytest.mark.parametrize("titre", [
+        "Sales Development Intern", "Office Manager Intern",
+        "Stage graphisme", "Customer Care Intern",
+    ])
+    def test_other_roles(self, titre):
+        assert not employer_scraper._is_finance_role(titre)

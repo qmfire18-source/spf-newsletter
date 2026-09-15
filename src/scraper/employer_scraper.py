@@ -32,6 +32,19 @@ USER_AGENT = "SPFNewsletterBot/1.0 (newsletter Sciences Po Finance)"
 REQUEST_TIMEOUT_SECONDS = 25
 REQUEST_DELAY_SECONDS = 1.0
 
+# Chez une banque d'affaires, tout poste est financier. Chez une fintech ou
+# un groupe industriel, non : un stage commercial ou marketing n'intéresse pas
+# l'association. Ces employeurs-là portent `finance_only` dans la
+# configuration, et leur intitulé doit alors porter un marqueur métier.
+FINANCE_TITLE_MARKERS = (
+    "financ", "comptab", "audit", "risk", "risque", "credit", "crédit",
+    "trésor", "tresor", "treasury", "compliance", "conformité", "conformite",
+    "regulatory", "réglementaire", "reglementaire", "reporting", "controlling",
+    "contrôle de gestion", "controle de gestion", "m&a", "invest", "fund",
+    "banking", "banque", "actuari", "fiscal", "tax", "valuation", "fp&a",
+    "legal", "juridique", "strategy", "stratégie", "strategie", "data analyst",
+)
+
 # Une offre doit parler de stage : ces portails publient tous types de postes.
 # Cherchés en MOT ENTIER — « intern » se cache dans « Internal Advisor », et
 # un poste de consultant interne n'est pas un stage.
@@ -45,7 +58,9 @@ _INTERNSHIP_RE = re.compile(
 )
 
 
-def fetch_recruitee(company_slug: str, display_name: str) -> list[dict]:
+def fetch_recruitee(
+    company_slug: str, display_name: str, finance_only: bool = False
+) -> list[dict]:
     """Offres d'un employeur hébergé par Recruitee — API JSON publique.
 
     Exemple : Eight Advisory, `8advisory`.
@@ -59,6 +74,9 @@ def fetch_recruitee(company_slug: str, display_name: str) -> list[dict]:
     for offre in payload.get("offers", []):
         titre = (offre.get("title") or "").strip()
         if not _is_internship(titre):
+            continue
+        if finance_only and not _is_finance_role(titre):
+            logger.info("Poste non financier, ignoré : %s", titre)
             continue
         if not _is_in_scope(offre.get("city"), offre.get("country_code")):
             logger.info("Hors périmètre (%s), ignorée : %s", offre.get("city"), titre)
@@ -109,6 +127,19 @@ def _normalise(texte: str) -> str:
     return "".join(c if c.isalnum() else "-" for c in sans_accent)
 
 
+def _is_finance_role(titre: str) -> bool:
+    minuscule = _normalise(titre or "").replace("-", " ")
+    return any(_normalise(m).replace("-", " ") in minuscule for m in FINANCE_TITLE_MARKERS)
+
+
+def _clean_location(lieu: str | None) -> str | None:
+    """Retire les drapeaux et symboles que certains portails collent aux villes."""
+    if not lieu:
+        return None
+    propre = "".join(c for c in lieu if c.isalnum() or c in " ,-'()./").strip(" ,-")
+    return " ".join(propre.split()) or None
+
+
 def _is_internship(titre: str) -> bool:
     return bool(_INTERNSHIP_RE.search(_normalise(titre or "").replace("-", " ")))
 
@@ -126,6 +157,55 @@ def _get_json(url: str, session: requests.Session | None = None) -> dict | None:
         # Un employeur injoignable ne doit pas faire échouer la collecte.
         logger.warning("Employeur injoignable (%s) : %s", error, url)
         return None
+
+
+def fetch_lever(
+    company_slug: str, display_name: str, finance_only: bool = False
+) -> list[dict]:
+    """Offres d'un employeur hébergé par Lever. Exemple : Qonto, Agicap.
+
+    Lever expose le type de contrat dans un champ dédié, `commitment`, ce qui
+    vaut mieux qu'un mot-clé dans l'intitulé : un « Internal Auditor » ne
+    passe pas, une « Alternance comptabilité » passe.
+    """
+    url = f"https://api.lever.co/v0/postings/{company_slug}?mode=json"
+    annonces = _get_json(url)
+    if not isinstance(annonces, list):
+        return []
+
+    offres = []
+    for annonce in annonces:
+        titre = (annonce.get("text") or "").strip()
+        categories = annonce.get("categories") or {}
+        contrat = (categories.get("commitment") or "").strip()
+
+        # Le champ tranche ; l'intitulé rattrape les annonces sans contrat
+        # renseigné, fréquentes sur les offres françaises.
+        if not (_is_internship(contrat) or _is_internship(titre)):
+            continue
+        if finance_only and not _is_finance_role(titre):
+            logger.info("Poste non financier, ignoré : %s", titre)
+            continue
+
+        ville = (categories.get("location") or "").strip()
+        pays = (annonce.get("country") or "").strip()
+        if not _is_in_scope(ville, pays or _country_code(ville, "")):
+            logger.info("Hors périmètre (%s), ignorée : %s", ville, titre)
+            continue
+
+        offres.append(
+            {
+                "title": titre,
+                "company": display_name,
+                "location": _clean_location(ville),
+                "deadline": None,
+                "url": annonce.get("hostedUrl") or annonce.get("applyUrl") or url,
+            }
+        )
+
+    logger.info("%s : %d stage(s) sur %d annonces.", display_name,
+                len(offres), len(annonces))
+    return offres
 
 
 def fetch_oracle(host: str, sites: list[str], display_name: str) -> list[dict]:
@@ -309,9 +389,14 @@ def _get_html(url: str) -> str | None:
 
 
 CONNECTORS = {
-    "recruitee": lambda source: fetch_recruitee(source["slug"], source["name"]),
+    "recruitee": lambda source: fetch_recruitee(
+        source["slug"], source["name"], source.get("finance_only", False)
+    ),
     "oracle": lambda source: fetch_oracle(
         source["host"], source["sites"], source["name"]
+    ),
+    "lever": lambda source: fetch_lever(
+        source["slug"], source["name"], source.get("finance_only", False)
     ),
     "euronext": lambda source: fetch_euronext(),
     "talentsoft": lambda source: fetch_talentsoft(source["host"], source["name"]),
