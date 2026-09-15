@@ -279,6 +279,12 @@ GitHub Actions, qui n'a personne pour copier-coller.
 accessible même quand la machine qui génère la newsletter est éteinte. Un
 `git push` suffit à la mettre à jour.
 
+L'adresse saisie est vérifiée avant envoi. Le format seul ne prouve rien —
+« jean@gmial.com » est parfaitement formé mais la boîte n'existe pas — donc la
+page rattrape la faute de frappe sur le domaine, qui produit l'essentiel des
+adresses mortes, et propose la correction sans l'imposer. Chaque adresse morte
+est un rebond qui abîme la réputation d'expéditeur.
+
 Le formulaire est inactif tant que le compte Brevo n'existe pas : son `action`
 vaut `REMPLACER_PAR_URL_BREVO`. Brevo fournit une URL de formulaire hébergé qui
 gère l'inscription, la confirmation et le désabonnement — c'est elle qu'il faut

@@ -263,6 +263,75 @@
 </main>
 
 <script>
+  // Vérification de l'adresse avant envoi.
+  //
+  // Le format seul ne prouve rien : « jean@gmial.com » est parfaitement formé
+  // mais la boîte n'existe pas. Sans email de confirmation, c'est la faute de
+  // frappe sur le domaine qui produit l'essentiel des adresses mortes — et
+  // chaque adresse morte est un rebond qui abîme la réputation d'expéditeur.
+  // On la rattrape donc ici, en proposant la correction sans l'imposer.
+  (function () {
+    var form = document.querySelector("form");
+    if (!form) return;
+    var champ = form.querySelector('input[type=email]');
+    var note = document.getElementById("note");
+    var noteOrigine = note ? note.innerHTML : "";
+
+    var DOMAINES = [
+      "gmail.com", "hotmail.com", "hotmail.fr", "outlook.com", "outlook.fr",
+      "yahoo.com", "yahoo.fr", "orange.fr", "wanadoo.fr", "free.fr",
+      "laposte.net", "sfr.fr", "icloud.com", "me.com", "protonmail.com",
+      "proton.me", "sciencespo.fr", "etu.sciencespo.fr",
+    ];
+
+    // Distance de Levenshtein : combien de corrections séparent deux mots.
+    function distance(a, b) {
+      var lignePrecedente = Array.from({ length: b.length + 1 }, function (_, i) { return i; });
+      for (var i = 0; i < a.length; i++) {
+        var ligne = [i + 1];
+        for (var j = 0; j < b.length; j++) {
+          ligne.push(Math.min(
+            lignePrecedente[j] + (a[i] === b[j] ? 0 : 1),
+            lignePrecedente[j + 1] + 1,
+            ligne[j] + 1
+          ));
+        }
+        lignePrecedente = ligne;
+      }
+      return lignePrecedente[b.length];
+    }
+
+    function suggestion(adresse) {
+      var partie = adresse.split("@");
+      if (partie.length !== 2) return null;
+      var domaine = partie[1].toLowerCase();
+      if (DOMAINES.indexOf(domaine) !== -1) return null;
+      for (var i = 0; i < DOMAINES.length; i++) {
+        // Une ou deux corrections : au-delà, ce n'est plus une faute de frappe
+        // mais un domaine légitime que nous ne connaissons pas.
+        if (distance(domaine, DOMAINES[i]) <= 2) return partie[0] + "@" + DOMAINES[i];
+      }
+      return null;
+    }
+
+    champ.addEventListener("blur", function () {
+      if (!note || !champ.value) return;
+      var propose = suggestion(champ.value.trim());
+      if (propose) {
+        note.innerHTML =
+          "Vouliez-vous dire <strong><a href=\"#\" id=\"corriger\">" +
+          propose.replace(/</g, "&lt;") + "</a></strong> ?";
+        document.getElementById("corriger").addEventListener("click", function (e) {
+          e.preventDefault();
+          champ.value = propose;
+          note.innerHTML = noteOrigine;
+        });
+      } else if (note.querySelector("#corriger")) {
+        note.innerHTML = noteOrigine;
+      }
+    });
+  })();
+
   // Tant que l'URL Brevo n'est pas branchée, le formulaire posterait dans le
   // vide : on le neutralise plutôt que d'afficher une erreur du navigateur.
   (function () {
