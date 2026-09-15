@@ -134,6 +134,11 @@ dans les sept derniers jours. Trois écartées d'office : celle dont la date
 limite est passée, celle déjà parue dans une édition précédente, et — au-delà
 de 30 jours — celles purgées du stock.
 
+**Rotation entre employeurs** : un recruteur prolixe ne prend pas toute
+l'édition. Lazard publiait à lui seul 53 des 74 offres du stock ; sans
+rotation, il aurait occupé les 40 places. Une édition de 40 offres compte
+désormais 18 employeurs différents.
+
 **Pas de répétition d'une semaine sur l'autre** : actualités comme offres, tout
 ce qui figure dans une édition antérieure est exclu de la suivante. L'édition
 en cours ne se bloque pas elle-même, donc régénérer le brouillon de la semaine
@@ -155,7 +160,7 @@ origines.
 | Employeur | Système | État |
 |---|---|---|
 | Eight Advisory | Recruitee (API JSON) | branché — 8 stages sur 78 annonces |
-| Lazard | Oracle Recruiting Cloud (API JSON) | identifié, à brancher |
+| Lazard | Oracle Recruiting Cloud (API JSON) | branché — 49 stages, avec les dates limites |
 | Euronext | site propre | identifié, à brancher |
 | Amundi | TalentSoft | identifié, à brancher |
 | Rothschild & Co | Workday (API JSON) | identifié, vide au dernier test |

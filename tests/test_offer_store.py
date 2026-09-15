@@ -175,3 +175,33 @@ class TestNoRepeatBetweenEditions:
 
     def test_empty_history(self, db):
         assert offer_store.already_published_urls(db) == set()
+
+
+class TestEmployerSpread:
+    def test_a_prolific_employer_does_not_take_every_slot(self, db):
+        # Lazard pesait 53 des 74 offres du stock réel.
+        offer_store.store_offers(db, [
+            offre(f"lazard{i}", company="Lazard") for i in range(10)
+        ] + [
+            offre("bnp1", company="BNP Paribas"),
+            offre("ardian1", company="Ardian"),
+        ])
+        tete = offer_store.recent_offers(db, limit=3)
+        assert len({o["company"] for o in tete}) == 3
+
+    def test_every_offer_is_still_reachable(self, db):
+        offer_store.store_offers(db, [
+            offre("a", company="Lazard"), offre("b", company="Lazard"),
+            offre("c", company="Ardian"),
+        ])
+        assert len(offer_store.recent_offers(db, limit=99)) == 3
+
+    def test_a_single_employer_keeps_its_order(self, db):
+        offer_store.store_offers(db, [offre("a", company="X", title="1")])
+        offer_store.store_offers(db, [offre("b", company="X", title="2")])
+        titres = [o["title"] for o in offer_store.recent_offers(db)]
+        assert titres == ["2", "1"]
+
+    def test_an_offer_without_a_company_is_kept(self, db):
+        offer_store.store_offers(db, [offre("a", company=None)])
+        assert len(offer_store.recent_offers(db)) == 1

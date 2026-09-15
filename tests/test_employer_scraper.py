@@ -149,3 +149,89 @@ class TestFetchEmployerOffers:
 
     def test_no_sources(self):
         assert employer_scraper.fetch_employer_offers([]) == []
+
+
+class TestInternshipWordBoundaries:
+    @pytest.mark.parametrize("titre", [
+        "Internal Advisor Consultant",
+        "Internal Audit Manager",
+        "International Sales Director",
+        "Alternator Systems Engineer",
+    ])
+    def test_a_marker_hidden_inside_a_word_does_not_count(self, titre):
+        # « intern » se cache dans « Internal » : un consultant interne
+        # n'est pas un stagiaire.
+        assert not employer_scraper._is_internship(titre)
+
+    @pytest.mark.parametrize("titre", [
+        "M&A intern - Large Cap",
+        "2027 London Financial Advisory Summer Internship",
+        "VIE Finance Londres",
+        "Off-cycle internship",
+    ])
+    def test_the_marker_as_a_whole_word_counts(self, titre):
+        assert employer_scraper._is_internship(titre)
+
+
+class TestFetchOracle:
+    def payload(self, *annonces):
+        return {"items": [{"requisitionList": list(annonces)}]}
+
+    def annonce(self, title="M&A Internship", loc="Paris, France",
+                pays="France", ident="123", fin="2027-01-31T00:00:00+00:00"):
+        return {"Title": title, "PrimaryLocation": loc,
+                "PrimaryLocationCountry": pays, "Id": ident, "PostingEndDate": fin}
+
+    def test_keeps_internships_in_scope(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: self.payload(
+            self.annonce(title="M&A Internship", loc="Paris, France"),
+            self.annonce(title="Managing Director", loc="Paris, France"),
+            self.annonce(title="Stage gestion privée", loc="Lyon, France"),
+            self.annonce(title="Summer Internship", loc="London, United Kingdom",
+                         pays="United Kingdom"),
+        ))
+        offres = employer_scraper.fetch_oracle("h", ["CX_1"], "Lazard")
+        assert [o["title"] for o in offres] == ["M&A Internship", "Summer Internship"]
+
+    def test_builds_a_usable_link_and_deadline(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
+        monkeypatch.setattr(employer_scraper, "_get_json",
+                            lambda url, session=None: self.payload(self.annonce()))
+        o = employer_scraper.fetch_oracle("h.example", ["CX_2"], "Lazard")[0]
+        assert o["url"].startswith("https://h.example/hcmUI/CandidateExperience/")
+        assert o["url"].endswith("/CX_2/job/123")
+        assert o["deadline"] == "2027-01-31"
+        assert o["company"] == "Lazard"
+
+    def test_a_missing_deadline_is_none(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
+        monkeypatch.setattr(employer_scraper, "_get_json",
+                            lambda url, session=None: self.payload(self.annonce(fin=None)))
+        assert employer_scraper.fetch_oracle("h", ["CX_1"], "L")[0]["deadline"] is None
+
+    def test_both_portals_are_queried(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
+        vus = []
+
+        def faux(url, session=None):
+            vus.append(url)
+            return self.payload(self.annonce(ident=str(len(vus))))
+
+        monkeypatch.setattr(employer_scraper, "_get_json", faux)
+        offres = employer_scraper.fetch_oracle("h", ["CX_1", "CX_2"], "Lazard")
+        assert len(vus) == 2 and len(offres) == 2
+
+    def test_the_expand_parameter_is_requested(self, monkeypatch):
+        # Sans expand, l'API renvoie le compteur mais pas les annonces.
+        monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
+        vus = []
+        monkeypatch.setattr(employer_scraper, "_get_json",
+                            lambda url, session=None: vus.append(url) or self.payload())
+        employer_scraper.fetch_oracle("h", ["CX_1"], "L")
+        assert "expand=requisitionList" in vus[0]
+
+    def test_an_unreachable_portal_yields_nothing(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
+        monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: None)
+        assert employer_scraper.fetch_oracle("h", ["CX_1"], "L") == []

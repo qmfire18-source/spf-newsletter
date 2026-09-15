@@ -32,9 +32,15 @@ REQUEST_TIMEOUT_SECONDS = 25
 REQUEST_DELAY_SECONDS = 1.0
 
 # Une offre doit parler de stage : ces portails publient tous types de postes.
+# Cherchés en MOT ENTIER — « intern » se cache dans « Internal Advisor », et
+# un poste de consultant interne n'est pas un stage.
 INTERNSHIP_MARKERS = (
-    "stage", "stagiaire", "intern", "internship", "apprenti", "alternance",
-    "vie ", "v.i.e", "summer analyst", "off-cycle", "offcycle",
+    "stage", "stages", "stagiaire", "stagiaires", "intern", "interns",
+    "internship", "internships", "apprenti", "apprentie", "alternance",
+    "alternant", "vie", "summer analyst", "off-cycle", "offcycle",
+)
+_INTERNSHIP_RE = re.compile(
+    r"(?<![a-z])(" + "|".join(re.escape(m) for m in INTERNSHIP_MARKERS) + r")(?![a-z])"
 )
 
 
@@ -103,8 +109,7 @@ def _normalise(texte: str) -> str:
 
 
 def _is_internship(titre: str) -> bool:
-    minuscule = f" {titre.lower()} "
-    return any(m in minuscule for m in INTERNSHIP_MARKERS)
+    return bool(_INTERNSHIP_RE.search(_normalise(titre or "").replace("-", " ")))
 
 
 def _get_json(url: str, session: requests.Session | None = None) -> dict | None:
@@ -122,8 +127,73 @@ def _get_json(url: str, session: requests.Session | None = None) -> dict | None:
         return None
 
 
+def fetch_oracle(host: str, sites: list[str], display_name: str) -> list[dict]:
+    """Offres d'un employeur hébergé par Oracle Recruiting Cloud.
+
+    Exemple : Lazard, dont les portails professionnels et étudiants sont deux
+    « sites » distincts du même hôte — d'où la liste.
+
+    Sans le paramètre `expand`, l'API renvoie le nombre d'annonces mais pas
+    les annonces elles-mêmes : le compteur est correct et la liste vide, ce
+    qui donne l'illusion d'un portail en panne.
+    """
+    offres = []
+    for index, site in enumerate(sites):
+        if index:
+            time.sleep(REQUEST_DELAY_SECONDS)
+        url = (
+            f"https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
+            "?onlyData=true&expand=requisitionList.secondaryLocations"
+            f"&finder=findReqs;siteNumber={site},limit=200,sortBy=POSTING_DATES_DESC"
+        )
+        payload = _get_json(url)
+        if not payload:
+            continue
+
+        for item in payload.get("items", []):
+            for annonce in item.get("requisitionList", []):
+                titre = (annonce.get("Title") or "").strip()
+                if not _is_internship(titre):
+                    continue
+                lieu = (annonce.get("PrimaryLocation") or "").strip()
+                pays = (annonce.get("PrimaryLocationCountry") or "").strip()
+                if not _is_in_scope(lieu, _country_code(lieu, pays)):
+                    logger.info("Hors périmètre (%s), ignorée : %s", lieu, titre)
+                    continue
+                offres.append(
+                    {
+                        "title": titre,
+                        "company": display_name,
+                        "location": lieu or None,
+                        "deadline": _iso_date(annonce.get("PostingEndDate")),
+                        "url": (
+                            f"https://{host}/hcmUI/CandidateExperience/fr/sites/"
+                            f"{site}/job/{annonce.get('Id')}"
+                        ),
+                    }
+                )
+
+    logger.info("%s : %d stage(s) retenus.", display_name, len(offres))
+    return offres
+
+
+def _country_code(lieu: str, pays: str) -> str:
+    """Oracle nomme le pays en toutes lettres, parfois seulement dans le lieu."""
+    texte = _normalise(f"{pays} {lieu}")
+    return "FR" if "france" in texte else "XX"
+
+
+def _iso_date(valeur) -> str | None:
+    if not isinstance(valeur, str) or not valeur:
+        return None
+    return valeur[:10]
+
+
 CONNECTORS = {
     "recruitee": lambda source: fetch_recruitee(source["slug"], source["name"]),
+    "oracle": lambda source: fetch_oracle(
+        source["host"], source["sites"], source["name"]
+    ),
 }
 
 

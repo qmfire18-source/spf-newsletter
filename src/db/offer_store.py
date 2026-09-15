@@ -67,7 +67,7 @@ def recent_offers(
         .order_by(CollectedOffer.collected_at.desc())
         .all()
     )
-    return [
+    retenues = [
         {
             "title": row.title,
             "company": row.company,
@@ -78,7 +78,29 @@ def recent_offers(
         for row in rows
         if (row.deadline is None or row.deadline >= today)
         and row.url not in exclude_urls
-    ][:limit]
+    ]
+    return _spread_across_employers(retenues)[:limit]
+
+
+def _spread_across_employers(offers: list[dict]) -> list[dict]:
+    """Alterne les employeurs, du plus récemment collecté au plus ancien.
+
+    Un employeur prolixe fausse l'édition : Lazard publiait à lui seul 53 des
+    74 offres du stock, et aurait pris presque toutes les places. On tourne
+    entre employeurs pour que la newsletter montre le marché, pas un seul
+    recruteur.
+    """
+    par_employeur: dict[str, list[dict]] = {}
+    for offer in offers:
+        par_employeur.setdefault(offer.get("company") or "?", []).append(offer)
+
+    files = list(par_employeur.values())
+    ordonnees = []
+    while files:
+        files = [f for f in files if f]
+        for file in files:
+            ordonnees.append(file.pop(0))
+    return ordonnees
 
 
 def purge_old(db, days: int = RETENTION_DAYS) -> int:

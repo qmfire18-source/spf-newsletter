@@ -61,4 +61,11 @@ STAGE_SOURCES = [
 # hors d'atteinte : voir src/scraper/employer_scraper.py.
 EMPLOYER_SOURCES = [
     {"type": "recruitee", "slug": "8advisory", "name": "Eight Advisory"},
+    {
+        "type": "oracle",
+        "host": "icbpjb.fa.ocs.oraclecloud.com",
+        # Deux portails : professionnels et étudiants.
+        "sites": ["CX_1", "CX_2"],
+        "name": "Lazard",
+    },
 ]
