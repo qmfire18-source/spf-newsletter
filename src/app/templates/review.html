@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% block title %}Validation — Newsletter SPF{% endblock %}
+{% block title %}Validation de la newsletter SPF{% endblock %}
 {% block style %}
     .topbar { background:var(--navy); color:#fff; position:sticky; top:0; z-index:40; }
     .topbar__in { max-width:78rem; margin:0 auto; padding:.85rem 1.25rem;
@@ -209,10 +209,10 @@
     <span class="toc__sep" aria-hidden="true"></span>
     <a href="/draft/{{ draft.id }}/apercu" target="_blank" rel="noopener">Aperçu email</a>
     <span class="toc__stats">
-      <span><b id="stat-items">—</b> actualités</span>
-      <span><b id="stat-offres">—</b> offres</span>
-      <span><b id="stat-mots">—</b> mots</span>
-      <span><b id="stat-taille">—</b> Ko</span>
+      <span><b id="stat-items">·</b> actualités</span>
+      <span><b id="stat-offres">·</b> offres</span>
+      <span><b id="stat-mots">·</b> mots</span>
+      <span><b id="stat-taille">·</b> Ko</span>
     </span>
   </nav>
 
@@ -221,7 +221,7 @@
     <section class="block" id="bloc-actus">
       <div class="block__head">
         <h2>Actus financières</h2>
-        <div class="toolbar" role="toolbar" aria-label="Mise en forme — actus financières"
+        <div class="toolbar" role="toolbar" aria-label="Mise en forme : actus financières"
              data-for="news_preview">
           <button type="button" class="tool" data-cmd="bold" title="Gras"
                   aria-label="Gras"><strong>G</strong></button>
@@ -258,7 +258,7 @@
     <section class="block" id="bloc-stages">
       <div class="block__head">
         <h2>Stages de la semaine</h2>
-        <div class="toolbar" role="toolbar" aria-label="Mise en forme — stages de la semaine"
+        <div class="toolbar" role="toolbar" aria-label="Mise en forme : stages de la semaine"
              data-for="stages_preview">
           <button type="button" class="tool" data-cmd="bold" title="Gras"
                   aria-label="Gras"><strong>G</strong></button>

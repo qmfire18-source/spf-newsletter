@@ -243,7 +243,9 @@ def send_draft(
     if not locked:
         return _redirect_home(error="Ce brouillon a déjà été envoyé.")
 
-    subject = f"Newsletter SPF — semaine du {draft.week_of}"
+    # Objet en clair, sans date ISO ni tiret cadratin : c'est la première
+    # chose que voit l'abonné dans sa liste de messages.
+    subject = f"Newsletter SPF - {_semaine_en_lettres(draft.week_of).lower()}"
     html = render_newsletter(
         news_html=draft.news_content or "",
         stages_html=draft.stages_content or "",
