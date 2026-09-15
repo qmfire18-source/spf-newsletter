@@ -500,6 +500,16 @@ newsletter — pas le volume. Trois règles, toutes dans `stage_scraper.py` :
    tiers du sitemap. On tourne entre entreprises plutôt que de trier par date,
    ce qui garantit autant d'employeurs différents que d'offres récoltées.
 
+## Couleurs
+
+Le marine de l'identité est **`#183050`**, échantillonné dans `logo.jpeg` :
+c'est la teinte dominante du blason, pas une valeur choisie à vue. Les
+dérivés (survol, marine clair, variantes du mode sombre) en découlent.
+
+Un or `#B08B3F` sert d'accent sur la page publique. Il ne vient pas du
+blason : le marine seul manquait de contraste. Si l'association se dote d'une
+charte graphique, ses codes priment sur ceux-ci.
+
 ## Logo de l'association
 
 Dépose le blason dans `src/app/static/logo.png` (ou `.svg`, `.jpg`, `.webp`) :

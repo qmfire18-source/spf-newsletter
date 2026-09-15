@@ -183,3 +183,13 @@ class TestNewsletterBranding:
     def test_escapes_the_title(self):
         out = brevo_sender.render_newsletter("", "", "<script>x</script>")
         assert "<script>x</script>" not in out.split("<body")[0]
+
+
+class TestBrandColour:
+    def test_uses_the_navy_sampled_from_the_crest(self):
+        # #183050 est la teinte dominante de logo.jpeg, pas une valeur choisie.
+        assert brevo_sender.MARINE == "#183050"
+
+    def test_the_navy_appears_in_the_rendered_email(self):
+        out = brevo_sender.render_newsletter("", "", date(2026, 9, 14))
+        assert "#183050" in out

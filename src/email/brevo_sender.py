@@ -19,13 +19,13 @@ from src.config import (
 logger = logging.getLogger(__name__)
 
 # Charte de l'association, reprise de l'interface de validation.
-MARINE = "#1E3A5F"
+MARINE = "#183050"
 OR = "#F0E7D4"
 ENCRE = "#141B2B"
 GRIS = "#5A6478"
 FOND = "#F4F5F7"
 FILET = "#E3E7ED"
-LIEN = "#1E3A5F"
+LIEN = "#183050"
 # Un mail ne peut pas pointer vers un fichier local : le blason est servi par
 # GitHub Pages, à une adresse publique et stable.
 LOGO_URL = "https://qmfire18-source.github.io/spf-newsletter/logo.jpeg"
