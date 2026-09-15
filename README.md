@@ -310,6 +310,12 @@ GitHub Actions, qui n'a personne pour copier-coller.
 accessible même quand la machine qui génère la newsletter est éteinte. Un
 `git push` suffit à la mettre à jour.
 
+Le navigateur retient les adresses déjà inscrites depuis cet appareil et le
+dit plutôt que de laisser repartir sur la page de remerciement comme la
+première fois — Brevo accepte une réinscription sans rien signaler. Cela ne
+couvre que l'appareil courant, ce qui suffit au cas courant : le lien cliqué
+deux fois.
+
 L'adresse saisie est vérifiée avant envoi. Le format seul ne prouve rien —
 « jean@gmial.com » est parfaitement formé mais la boîte n'existe pas — donc la
 page rattrape la faute de frappe sur le domaine, qui produit l'essentiel des

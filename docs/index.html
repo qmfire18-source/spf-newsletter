@@ -15,9 +15,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#183050; --navy-900:#0E1E35; --navy-700:#122740; --navy-300:#7A97BE;
+    --navy:#183050; --navy-900:#0E1E35; --navy-300:#7A97BE;
     --gold:#B08B3F; --gold-soft:#E8D6AE;
-    --paper:#F5F7FA; --surface:#FFFFFF; --surface-2:#EDF1F6;
+    --paper:#F5F7FA;
     --ink:#141B2B; --ink-2:#4E596B; --ink-3:#7A8496; --rule:#DDE3EB;
     --sans:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
     --serif:"Newsreader",Georgia,"Times New Roman",serif;
@@ -26,7 +26,7 @@
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --paper:#0B1220; --surface:#141C2C; --surface-2:#1B2436;
+      --paper:#0B1220;
       --ink:#E9EDF5; --ink-2:#A6B1C5; --ink-3:#7A8496; --rule:#26314A;
       --navy:#1D3A5C; --navy-900:#0A1526; --navy-300:#8AA9CE;
       --gold:#D3AE63; --gold-soft:#E8D6AE;
@@ -97,6 +97,8 @@
   .note{font-size:.86rem;color:#9FB4CE;margin:1rem 0 0}
   .note strong{color:#fff;font-weight:500}
   .note a{color:var(--gold-soft)}
+  .note--deja{color:var(--gold-soft)}
+  .note--deja strong{color:var(--gold-soft)}
 
   /* ---------- ce que vous recevez ---------- */
   .inside{padding-block:4rem 1rem}
@@ -322,20 +324,48 @@
 </footer>
 
 <script>
-  // Vérification de l'adresse avant envoi.
-  //
-  // Le format seul ne prouve rien : « jean@gmial.com » est parfaitement formé
-  // mais la boîte n'existe pas. Sans email de confirmation, c'est la faute de
-  // frappe sur le domaine qui produit l'essentiel des adresses mortes, et
-  // chaque adresse morte est un rebond qui abîme la réputation d'expéditeur.
-  // On la rattrape donc ici, en proposant la correction sans l'imposer.
+  // Le formulaire : correction des fautes de frappe, et mémoire des adresses
+  // déjà inscrites depuis ce navigateur.
   (function () {
     var form = document.querySelector("form");
     if (!form) return;
+
     var champ = form.querySelector('input[type=email]');
     var note = document.getElementById("note");
-    var noteOrigine = note ? note.innerHTML : "";
+    var noteOrigine = note.innerHTML;
+    var CLE = "spf-inscrits";
 
+    // --- adresses déjà inscrites depuis ce navigateur ---------------------
+    //
+    // Brevo accepte une réinscription sans rien dire, si bien qu'on
+    // repartait sur sa page de remerciement comme la première fois. Le
+    // navigateur se souvient donc de ce qu'il a envoyé. Cela ne couvre que
+    // cet appareil : une inscription faite ailleurs restera invisible ici,
+    // et c'est assez pour le cas courant, le lien cliqué deux fois.
+    function inscrits() {
+      try { return JSON.parse(localStorage.getItem(CLE)) || []; }
+      catch (e) { return []; }
+    }
+
+    function retenir(adresse) {
+      try {
+        var liste = inscrits();
+        if (liste.indexOf(adresse) === -1) liste.push(adresse);
+        localStorage.setItem(CLE, JSON.stringify(liste));
+      } catch (e) { /* navigation privée ou quota : sans gravité */ }
+    }
+
+    function dejaInscrit(adresse) {
+      return inscrits().indexOf(adresse) !== -1;
+    }
+
+    // --- correction des fautes de frappe sur le domaine --------------------
+    //
+    // Le format seul ne prouve rien : « jean@gmial.com » est parfaitement
+    // formé mais la boîte n'existe pas. Sans email de confirmation, c'est la
+    // faute de frappe sur le domaine qui produit l'essentiel des adresses
+    // mortes, et chaque adresse morte est un rebond qui abîme la réputation
+    // d'expéditeur. On la rattrape ici, en proposant sans imposer.
     var DOMAINES = [
       "gmail.com", "hotmail.com", "hotmail.fr", "outlook.com", "outlook.fr",
       "yahoo.com", "yahoo.fr", "orange.fr", "wanadoo.fr", "free.fr",
@@ -372,20 +402,51 @@
       return null;
     }
 
+    function messageOrigine() {
+      note.className = "note";
+      note.innerHTML = noteOrigine;
+    }
+
+    champ.addEventListener("input", function () {
+      if (note.className !== "note") messageOrigine();
+    });
+
     champ.addEventListener("blur", function () {
-      if (!note || !champ.value) return;
-      var propose = suggestion(champ.value.trim());
+      var saisie = champ.value.trim().toLowerCase();
+      if (!saisie) return;
+
+      if (dejaInscrit(saisie)) {
+        note.className = "note note--deja";
+        note.innerHTML = "<strong>Tu es déjà inscrit</strong> avec cette adresse. " +
+          "La prochaine édition arrive lundi matin.";
+        return;
+      }
+
+      var propose = suggestion(saisie);
       if (propose) {
+        note.className = "note";
         note.innerHTML = "Vouliez-vous dire <strong><a href=\"#\" id=\"corriger\">" +
           propose.replace(/</g, "&lt;") + "</a></strong> ?";
         document.getElementById("corriger").addEventListener("click", function (e) {
           e.preventDefault();
           champ.value = propose;
-          note.innerHTML = noteOrigine;
+          messageOrigine();
         });
-      } else if (note.querySelector("#corriger")) {
-        note.innerHTML = noteOrigine;
+      } else {
+        messageOrigine();
       }
+    });
+
+    form.addEventListener("submit", function (e) {
+      var saisie = champ.value.trim().toLowerCase();
+      if (dejaInscrit(saisie)) {
+        e.preventDefault();
+        note.className = "note note--deja";
+        note.innerHTML = "<strong>Tu es déjà inscrit</strong> avec cette adresse. " +
+          "Inutile de recommencer, la prochaine édition arrive lundi matin.";
+        return;
+      }
+      retenir(saisie);
     });
   })();
 
