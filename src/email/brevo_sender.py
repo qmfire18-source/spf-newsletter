@@ -26,9 +26,11 @@ GRIS = "#5A6478"
 FOND = "#F4F5F7"
 FILET = "#E3E7ED"
 LIEN = "#183050"
-# Un mail ne peut pas pointer vers un fichier local : le blason est servi par
-# GitHub Pages, à une adresse publique et stable.
-LOGO_URL = "https://qmfire18-source.github.io/spf-newsletter/logo.jpeg"
+# Un mail ne peut pas pointer vers un fichier local : le logo est servi par
+# GitHub Pages, à une adresse publique et stable. Le médaillon est préféré au
+# blason ici : fond transparent et 480 px de côté, il reste net sur les écrans
+# à haute densité, où le blason de 200 px se voyait crénelé.
+LOGO_URL = "https://qmfire18-source.github.io/spf-newsletter/logo-medaillon.png"
 
 BASE_URL = "https://api.brevo.com/v3"
 REQUEST_TIMEOUT_SECONDS = 30
