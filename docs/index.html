@@ -183,14 +183,20 @@
     </p>
 
     <div class="signup">
-      <!-- Remplacer l'action par l'URL du formulaire Brevo une fois le compte créé.
-           Voir README, section « Page d'abonnement ». -->
-      <form action="REMPLACER_PAR_URL_BREVO" method="post">
-        <label for="email" class="visually-hidden" style="position:absolute;left:-9999px">
-          Adresse email
-        </label>
+      <!-- Formulaire hébergé par Brevo. Les trois champs sont ceux qu'il
+           attend : l'adresse, un piège anti-robot qui doit rester vide, et
+           la langue. En retirer un fait rejeter l'inscription sans message. -->
+      <form action="https://2653ba05.sibforms.com/serve/MUIFAJoGXJQJuOFNk-XFL4vZZDWYj_5GfmRW0o06EDh8O-iQ3Q14wvt9OfDTjENNMXKRb49BlgGyxID55oilw1qCs59l6_gv-WRKicrndu--B_4zAGIQL-9O0qCHV9JZIWtgRIpTdz1ci4VoF5DlEZLrmvvuuvQalN4oj2PDpAMvAj5vFsaIUx9bluTydwqJ0kKP_VjkhTCRRTlklA=="
+            method="POST">
+        <label for="email" style="position:absolute;left:-9999px">Adresse email</label>
         <input id="email" type="email" name="EMAIL" required
                placeholder="ton.email@sciencespo.fr" autocomplete="email">
+        <!-- Piège : invisible et hors du parcours clavier. Un robot le
+             remplit, un humain non, et Brevo écarte alors l'envoi. -->
+        <input type="text" name="email_address_check" value="" tabindex="-1"
+               autocomplete="off" aria-hidden="true"
+               style="position:absolute;left:-9999px;width:1px;height:1px">
+        <input type="hidden" name="locale" value="fr">
         <button type="submit">Je m'abonne</button>
       </form>
       <p class="note" id="note">

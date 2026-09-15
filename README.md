@@ -285,10 +285,11 @@ page rattrape la faute de frappe sur le domaine, qui produit l'essentiel des
 adresses mortes, et propose la correction sans l'imposer. Chaque adresse morte
 est un rebond qui abîme la réputation d'expéditeur.
 
-Le formulaire est inactif tant que le compte Brevo n'existe pas : son `action`
-vaut `REMPLACER_PAR_URL_BREVO`. Brevo fournit une URL de formulaire hébergé qui
-gère l'inscription, la confirmation et le désabonnement — c'est elle qu'il faut
-coller là.
+Le formulaire poste directement vers Brevo, qui gère l'inscription, l'email de
+confirmation et le désabonnement. Trois champs sont attendus et tous les trois
+sont nécessaires : `EMAIL`, un piège anti-robot `email_address_check` qui doit
+rester vide, et `locale`. En retirer un fait rejeter l'inscription sans
+message d'erreur.
 
 ## Partager l'interface de validation avec le bureau
 
