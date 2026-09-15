@@ -68,4 +68,6 @@ EMPLOYER_SOURCES = [
         "sites": ["CX_1", "CX_2"],
         "name": "Lazard",
     },
+    {"type": "euronext", "name": "Euronext"},
+    {"type": "talentsoft", "host": "jobs.amundi.com", "name": "Amundi"},
 ]

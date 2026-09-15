@@ -16,6 +16,7 @@ Employeurs écartés faute d'accès, et pourquoi :
 - **Natixis** interdit `/emploi/` et `/recherche-d'offres` dans son
   robots.txt, et rend ses listes en JavaScript.
 """
+import html
 import logging
 import re
 import time
@@ -178,7 +179,7 @@ def fetch_oracle(host: str, sites: list[str], display_name: str) -> list[dict]:
 
 
 def _country_code(lieu: str, pays: str) -> str:
-    """Oracle nomme le pays en toutes lettres, parfois seulement dans le lieu."""
+    """Les portails nomment le pays en toutes lettres, parfois dans le lieu."""
     texte = _normalise(f"{pays} {lieu}")
     return "FR" if "france" in texte else "XX"
 
@@ -189,11 +190,131 @@ def _iso_date(valeur) -> str | None:
     return valeur[:10]
 
 
+def fetch_euronext() -> list[dict]:
+    """Offres d'Euronext, publiées dans un tableau sur leur propre site.
+
+    Le type de contrat est une colonne à part — plus sûr qu'un mot-clé dans
+    l'intitulé : « Intern (Fixed Term) (Trainee) » et « International
+    Graduate Programme VIE » sont explicites.
+    """
+    url = "https://www.euronext.com/en/about/careers/open-positions"
+    page = _get_html(url)
+    if not page:
+        return []
+
+    offres = []
+    lignes = re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S)
+    for ligne in lignes:
+        titre = _table_cell(ligne, "field-job-title")
+        if not titre:
+            continue
+        contrat = _table_cell(ligne, "field-job-sub-type") or ""
+        if not _is_internship(contrat):
+            continue
+
+        ville = _table_cell(ligne, "name") or ""
+        pays = _table_cell(ligne, "field-country") or ""
+        if not _is_in_scope(ville, _country_code(ville, pays)):
+            logger.info("Hors périmètre (%s), ignorée : %s", ville, titre)
+            continue
+
+        lien = re.search(r'href="([^"]*job-offers[^"]*)"', ligne)
+        offres.append(
+            {
+                "title": titre,
+                "company": "Euronext",
+                "location": ", ".join(x for x in (ville, pays) if x) or None,
+                "deadline": None,
+                "url": urljoin(url, lien.group(1)) if lien else url,
+            }
+        )
+
+    logger.info("Euronext : %d stage(s) sur %d annonces.", len(offres), len(lignes))
+    return offres
+
+
+def fetch_talentsoft(host: str, display_name: str) -> list[dict]:
+    """Offres d'un employeur hébergé par TalentSoft. Exemple : Amundi.
+
+    Chaque annonce porte une courte description en trois points — type de
+    contrat, entité, pays. La ville n'y figure pas : elle demanderait de
+    visiter chaque fiche, pour un gain faible. Une annonce française sans
+    ville est donc conservée, comme partout ailleurs dans le projet.
+    """
+    url = f"https://{host}/offre-de-emploi/liste-toutes-offres.aspx"
+    page = _get_html(url)
+    if not page:
+        return []
+
+    blocs = re.split(r'<li class="ts-offer-list-item', page)[1:]
+    offres = []
+    for bloc in blocs:
+        lien = re.search(r'title-link[^>]*href="([^"]+)"[^>]*>(.*?)</a>', bloc, re.S)
+        if not lien:
+            continue
+        titre = _text(lien.group(2))
+        details = _talentsoft_details(bloc)
+        contrat = details[0] if details else ""
+        if not _is_internship(contrat):
+            continue
+
+        pays = details[-1] if len(details) > 1 else ""
+        if not _is_in_scope("", _country_code("", pays)):
+            continue
+
+        entite = details[1] if len(details) > 2 else ""
+        offres.append(
+            {
+                "title": titre,
+                "company": display_name,
+                "location": ", ".join(x for x in (entite, pays) if x) or None,
+                "deadline": None,
+                "url": urljoin(url, lien.group(1)),
+            }
+        )
+
+    logger.info("%s : %d stage(s) sur %d annonces.", display_name, len(offres), len(blocs))
+    return offres
+
+
+def _talentsoft_details(bloc: str) -> list[str]:
+    liste = re.search(r'ts-offer-list-item__description\s*">(.*?)</ul>', bloc, re.S)
+    if not liste:
+        return []
+    return [_text(x) for x in re.findall(r"<li>(.*?)</li>", liste.group(1), re.S)]
+
+
+def _table_cell(ligne: str, classe: str) -> str | None:
+    cellule = re.search(
+        r'class="views-field views-field-' + re.escape(classe) + r'"[^>]*>(.*?)</td>',
+        ligne, re.S,
+    )
+    return _text(cellule.group(1)) if cellule else None
+
+
+def _text(brut: str) -> str:
+    return html.unescape(re.sub(r"<[^>]+>", " ", brut)).strip()
+
+
+def _get_html(url: str) -> str | None:
+    try:
+        response = requests.get(
+            url, headers={"User-Agent": USER_AGENT}, timeout=REQUEST_TIMEOUT_SECONDS
+        )
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as error:
+        logger.warning("Employeur injoignable (%s) : %s", error, url)
+        return None
+
+
 CONNECTORS = {
     "recruitee": lambda source: fetch_recruitee(source["slug"], source["name"]),
     "oracle": lambda source: fetch_oracle(
         source["host"], source["sites"], source["name"]
     ),
+    "euronext": lambda source: fetch_euronext(),
+    "talentsoft": lambda source: fetch_talentsoft(source["host"], source["name"]),
 }
 
 

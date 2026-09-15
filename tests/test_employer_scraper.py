@@ -235,3 +235,104 @@ class TestFetchOracle:
         monkeypatch.setattr(employer_scraper, "REQUEST_DELAY_SECONDS", 0)
         monkeypatch.setattr(employer_scraper, "_get_json", lambda url, session=None: None)
         assert employer_scraper.fetch_oracle("h", ["CX_1"], "L") == []
+
+
+EURONEXT_LIGNE = '''
+<tr>
+ <td class="views-field views-field-field-country">{pays} </td>
+ <td class="views-field views-field-field-job-title"><a href="{url}">{titre}</a> </td>
+ <td class="views-field views-field-field-job-sub-type">{contrat} </td>
+ <td class="views-field views-field-name">{ville} </td>
+</tr>'''
+
+
+def euronext_page(*lignes):
+    return "<table><tbody>" + "".join(lignes) + "</tbody></table>"
+
+
+def euronext_ligne(titre="Corporate Actions Intern", contrat="Intern (Fixed Term) (Trainee)",
+                   ville="Paris", pays="France", url="/en/about/careers/job-offers/r1-x"):
+    return EURONEXT_LIGNE.format(titre=titre, contrat=contrat, ville=ville,
+                                 pays=pays, url=url)
+
+
+class TestFetchEuronext:
+    def test_keeps_internships_and_vie(self, monkeypatch):
+        page = euronext_page(
+            euronext_ligne(titre="Corporate Actions Intern"),
+            euronext_ligne(titre="Issuance Product Manager", contrat="Permanent"),
+            euronext_ligne(titre="ESG Analyst", contrat="International Graduate Programme VIE",
+                           ville="Athens", pays="Greece"),
+            euronext_ligne(titre="Consultant", contrat="Fixed Term (Fixed Term)"),
+        )
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: page)
+        offres = employer_scraper.fetch_euronext()
+        assert [o["title"] for o in offres] == ["Corporate Actions Intern", "ESG Analyst"]
+
+    def test_the_contract_column_decides_not_the_title(self, monkeypatch):
+        # Un intitulé sans le mot « stage » reste un stage si la colonne le dit.
+        page = euronext_page(euronext_ligne(titre="Student Employee"))
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: page)
+        assert len(employer_scraper.fetch_euronext()) == 1
+
+    def test_french_provinces_are_dropped(self, monkeypatch):
+        page = euronext_page(euronext_ligne(ville="Lyon", pays="France"))
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: page)
+        assert employer_scraper.fetch_euronext() == []
+
+    def test_link_and_shape(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_html",
+                            lambda url: euronext_page(euronext_ligne()))
+        o = employer_scraper.fetch_euronext()[0]
+        assert o["url"].startswith("https://www.euronext.com/")
+        assert o["company"] == "Euronext"
+        assert o["location"] == "Paris, France"
+
+    def test_an_unreachable_site_yields_nothing(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: None)
+        assert employer_scraper.fetch_euronext() == []
+
+
+def talentsoft_bloc(titre="Stage Capital Markets H/F", contrat="Stage",
+                    entite="Amundi Asset Management", pays="France",
+                    url="/offre-de-emploi/emploi-x_1.aspx"):
+    return (
+        '<li class="ts-offer-list-item offerlist-item">'
+        f'<h3><a class="ts-offer-list-item__title-link" href="{url}">{titre}</a></h3>'
+        '<ul class="ts-offer-list-item__description ">'
+        f"<li>{contrat}</li><li>{entite}</li><li>{pays}</li></ul>"
+    )
+
+
+class TestFetchTalentsoft:
+    def test_keeps_only_internships(self, monkeypatch):
+        page = "".join([
+            talentsoft_bloc(titre="Stage Capital Markets H/F"),
+            talentsoft_bloc(titre="Senior Project Manager", contrat="CDI"),
+            talentsoft_bloc(titre="Alternance Data", contrat="Alternance"),
+        ])
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: page)
+        offres = employer_scraper.fetch_talentsoft("jobs.amundi.com", "Amundi")
+        assert [o["title"] for o in offres] == ["Stage Capital Markets H/F", "Alternance Data"]
+
+    def test_entity_and_country_make_the_location(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: talentsoft_bloc())
+        o = employer_scraper.fetch_talentsoft("jobs.amundi.com", "Amundi")[0]
+        assert o["location"] == "Amundi Asset Management, France"
+        assert o["company"] == "Amundi"
+        assert o["url"].startswith("https://jobs.amundi.com/")
+
+    def test_html_entities_are_decoded(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_html",
+                            lambda url: talentsoft_bloc(titre="Stage Compliance &amp; Risk"))
+        o = employer_scraper.fetch_talentsoft("h", "Amundi")[0]
+        assert o["title"] == "Stage Compliance & Risk"
+
+    def test_a_block_without_a_link_is_skipped(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_html",
+                            lambda url: '<li class="ts-offer-list-item">rien</li>')
+        assert employer_scraper.fetch_talentsoft("h", "Amundi") == []
+
+    def test_an_unreachable_site_yields_nothing(self, monkeypatch):
+        monkeypatch.setattr(employer_scraper, "_get_html", lambda url: None)
+        assert employer_scraper.fetch_talentsoft("h", "Amundi") == []

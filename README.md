@@ -161,8 +161,8 @@ origines.
 |---|---|---|
 | Eight Advisory | Recruitee (API JSON) | branché — 8 stages sur 78 annonces |
 | Lazard | Oracle Recruiting Cloud (API JSON) | branché — 49 stages, avec les dates limites |
-| Euronext | site propre | identifié, à brancher |
-| Amundi | TalentSoft | identifié, à brancher |
+| Euronext | site propre (tableau HTML) | branché — 22 stages et VIE sur 51 annonces |
+| Amundi | TalentSoft | branché — 32 stages sur 50 annonces |
 | Rothschild & Co | Workday (API JSON) | identifié, vide au dernier test |
 
 Deux employeurs sont hors d'atteinte : **Bpifrance** répond 403 à toute
@@ -170,8 +170,16 @@ requête automatisée — blocage délibéré, même famille que JobTeaser, on
 renonce — et **Natixis** interdit ses chemins de recherche dans son
 `robots.txt` tout en rendant ses listes en JavaScript.
 
+Chez Euronext et Amundi, le type de contrat est un champ à part : « Intern
+(Fixed Term) (Trainee) », « International Graduate Programme VIE », « Stage ».
+C'est plus sûr qu'un mot-clé dans l'intitulé — *Student Employee* chez
+Euronext est bien un stage, et *Internal Advisor Consultant* chez Lazard n'en
+est pas un.
+
 La même règle géographique qu'ailleurs s'applique : Paris, Île-de-France et
-international, pas la province.
+international, pas la province. TalentSoft ne publie que le pays, pas la
+ville : une annonce française sans ville est conservée, comme partout dans le
+projet une donnée absente ne fait pas rejeter une offre.
 
 ## Classement des stages par secteur
 
