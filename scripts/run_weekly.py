@@ -65,6 +65,12 @@ def current_week_of(today: date | None = None) -> date:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--remplacer",
+        action="store_true",
+        help="régénère l'édition de la semaine même si un brouillon existe ; "
+             "une édition déjà envoyée n'est jamais touchée",
+    )
+    parser.add_argument(
         "--generator",
         choices=("auto", "api", "local"),
         default="auto",
@@ -85,7 +91,21 @@ def main(argv: list[str] | None = None) -> int:
     db = SessionLocal()
 
     try:
-        if db.query(Draft).filter(Draft.week_of == week_of).first():
+        existant = db.query(Draft).filter(Draft.week_of == week_of).first()
+        if existant and args.remplacer:
+            # Une édition partie ne se réécrit pas : les abonnés l'ont reçue,
+            # et l'historique doit continuer de dire ce qui leur a été envoyé.
+            if existant.status == "sent":
+                logger.error(
+                    "L'édition de la semaine du %s est déjà envoyée : "
+                    "elle ne peut pas être régénérée.",
+                    week_of,
+                )
+                return 1
+            logger.info("Remplacement du brouillon de la semaine du %s.", week_of)
+            db.delete(existant)
+            db.commit()
+        elif existant:
             logger.info(
                 "Un brouillon existe déjà pour la semaine du %s : rien à faire.",
                 week_of,

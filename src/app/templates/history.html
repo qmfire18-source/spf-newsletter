@@ -97,6 +97,11 @@
         </a>
         {% if d.status != "sent" %}
         <a class="btn btn--primary" href="/">Relire</a>
+        {% else %}
+        <form method="post" action="/draft/{{ d.id }}/rouvrir" style="margin:0"
+              onsubmit="return confirm('Remettre cette édition en attente pour la corriger et la renvoyer ?\n\nLes abonnés ont déjà reçu la version actuelle.');">
+          <button type="submit" class="btn btn--ghost">Rouvrir pour renvoyer</button>
+        </form>
         {% endif %}
       </div>
     </article>

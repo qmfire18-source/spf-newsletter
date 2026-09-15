@@ -181,6 +181,23 @@ international, pas la province. TalentSoft ne publie que le pays, pas la
 ville : une annonce française sans ville est conservée, comme partout dans le
 projet une donnée absente ne fait pas rejeter une offre.
 
+## Relancer ou renvoyer depuis l'interface
+
+**Rafraîchir l'actu** (sommaire de la page de relecture) relance la collecte
+et la rédaction pour la semaine en cours, en remplaçant le brouillon. La
+rédaction dure trois à quatre minutes : la route lance
+`scripts/run_weekly.py --remplacer` en sous-processus et la page affiche une
+bannière qui se rafraîchit seule.
+
+**Une édition déjà envoyée n'est jamais régénérée.** Les abonnés l'ont reçue,
+et l'historique doit continuer de dire ce qui leur a été envoyé. Le refus est
+appliqué à deux endroits : dans la route et dans le script.
+
+**Rouvrir pour renvoyer** (page d'historique) remet une édition envoyée en
+attente, pour corriger un contenu abîmé ou un lien mort puis réexpédier. La
+trace de l'envoi précédent est conservée jusqu'au suivant, pour que
+l'historique ne mente pas entre-temps.
+
 ## Historique des éditions
 
 `/historique` liste toutes les éditions, envoyées ou non : la semaine, la date

@@ -439,3 +439,112 @@ class TestSendRecordsTheDelivery:
         assert draft.brevo_campaign_id is None
         assert draft.recipient_count is None
         assert draft.status == "pending_review"
+
+
+class TestRegenerate:
+    def test_requires_authentication(self, client):
+        assert client.post("/regenerer").headers["location"] == "/login"
+
+    def test_launches_a_background_run(self, client, draft, monkeypatch):
+        lancements = []
+        monkeypatch.setattr(main, "_regeneration",
+                            {"en_cours": False, "depuis": None, "erreur": None})
+
+        class FauxFil:
+            def __init__(self, target=None, daemon=None): lancements.append(target)
+            def start(self): pass
+
+        monkeypatch.setattr(main.threading, "Thread", FauxFil)
+        login(client)
+        r = client.post("/regenerer")
+        assert r.status_code == 303
+        assert len(lancements) == 1
+        assert main._regeneration["en_cours"] is True
+
+    def test_refuses_while_one_is_running(self, client, draft, monkeypatch):
+        monkeypatch.setattr(main, "_regeneration",
+                            {"en_cours": True, "depuis": None, "erreur": None})
+        lancements = []
+        monkeypatch.setattr(main.threading, "Thread",
+                            lambda **kw: lancements.append(kw) or type("T", (), {"start": lambda s: None})())
+        login(client)
+        client.post("/regenerer")
+        assert lancements == []
+
+    def test_refuses_to_replace_a_sent_edition(self, client, db_session, draft, monkeypatch):
+        # Les abonnés l'ont reçue : on ne réécrit pas ce qui est parti.
+        from datetime import date as _date
+        draft.week_of = main.current_week_of()
+        draft.status = "sent"
+        db_session.commit()
+        monkeypatch.setattr(main, "_regeneration",
+                            {"en_cours": False, "depuis": None, "erreur": None})
+        login(client)
+        r = client.post("/regenerer")
+        assert "error" in r.headers["location"]
+        assert main._regeneration["en_cours"] is False
+
+    def test_the_banner_shows_while_running(self, client, draft, monkeypatch):
+        monkeypatch.setattr(main, "_regeneration",
+                            {"en_cours": True, "depuis": datetime(2026, 9, 15, 11, 5),
+                             "erreur": None})
+        login(client)
+        page = client.get("/").text
+        assert "Régénération en cours" in page
+        assert 'http-equiv="refresh"' in page
+
+    def test_a_failure_is_reported(self, client, draft, monkeypatch):
+        monkeypatch.setattr(main, "_regeneration",
+                            {"en_cours": False, "depuis": None,
+                             "erreur": "CLI introuvable"})
+        login(client)
+        assert "CLI introuvable" in client.get("/").text
+
+
+class TestReopen:
+    def test_requires_authentication(self, client, draft):
+        assert client.post(f"/draft/{draft.id}/rouvrir").headers["location"] == "/login"
+
+    def test_a_sent_edition_can_be_reopened(self, client, db_session, draft):
+        draft.status = "sent"
+        draft.sent_at = datetime(2026, 9, 15, 10, 48)
+        db_session.commit()
+        login(client)
+        client.post(f"/draft/{draft.id}/rouvrir")
+        db_session.refresh(draft)
+        assert draft.status == "pending_review"
+
+    def test_the_previous_send_trace_survives(self, client, db_session, draft):
+        # L'historique ne doit pas mentir entre la réouverture et le renvoi.
+        draft.status = "sent"
+        draft.sent_at = datetime(2026, 9, 15, 10, 48)
+        draft.recipient_count = 87
+        db_session.commit()
+        login(client)
+        client.post(f"/draft/{draft.id}/rouvrir")
+        db_session.refresh(draft)
+        assert draft.sent_at is not None
+        assert draft.recipient_count == 87
+
+    def test_a_pending_edition_is_refused(self, client, draft):
+        login(client)
+        r = client.post(f"/draft/{draft.id}/rouvrir")
+        assert "error" in r.headers["location"]
+
+    def test_unknown_draft_is_a_404(self, client):
+        login(client)
+        assert client.post("/draft/9999/rouvrir").status_code == 404
+
+    def test_a_reopened_edition_can_be_sent_again(self, client, db_session, draft, monkeypatch):
+        envois = []
+        monkeypatch.setattr(main, "send_campaign",
+                            lambda subject, html_content: envois.append(subject) or "2")
+        monkeypatch.setattr(main, "count_recipients", lambda: 87)
+        draft.status = "sent"
+        db_session.commit()
+        login(client)
+        client.post(f"/draft/{draft.id}/rouvrir")
+        client.post(f"/draft/{draft.id}/send", data=ENVOI)
+        db_session.refresh(draft)
+        assert draft.status == "sent"
+        assert len(envois) == 1

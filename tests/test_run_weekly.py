@@ -199,3 +199,36 @@ class TestGeneratorChoice:
         monkeypatch.setattr(run_weekly, "find_cli", lambda: None)
         generate, _ = run_weekly.choose_generator("auto")
         assert generate is run_weekly.generate_draft
+
+
+class TestReplaceMode:
+    def test_replaces_a_pending_draft(self, db, pipeline):
+        run_weekly.main()
+        premier = db.query(Draft).one()
+        premier.news_content = "<p>ancienne version</p>"
+        db.commit()
+
+        assert run_weekly.main(["--remplacer"]) == 0
+        draft = db.query(Draft).one()
+        assert draft.news_content != "<p>ancienne version</p>"
+        assert pipeline["draft"] == 2
+
+    def test_refuses_to_replace_a_sent_edition(self, db, pipeline):
+        # Les abonnés l'ont reçue : l'historique doit rester fidèle.
+        run_weekly.main()
+        envoye = db.query(Draft).one()
+        envoye.status = "sent"
+        db.commit()
+
+        assert run_weekly.main(["--remplacer"]) == 1
+        assert db.query(Draft).one().status == "sent"
+        assert pipeline["draft"] == 1
+
+    def test_without_the_flag_nothing_is_touched(self, db, pipeline):
+        run_weekly.main()
+        assert run_weekly.main() == 0
+        assert pipeline["draft"] == 1
+
+    def test_replace_on_an_empty_week_just_generates(self, db, pipeline):
+        assert run_weekly.main(["--remplacer"]) == 0
+        assert db.query(Draft).count() == 1

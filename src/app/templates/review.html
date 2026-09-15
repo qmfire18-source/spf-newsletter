@@ -103,6 +103,16 @@
                     font-variant-numeric:tabular-nums; }
     .toc__sep { width:1px; height:18px; background:var(--border); }
 
+    .encours { display:flex; align-items:center; gap:.7rem; padding:.85rem 1.1rem;
+               background:var(--surface-2); border:1px solid var(--border);
+               border-radius:var(--radius); margin-bottom:1.25rem;
+               font-size:.92rem; max-width:44rem; margin-inline:auto; }
+    .tourne { width:14px; height:14px; border-radius:50%; flex:none;
+              border:2px solid var(--border); border-top-color:var(--navy);
+              animation:tourne 1s linear infinite; }
+    @keyframes tourne { to { transform:rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .tourne { animation:none; } }
+
     .saved { font-size:.82rem; color:var(--fg-muted); display:none; }
     .saved[data-on="1"] { display:inline; }
 
@@ -203,12 +213,34 @@
     <span class="badge"><span class="badge__dot"></span>En attente de validation</span>
   </div>
 
+  {% if regeneration and regeneration.en_cours %}
+  <div class="encours" role="status">
+    <span class="tourne" aria-hidden="true"></span>
+    <span>Régénération en cours depuis
+      {{ regeneration.depuis.strftime("%H:%M") if regeneration.depuis else "peu" }}.
+      La page se rafraîchit toute seule.</span>
+  </div>
+  <meta http-equiv="refresh" content="20">
+  {% elif regeneration and regeneration.erreur %}
+  <p class="flash flash--error" role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/>
+      <path d="M12 8v5M12 16.5v.01"/></svg>
+    <span>La dernière régénération a échoué : {{ regeneration.erreur }}</span>
+  </p>
+  {% endif %}
+
   <nav class="toc" aria-label="Sommaire du brouillon" style="max-width:44rem;margin-inline:auto;">
     <a href="#bloc-actus">Actus financières</a>
     <a href="#bloc-stages">Stages</a>
     <span class="toc__sep" aria-hidden="true"></span>
     <a href="/draft/{{ draft.id }}/apercu" target="_blank" rel="noopener">Aperçu email</a>
     <a href="/historique">Historique</a>
+    <span class="toc__sep" aria-hidden="true"></span>
+    <form method="post" action="/regenerer" style="margin:0"
+          onsubmit="return confirm('Relancer la collecte et la rédaction ?\n\nLe brouillon actuel sera remplacé. Comptez trois à quatre minutes.');">
+      <button type="submit" class="tool" style="min-height:28px">Rafraîchir l'actu</button>
+    </form>
     <span class="toc__stats">
       <span><b id="stat-items">·</b> actualités</span>
       <span><b id="stat-offres">·</b> offres</span>

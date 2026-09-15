@@ -1,4 +1,4 @@
-"""Interface web de validation — voir PLAN.md §4.
+"""Interface web de validation, voir PLAN.md §4.
 
 Auth par mot de passe partagé haché + liste blanche d'emails, session en
 cookie signé et daté. Une seule vue : voir le dernier brouillon
@@ -7,9 +7,11 @@ pending_review, l'éditer, l'envoyer.
 L'envoi n'est JAMAIS déclenché par le cron : il part d'ici, sur action humaine.
 """
 import logging
-from urllib.parse import urlencode
-
+import subprocess
+import sys
+import threading
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -25,6 +27,7 @@ from src.config import (
     REVIEWER_PASSWORD_HASH,
     SESSION_MAX_AGE_SECONDS,
 )
+from scripts.run_weekly import current_week_of
 from src.db.models import Draft, SessionLocal, utcnow
 from src.config import BREVO_LIST_ID
 from src.email.brevo_sender import (
@@ -62,6 +65,39 @@ def _logo_url() -> str | None:
 
 
 templates.env.globals["logo_url"] = _logo_url()
+
+RACINE = Path(__file__).resolve().parent.parent.parent
+
+# Une régénération dure trois à quatre minutes : scraping, lecture des
+# articles, puis rédaction. Elle ne peut pas tenir dans une requête HTTP. On
+# lance donc le script existant en sous-processus et on suit son état ici.
+# L'application tourne en un seul processus : un dictionnaire suffit, et le
+# verrou empêche deux régénérations simultanées.
+_regeneration = {"en_cours": False, "depuis": None, "erreur": None}
+_verrou_regeneration = threading.Lock()
+
+
+def regeneration_state() -> dict:
+    return dict(_regeneration)
+
+
+def _lancer_regeneration() -> None:
+    """Exécute scripts/run_weekly.py --remplacer et retient son issue."""
+    try:
+        resultat = subprocess.run(
+            [sys.executable, "scripts/run_weekly.py", "--generator", "local",
+             "--remplacer"],
+            cwd=RACINE, capture_output=True, text=True, timeout=1800,
+        )
+        if resultat.returncode != 0:
+            derniere = (resultat.stderr or resultat.stdout or "").strip().splitlines()
+            _regeneration["erreur"] = derniere[-1][:300] if derniere else "échec inconnu"
+        else:
+            _regeneration["erreur"] = None
+    except Exception as error:
+        _regeneration["erreur"] = f"{type(error).__name__}: {error}"[:300]
+    finally:
+        _regeneration["en_cours"] = False
 
 
 class NotAuthenticated(Exception):
@@ -170,12 +206,68 @@ def review_draft(
         "review.html",
         {
             "draft": draft,
+            "regeneration": regeneration_state(),
             # La même formulation que dans l'email, plutôt qu'une date ISO.
             "semaine": _semaine_en_lettres(draft.week_of) if draft else "",
             "reviewer": reviewer,
             "message": message,
             "error": error,
         },
+    )
+
+
+@app.post("/regenerer")
+def regenerate(
+    reviewer: str = Depends(get_current_reviewer),
+    db=Depends(get_db),
+):
+    """Relance la collecte et la rédaction pour la semaine en cours."""
+    semaine = current_week_of()
+    existant = db.query(Draft).filter(Draft.week_of == semaine).first()
+    if existant and existant.status == "sent":
+        return _redirect_home(
+            error="L'édition de cette semaine est déjà envoyée : elle ne peut "
+                  "plus être régénérée."
+        )
+
+    with _verrou_regeneration:
+        if _regeneration["en_cours"]:
+            return _redirect_home(message="Une régénération est déjà en cours.")
+        _regeneration.update({"en_cours": True, "depuis": utcnow(), "erreur": None})
+
+    threading.Thread(target=_lancer_regeneration, daemon=True).start()
+    logger.info("Régénération demandée par %s", reviewer)
+    return _redirect_home(
+        message="Régénération lancée. Comptez trois à quatre minutes ; la page "
+                "se rafraîchit toute seule."
+    )
+
+
+@app.post("/draft/{draft_id}/rouvrir")
+def reopen_draft(
+    draft_id: int,
+    reviewer: str = Depends(get_current_reviewer),
+    db=Depends(get_db),
+):
+    """Remet une édition envoyée en attente, pour la corriger et la renvoyer.
+
+    Le cas d'usage est l'envoi raté : contenu abîmé, lien mort, erreur
+    repérée trop tard. La trace de l'envoi précédent est conservée jusqu'au
+    suivant, pour que l'historique ne mente pas entre-temps.
+    """
+    draft = db.query(Draft).filter(Draft.id == draft_id).first()
+    if not draft:
+        raise HTTPException(status_code=404, detail="Brouillon introuvable.")
+    if draft.status != "sent":
+        return _redirect_home(error="Cette édition n'a pas été envoyée.")
+
+    db.query(Draft).filter(Draft.id == draft_id).update(
+        {"status": "pending_review"}
+    )
+    db.commit()
+    logger.info("Édition %s rouverte par %s", draft_id, reviewer)
+    return _redirect_home(
+        message="Édition rouverte. Elle peut être corrigée puis renvoyée."
     )
 
 
