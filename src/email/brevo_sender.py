@@ -5,6 +5,7 @@ validation, sur action humaine explicite.
 """
 import html
 import logging
+import re
 from datetime import datetime
 
 import requests
@@ -111,6 +112,46 @@ def _post(path: str, headers: dict, json: dict | None = None) -> dict:
         return {}
 
 
+# Styles appliqués directement sur chaque balise du contenu généré.
+#
+# Le bloc <style> ne suffit pas : Gmail sur mobile et plusieurs autres clients
+# le suppriment, et les rubriques redevenaient alors des titres noirs
+# ordinaires — l'étiquette dorée disparaissait précisément là où on lit le
+# plus. Ces styles-là voyagent avec la balise et survivent partout.
+#
+# Le nettoyage retire tout attribut `style` du contenu reçu ; ceux-ci sont
+# ajoutés ensuite, et leurs valeurs viennent d'ici, pas du modèle.
+STYLES_CONTENU = {
+    "h3": (
+        "font-size:13px;letter-spacing:.12em;text-transform:uppercase;"
+        f"color:{OR_FONCE};font-weight:700;margin:32px 0 0;padding-top:16px;"
+        f"border-top:1px solid {FILET};font-family:Helvetica,Arial,sans-serif;"
+    ),
+    "h4": (
+        "font-family:Georgia,'Times New Roman',serif;font-size:19px;"
+        f"line-height:1.3;color:{ENCRE};font-weight:600;margin:10px 0 10px;"
+    ),
+    "p": "margin:0 0 14px;",
+    "ul": "margin:0 0 16px;padding-left:20px;",
+    "ol": "margin:0 0 16px;padding-left:20px;",
+    "li": "margin:0 0 10px;",
+    "a": f"color:{LIEN};",
+}
+
+_BALISE_OUVRANTE = re.compile(r"<(h3|h4|p|ul|ol|li|a)(\s[^>]*)?>")
+
+
+def inline_styles(fragment: str) -> str:
+    """Pose les styles sur chaque balise, pour les clients sans <style>."""
+
+    def remplacer(trouve):
+        balise = trouve.group(1)
+        attributs = trouve.group(2) or ""
+        return f'<{balise}{attributs} style="{STYLES_CONTENU[balise]}">'
+
+    return _BALISE_OUVRANTE.sub(remplacer, fragment or "")
+
+
 def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
     """Enveloppe les fragments générés dans un email aux couleurs de l'asso.
 
@@ -126,6 +167,8 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
     """
     titre = f"Newsletter Sciences Po Finance : semaine du {week_of}"
     semaine = html.escape(_semaine_en_lettres(week_of))
+    news_html = _sans_filet_initial(inline_styles(news_html))
+    stages_html = inline_styles(stages_html)
 
     return f"""<!DOCTYPE html>
 <html lang="fr">
@@ -161,7 +204,7 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
        portait à 20px, ce qui le coupait en deux lignes sur un téléphone :
        « Semaine du 14 septembre » / « 2026 ». Il rétrécit au contraire. */
     .titre     {{ font-size:13px !important; letter-spacing:0 !important; }}
-    .contenu h3 {{ font-size:11px !important; }}
+    .contenu h3 {{ font-size:13px !important; }}
     .contenu h4 {{ font-size:17px !important; }}
     .contenu, .contenu p, .contenu li {{ font-size:16px !important; }}
   }}
@@ -169,7 +212,8 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
 </head>
 <body style="margin:0;padding:0;background:{FOND};
              -webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<div class="preheader">{semaine}. L'actu finance décryptée et les stages de la semaine.</div>
+<div class="preheader" style="display:none;max-height:0;overflow:hidden;
+     mso-hide:all;font-size:1px;line-height:1px;color:#F4F5F7;opacity:0;">{semaine}. L'actu finance décryptée et les stages de la semaine.</div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
        style="background:{FOND};">
@@ -240,6 +284,19 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
 </table>
 </body>
 </html>"""
+
+
+def _sans_filet_initial(fragment: str) -> str:
+    """Retire le filet de la toute première rubrique : rien ne la précède."""
+    premiere = fragment.find("<h3")
+    if premiere == -1:
+        return fragment
+    fin = fragment.find(">", premiere)
+    debut = fragment[premiere:fin]
+    allege = debut.replace(f"border-top:1px solid {FILET};", "").replace(
+        "padding-top:16px;", ""
+    ).replace("margin:32px 0 0;", "margin:8px 0 0;")
+    return fragment[:premiere] + allege + fragment[fin:]
 
 
 def _semaine_en_lettres(week_of) -> str:

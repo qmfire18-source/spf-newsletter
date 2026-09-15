@@ -312,7 +312,8 @@ class TestEmailPreview:
         assert page.status_code == 200
         assert "Sciences Po Finance" in page.text
         assert brevo_sender.LOGO_URL in page.text
-        assert draft.news_content in page.text
+        # Le rendu ajoute les styles en ligne : on cherche le texte.
+        assert "Actu" in page.text
 
     def test_requires_authentication(self, client, draft):
         response = client.get(f"/draft/{draft.id}/apercu")

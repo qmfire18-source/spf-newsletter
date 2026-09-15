@@ -123,8 +123,10 @@ class TestRenderNewsletter:
     def test_produces_a_full_document(self):
         out = brevo_sender.render_newsletter("<p>A</p>", "<p>S</p>", date(2026, 9, 7))
         assert out.startswith("<!DOCTYPE html>")
-        assert "<p>A</p>" in out
-        assert "<p>S</p>" in out
+        # Le contenu porte désormais ses styles en ligne : on vérifie le
+        # texte, pas le balisage exact.
+        assert ">A</p>" in out
+        assert ">S</p>" in out
 
     def test_shows_the_week(self):
         out = brevo_sender.render_newsletter("", "", date(2026, 9, 7))
@@ -235,3 +237,59 @@ class TestSectionHierarchy:
     def test_the_label_colour_reads_on_white(self):
         # L'or clair de l'en-tête ne passe pas le contraste sur fond blanc.
         assert brevo_sender.OR_FONCE == "#8A6B22"
+
+
+class TestInlineStyles:
+    def test_every_content_tag_carries_its_own_style(self):
+        # Gmail sur mobile supprime le bloc <style> : sans styles en ligne,
+        # l'étiquette dorée redevenait un titre noir ordinaire.
+        out = brevo_sender.inline_styles(
+            '<h3>MARCHÉS</h3><h4>Titre</h4><p>Texte</p><ul><li>x</li></ul>'
+        )
+        for balise in ("h3", "h4", "p", "ul", "li"):
+            assert f"<{balise} style=" in out or f'<{balise} style=' in out
+
+    def test_existing_attributes_survive(self):
+        out = brevo_sender.inline_styles('<h4 id="a1">Titre</h4>')
+        assert 'id="a1"' in out and "style=" in out
+
+    def test_the_rubric_is_gold_and_uppercase(self):
+        out = brevo_sender.inline_styles("<h3>MARCHÉS</h3>")
+        assert brevo_sender.OR_FONCE in out
+        assert "text-transform:uppercase" in out
+
+    def test_untouched_tags_are_left_alone(self):
+        assert brevo_sender.inline_styles("<strong>x</strong>") == "<strong>x</strong>"
+
+    def test_empty_fragment(self):
+        assert brevo_sender.inline_styles("") == ""
+        assert brevo_sender.inline_styles(None) == ""
+
+    def test_the_first_rubric_has_no_rule_above_it(self):
+        # Rien ne la précède : un filet y serait une barre flottante.
+        out = brevo_sender.render_newsletter(
+            "<h3>MARCHÉS</h3><p>a</p><h3>MACRO</h3><p>b</p>", "", date(2026, 9, 14)
+        )
+        premier = out[out.index("<h3"):out.index("</h3>")]
+        assert "border-top" not in premier
+        assert out.count(f"border-top:1px solid {brevo_sender.FILET}") >= 1
+
+    def test_styles_come_from_us_not_from_the_model(self):
+        # Le nettoyage retire tout style reçu ; ceux-ci sont ajoutés ensuite.
+        from src.sanitize import sanitize_html
+        propre = sanitize_html('<h3 style="color:red">MARCHÉS</h3>')
+        assert "red" not in propre
+        assert brevo_sender.OR_FONCE in brevo_sender.inline_styles(propre)
+
+
+class TestPreheaderStaysHidden:
+    def test_it_is_hidden_without_the_style_block(self):
+        # Un client qui supprime <style> affichait le pré-en-tête en clair,
+        # juste au-dessus de l'en-tête.
+        import re
+        out = brevo_sender.render_newsletter("<p>A</p>", "", date(2026, 9, 14))
+        sans_style = re.sub(r"<style>.*?</style>", "", out, flags=re.S)
+        bloc = sans_style[sans_style.index('class="preheader"'):]
+        bloc = bloc[:bloc.index("</div>")]
+        assert "display:none" in bloc
+        assert "max-height:0" in bloc
