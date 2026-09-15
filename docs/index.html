@@ -4,168 +4,181 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Newsletter Sciences Po Finance</title>
-<meta name="description" content="Chaque lundi : les actus finance qui comptent, décryptées pour des étudiants, et les stages de la semaine. Gratuit.">
+<meta name="description" content="Chaque lundi : les actus finance décryptées avec leurs chiffres, et les stages de la semaine classés par secteur. Gratuit.">
 <meta property="og:title" content="Newsletter Sciences Po Finance">
 <meta property="og:description" content="Chaque lundi : l'actu finance décryptée et les stages de la semaine. Gratuit.">
-<meta property="og:image" content="logo.jpeg">
+<meta property="og:image" content="logo-medaillon.png">
 <meta property="og:type" content="website">
 <link rel="icon" href="logo.jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#183050; --navy-700:#112438; --navy-300:#7A97BE;
-    --bg:#FBFAF8; --surface:#FFFFFF; --surface-2:#F2F4F7;
-    --fg:#141B2B; --fg-muted:#5A6478; --border:#E3E7ED;
-    --gold:#B08B3F;
+    --navy:#183050; --navy-900:#0E1E35; --navy-700:#122740; --navy-300:#7A97BE;
+    --gold:#B08B3F; --gold-soft:#E8D6AE;
+    --paper:#F5F7FA; --surface:#FFFFFF; --surface-2:#EDF1F6;
+    --ink:#141B2B; --ink-2:#4E596B; --ink-3:#7A8496; --rule:#DDE3EB;
     --sans:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
     --serif:"Newsreader",Georgia,"Times New Roman",serif;
-    --wrap:64rem;
+    --mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     color-scheme:light;
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#0C1220; --surface:#141C2C; --surface-2:#1B2436;
-      --fg:#EAEEF6; --fg-muted:#9BA7BE; --border:#27324A;
-      --navy:#1E3A5C; --navy-300:#9DBBE0; --gold:#D8B463;
+      --paper:#0B1220; --surface:#141C2C; --surface-2:#1B2436;
+      --ink:#E9EDF5; --ink-2:#A6B1C5; --ink-3:#7A8496; --rule:#26314A;
+      --navy:#1D3A5C; --navy-900:#0A1526; --navy-300:#8AA9CE;
+      --gold:#D3AE63; --gold-soft:#E8D6AE;
       color-scheme:dark;
     }
   }
   *,*::before,*::after{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
-       font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 1.5rem}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+       overflow-x:hidden}
+  .wrap{max-width:60rem;margin:0 auto;padding-inline:1.75rem}
   a{color:var(--navy)}
   @media (prefers-color-scheme:dark){a{color:var(--navy-300)}}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:4px}
 
-  /* ---------- en-tête ---------- */
-  header{background:var(--navy);color:#fff;padding:1rem 0}
-  .brand{display:flex;align-items:center;gap:.8rem}
-  .brand img{width:42px;height:42px;border-radius:8px;background:#fff;flex:none}
-  .brand b{font-family:var(--serif);font-weight:600;font-size:1.05rem;display:block;line-height:1.2}
-  .brand span{font-size:.75rem;color:#BED0E8;letter-spacing:.06em;text-transform:uppercase}
+  /* ---------- entrée en scène ---------- */
+  @keyframes monte{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes trace{to{stroke-dashoffset:0}}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .anim{animation:monte .7s cubic-bezier(.2,.7,.3,1) both}
+  .d1{animation-delay:.06s}.d2{animation-delay:.14s}.d3{animation-delay:.22s}
 
-  /* ---------- hero ---------- */
-  .hero{padding-block:4.5rem 3rem;text-align:center}
-  .kicker{display:inline-block;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
-          color:var(--gold);font-weight:500;margin-bottom:1.1rem}
-  h1{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;line-height:1.1;
-     font-size:clamp(1.75rem,7.5vw,3.6rem);margin:0 0 1rem}
-  h1 em{font-style:italic;color:var(--navy)}
-  @media (prefers-color-scheme:dark){h1 em{color:var(--navy-300)}}
-  .lede{font-size:clamp(1.02rem,2.2vw,1.2rem);color:var(--fg-muted);
-        max-width:36rem;margin:0 auto 2.2rem}
+  /* ---------- bandeau ---------- */
+  .top{background:var(--navy-900);color:#fff}
+  .top__in{max-width:60rem;margin:0 auto;padding:.9rem 1.75rem;
+           display:flex;align-items:center;gap:.8rem}
+  .top img{width:38px;height:38px;border-radius:8px;background:#fff;flex:none}
+  .top b{font-family:var(--serif);font-weight:600;font-size:1.02rem;display:block;line-height:1.2}
+  .top span{font-size:.72rem;color:var(--navy-300);letter-spacing:.09em;text-transform:uppercase}
+
+  /* ---------- héros ---------- */
+  .hero{position:relative;background:var(--navy);color:#fff;overflow:hidden;
+        padding-block:4.5rem 6.5rem}
+  .courbe{position:absolute;inset:auto 0 0 0;width:100%;height:38%;
+          pointer-events:none;opacity:.45}
+  .courbe path.ligne{fill:none;stroke:var(--gold);stroke-width:2;
+               stroke-dasharray:1600;stroke-dashoffset:1600;
+               animation:trace 2.6s .5s cubic-bezier(.4,0,.2,1) forwards}
+  .courbe path.aire{fill:url(#degrade);stroke:none;opacity:0;
+                animation:monte 1.2s 1.6s both}
+  .hero__in{position:relative;max-width:60rem;margin:0 auto;padding-inline:1.75rem}
+  .kicker{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--mono);
+          font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+          color:var(--gold-soft);margin:0 0 1.3rem}
+  .kicker i{width:7px;height:7px;border-radius:50%;background:var(--gold-soft);
+            display:inline-block;animation:pulse 2.4s ease-in-out infinite}
+  h1{font-family:var(--serif);font-weight:600;letter-spacing:-.022em;line-height:1.06;
+     font-size:clamp(2.1rem,6.4vw,4.1rem);margin:0 0 1.1rem;max-width:15ch;
+     text-wrap:balance}
+  h1 em{font-style:italic;color:var(--gold-soft)}
+  .lede{font-size:clamp(1.04rem,2.1vw,1.22rem);color:#C8D6E8;max-width:40rem;
+        margin:0 0 2.2rem}
 
   /* ---------- formulaire ---------- */
-  .signup{max-width:34rem;margin:0 auto}
+  .signup{max-width:33rem}
   form{display:flex;gap:.6rem;flex-wrap:wrap}
-  input[type=email]{flex:1 1 16rem;min-width:0;min-height:52px;padding:.8rem 1rem;
-    font:inherit;color:var(--fg);background:var(--surface);
-    border:1px solid var(--border);border-radius:8px}
-  input[type=email]:focus-visible,button:focus-visible,a:focus-visible{
-    outline:3px solid var(--navy);outline-offset:2px}
-  button{min-height:52px;padding:.8rem 1.6rem;border:0;border-radius:8px;
-    background:var(--navy);color:#fff;font:inherit;font-weight:500;cursor:pointer;
-    transition:background-color .18s ease}
-  button:hover{background:var(--navy-700)}
-  .note{font-size:.88rem;color:var(--fg-muted);margin:.9rem 0 0}
+  input[type=email]{flex:1 1 15rem;min-width:0;min-height:56px;padding:.85rem 1.1rem;
+    font:inherit;color:#141B2B;background:#fff;border:1px solid transparent;
+    border-radius:9px}
+  input[type=email]::placeholder{color:#7A8496}
+  button{min-height:56px;padding:.85rem 1.8rem;border:0;border-radius:9px;
+    background:var(--gold);color:#1A1204;font:inherit;font-weight:700;cursor:pointer;
+    transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s ease,filter .18s ease}
+  button:hover{filter:brightness(1.07);transform:translateY(-2px);
+               box-shadow:0 8px 20px rgba(0,0,0,.28)}
+  button:active{transform:translateY(0)}
+  .note{font-size:.86rem;color:#9FB4CE;margin:1rem 0 0}
+  .note strong{color:#fff;font-weight:500}
+  .note a{color:var(--gold-soft)}
 
-  /* ---------- ce qu'il y a dedans ---------- */
-  .inside{padding-block:3.5rem}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-        padding:1.6rem}
-  .card .num{font-family:var(--serif);font-size:2rem;font-weight:600;color:var(--gold);
-             line-height:1;display:block;margin-bottom:.5rem}
-  .card h3{font-family:var(--serif);font-size:1.12rem;font-weight:600;margin:0 0 .4rem}
-  .card p{margin:0;color:var(--fg-muted);font-size:1rem}
+  /* ---------- ce que vous recevez ---------- */
+  .inside{padding-block:4rem 1rem}
+  .sectitle{font-family:var(--serif);font-size:clamp(1.5rem,3.4vw,2rem);font-weight:600;
+            margin:0 0 .4rem;letter-spacing:-.015em}
+  .subtitle{color:var(--ink-2);margin:0 0 2.4rem;max-width:44ch}
+  .rows{display:grid;gap:0;border-top:1px solid var(--rule)}
+  .row{display:grid;grid-template-columns:7.5rem 1fr;gap:.35rem 1.8rem;
+       padding:1.5rem 0;border-bottom:1px solid var(--rule);align-items:baseline}
+  .row__num{font-family:var(--serif);font-size:2.3rem;font-weight:600;color:var(--gold);
+            line-height:1;grid-row:1/3;text-align:right;font-variant-numeric:tabular-nums;
+            white-space:nowrap}
+  .row h3{font-family:var(--serif);font-size:1.16rem;font-weight:600;margin:0 0 .2rem}
+  .row p{margin:0;color:var(--ink-2);font-size:.99rem;max-width:46ch;grid-column:2}
 
   /* ---------- aperçu ---------- */
-  .preview{padding-block:1rem 4rem}
-  .sectitle{font-family:var(--serif);font-size:1.5rem;font-weight:600;
-            text-align:center;margin:0 0 .5rem}
-  .subtitle{text-align:center;color:var(--fg-muted);margin:0 0 2rem;font-size:1rem}
-  .mock{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-        overflow:hidden;max-width:44rem;margin:0 auto}
-  .mock__top{background:var(--navy);padding:1rem 1.5rem;color:#fff;
-             font-family:var(--serif);font-size:1rem;white-space:nowrap;
-             overflow:hidden;text-overflow:ellipsis}
-  .mock__body{padding:1.5rem}
-  .mock__body h4{font-family:var(--serif);font-size:1.15rem;font-weight:600;margin:0 0 .5rem}
-  .mock__body p{margin:0 0 1rem;font-size:1rem}
-  .mock__body .src{font-size:.85rem;color:var(--fg-muted)}
-  .fade{position:relative;max-height:17rem;overflow:hidden}
-  .fade::after{content:"";position:absolute;inset:auto 0 0 0;height:6rem;
-    background:linear-gradient(to bottom,transparent,var(--surface))}
+  .preview{padding-block:3.5rem 4.5rem}
+  .mock{max-width:38rem;margin:0 auto;border-radius:12px;overflow:hidden;
+        box-shadow:0 2px 6px rgba(15,23,42,.07),0 22px 50px rgba(15,23,42,.13);
+        background:#fff;transition:transform .4s cubic-bezier(.2,.7,.3,1)}
+  .mock:hover{transform:translateY(-5px)}
+  .mock__head{background:#183050;padding:1.2rem 1.5rem;display:flex;
+              align-items:center;gap:.85rem}
+  .mock__head img{width:42px;height:42px;border-radius:7px;background:#fff;flex:none}
+  .mock__head b{font-family:var(--serif);color:#fff;font-size:1.02rem;display:block;
+                line-height:1.2;font-weight:600}
+  .mock__head span{font-size:.7rem;color:#BED0E8;letter-spacing:.08em;text-transform:uppercase}
+  .mock__band{background:#F0E7D4;padding:.6rem 1.5rem;font-family:var(--serif);
+              font-size:.88rem;color:#183050}
+  .mock__body{padding:1.5rem;color:#141B2B}
+  .mock__body h4{font-family:var(--serif);font-size:1.13rem;font-weight:600;
+                 margin:0 0 .55rem;line-height:1.3}
+  .mock__body p{margin:0 0 .95rem;font-size:.97rem;line-height:1.62}
+  .mock__body .src{font-size:.82rem;color:#5A6478}
+  .fade{max-height:21rem;overflow:hidden;position:relative}
+  .fade::after{content:"";position:absolute;inset:auto 0 0 0;height:9rem;
+    background:linear-gradient(to bottom,rgba(255,255,255,0),#fff)}
 
-  /* ---------- pied ---------- */
-  footer{border-top:1px solid var(--border);padding-block:2.2rem;text-align:center;
-         color:var(--fg-muted);font-size:.9rem}
+  footer{border-top:1px solid var(--rule);padding-block:2.4rem;color:var(--ink-3);
+         font-size:.88rem}
 
-  @media (max-width:760px){
-    .grid{grid-template-columns:1fr}
-    .hero{padding-block:3rem 2.2rem}
-  }
-  @media (max-width:560px){
-    /* Rythme vertical unique : 1,4rem entre éléments liés, 2,6rem entre
-       sections. Les écarts inégaux étaient le principal défaut. */
+  /* ---------- téléphone ---------- */
+  @media (max-width:640px){
     body{font-size:16px}
-    .wrap{padding:0 1.7rem}
-
-    .hero{padding-block:1.9rem 0;text-align:left}
-    .kicker{font-size:.75rem;letter-spacing:.12em;margin-bottom:.55rem}
-    h1{line-height:1.13;margin-bottom:.6rem}
-    .lede{font-size:1.02rem;line-height:1.58;margin:0 0 1.4rem;max-width:none}
-
-    /* En colonne, flex-basis porte sur la HAUTEUR : le 16rem prévu pour la
-       largeur en ligne rendait le champ haut de 256 px. */
-    form{flex-direction:column;gap:.5rem}
+    .wrap,.hero__in,.top__in{padding-inline:1.35rem}
+    .hero{padding-block:2.8rem 4.5rem}
+    .courbe{height:30%;opacity:.38}
+    h1{max-width:none;line-height:1.1;margin-bottom:.85rem}
+    .lede{margin-bottom:1.7rem}
+    form{flex-direction:column;gap:.55rem}
     input[type=email]{flex:0 0 auto}
-    input[type=email],button{width:100%;min-height:54px}
-    .note{text-align:left;font-size:.87rem;line-height:1.55;margin-top:.8rem}
+    input[type=email],button{width:100%}
+    .note{margin-top:.9rem}
 
-    /* Les trois arguments perdent leur carte : empilées, trois boîtes
-       bordées créaient un effet de bandes et mangeaient la hauteur. Un
-       filet doré suffit à les séparer. */
-    .inside{padding-block:2.6rem 0}
-    .grid{gap:0}
-    .card{
-      background:none;border:0;border-radius:0;
-      border-top:1px solid var(--border);
-      padding:1.15rem 0 1.2rem;
-      display:grid;grid-template-columns:4.9rem 1fr;column-gap:.85rem;
-    }
-    .card:first-child{border-top:0;padding-top:0}
-    .card .num{
-      font-size:1.45rem;margin:0;grid-row:1/3;line-height:1.2;
-      padding-top:.08em;text-align:right;white-space:nowrap;
-    }
-    .card h3{font-size:1.04rem;margin:0 0 .15rem;line-height:1.3}
-    .card p{font-size:.97rem;line-height:1.58;grid-column:2}
+    .inside{padding-block:2.8rem .5rem}
+    .subtitle{margin-bottom:1.5rem}
+    .row{grid-template-columns:6.1rem 1fr;gap:.25rem .9rem;padding:1.15rem 0}
+    .row__num{font-size:1.65rem}
+    .row h3{font-size:1.06rem}
+    .row p{font-size:.96rem}
 
-    .preview{padding-block:1.7rem 2.2rem}
-    .sectitle{font-size:1.3rem;text-align:left}
-    .subtitle{text-align:left;margin-bottom:1.1rem;font-size:.95rem}
-    .mock__top{padding:.8rem 1.15rem;font-size:.82rem}
-    .mock__body{padding:1.3rem 1.25rem}
-    .mock__body h4{font-size:1.06rem;line-height:1.3;margin-bottom:.45rem}
-    .mock__body p{font-size:.97rem;line-height:1.62;margin-bottom:.9rem}
-    /* Le dégradé coupait une phrase en plein milieu sur une hauteur fixe :
-       il se déclenche plus bas et s'étale, la coupure devient un fondu. */
-    .fade{max-height:19rem}
-    .fade::after{height:8rem}
-
-    footer{padding-block:1.6rem;font-size:.87rem;text-align:left}
+    .preview{padding-block:2.4rem 3rem}
+    .mock__head{padding:1rem 1.15rem}
+    .mock__band{padding:.55rem 1.15rem;font-size:.82rem}
+    .mock__body{padding:1.2rem 1.15rem}
+    .fade{max-height:17rem}
+    .mock:hover{transform:none}
+    footer{padding-block:1.8rem}
   }
 
-  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .anim,.courbe path,.kicker i{animation:none!important;
+      opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
+    .mock,button{transition:none}
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap brand">
+<header class="top">
+  <div class="top__in">
     <img src="logo.jpeg" alt="Logo Sciences Po Finance">
     <div>
       <b>Sciences&nbsp;Po Finance</b>
@@ -175,62 +188,86 @@
 </header>
 
 <main>
-  <section class="hero wrap">
-    <span class="kicker">Chaque lundi matin · Gratuit</span>
-    <h1>La finance, expliquée <em>pour ceux qui y vont</em>.</h1>
-    <p class="lede">
-      Les actus qui comptent vraiment, décryptées. Pas une liste de liens.
-      Et les stages de la semaine, sélectionnés pour des étudiants de Sciences&nbsp;Po.
-    </p>
+  <section class="hero">
+    <!-- Une courbe de taux qui se trace : le sujet même de la newsletter,
+         pas un ornement. Décorative pour l'accessibilité. -->
+    <svg class="courbe" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="degrade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#B08B3F" stop-opacity=".30"/>
+          <stop offset="100%" stop-color="#B08B3F" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path class="aire" d="M0 250 C 120 240, 200 210, 300 215 S 470 180, 560 150 S 720 130, 830 95 S 1010 70, 1200 32 L1200 300 L0 300 Z"/>
+      <path class="ligne" d="M0 250 C 120 240, 200 210, 300 215 S 470 180, 560 150 S 720 130, 830 95 S 1010 70, 1200 32"/>
+    </svg>
 
-    <div class="signup">
-      <!-- Formulaire hébergé par Brevo. Les trois champs sont ceux qu'il
-           attend : l'adresse, un piège anti-robot qui doit rester vide, et
-           la langue. En retirer un fait rejeter l'inscription sans message. -->
-      <form action="https://2653ba05.sibforms.com/serve/MUIFAJoGXJQJuOFNk-XFL4vZZDWYj_5GfmRW0o06EDh8O-iQ3Q14wvt9OfDTjENNMXKRb49BlgGyxID55oilw1qCs59l6_gv-WRKicrndu--B_4zAGIQL-9O0qCHV9JZIWtgRIpTdz1ci4VoF5DlEZLrmvvuuvQalN4oj2PDpAMvAj5vFsaIUx9bluTydwqJ0kKP_VjkhTCRRTlklA=="
-            method="POST">
-        <label for="email" style="position:absolute;left:-9999px">Adresse email</label>
-        <input id="email" type="email" name="EMAIL" required
-               placeholder="ton.email@sciencespo.fr" autocomplete="email">
-        <!-- Piège : invisible et hors du parcours clavier. Un robot le
-             remplit, un humain non, et Brevo écarte alors l'envoi. -->
-        <input type="text" name="email_address_check" value="" tabindex="-1"
-               autocomplete="off" aria-hidden="true"
-               style="position:absolute;left:-9999px;width:1px;height:1px">
-        <input type="hidden" name="locale" value="fr">
-        <button type="submit">Je m'abonne</button>
-      </form>
-      <p class="note" id="note">
-        Un email par semaine, le lundi. Désabonnement en un clic, lien dans
-        chaque envoi. Ton adresse ne sert qu'à ça.
+    <div class="hero__in">
+      <p class="kicker anim"><i></i>Chaque lundi matin · Gratuit</p>
+      <h1 class="anim d1">La finance, expliquée <em>pour ceux qui y vont</em>.</h1>
+      <p class="lede anim d2">
+        Les actualités qui comptent vraiment, décryptées avec leurs chiffres et
+        ce qu'elles changent concrètement pour vous. Et les stages de la
+        semaine, classés par secteur.
       </p>
+
+      <div class="signup anim d3">
+        <form action="https://2653ba05.sibforms.com/serve/MUIFAJoGXJQJuOFNk-XFL4vZZDWYj_5GfmRW0o06EDh8O-iQ3Q14wvt9OfDTjENNMXKRb49BlgGyxID55oilw1qCs59l6_gv-WRKicrndu--B_4zAGIQL-9O0qCHV9JZIWtgRIpTdz1ci4VoF5DlEZLrmvvuuvQalN4oj2PDpAMvAj5vFsaIUx9bluTydwqJ0kKP_VjkhTCRRTlklA=="
+              method="POST">
+          <label for="email" style="position:absolute;left:-9999px">Adresse email</label>
+          <input id="email" type="email" name="EMAIL" required
+                 placeholder="ton.email@sciencespo.fr" autocomplete="email">
+          <!-- Piège anti-robot : invisible, hors du parcours clavier. -->
+          <input type="text" name="email_address_check" value="" tabindex="-1"
+                 autocomplete="off" aria-hidden="true"
+                 style="position:absolute;left:-9999px;width:1px;height:1px">
+          <input type="hidden" name="locale" value="fr">
+          <button type="submit">Je m'abonne</button>
+        </form>
+        <p class="note" id="note">
+          <strong>Un email par semaine</strong>, le lundi. Désabonnement en un
+          clic. Ton adresse ne sert qu'à ça.
+        </p>
+      </div>
     </div>
   </section>
 
   <section class="inside wrap">
-    <div class="grid">
-      <div class="card">
-        <span class="num">3–5</span>
-        <h3>Actus décryptées</h3>
+    <h2 class="sectitle">Ce que vous recevez</h2>
+    <p class="subtitle">Les chiffres d'une édition type, celle du 14 septembre.</p>
+
+    <div class="rows">
+      <div class="row">
+        <span class="row__num" data-compte="5">5</span>
+        <h3>Actualités décryptées</h3>
         <p>
           Ce qui s'est passé, les chiffres, et surtout pourquoi ça compte pour
           quelqu'un qui vise la finance. Lisible sans ouvrir un seul article.
         </p>
       </div>
-      <div class="card">
-        <span class="num">~40</span>
-        <h3>Stages repérés</h3>
+      <div class="row">
+        <span class="row__num" data-compte="40">40</span>
+        <h3>Stages, classés par secteur</h3>
         <p>
-          M&amp;A, banque d'affaires, private equity, audit, gestion d'actifs.
-          Avec l'entreprise, le lieu, la date limite et le lien direct.
+          M&amp;A, banque de financement, private equity, gestion d'actifs,
+          audit, assurance. Entreprise, lieu, date limite et lien direct.
         </p>
       </div>
-      <div class="card">
-        <span class="num">5 min</span>
-        <h3>Et c'est tout</h3>
+      <div class="row">
+        <span class="row__num" data-compte="22">22</span>
+        <h3>Employeurs différents</h3>
         <p>
-          Pas de jargon non expliqué, pas de remplissage, jamais deux fois la
-          même info d'une semaine sur l'autre.
+          Lazard, BNP Paribas, Société Générale, Crédit Agricole CIB, Amundi,
+          Eight Advisory, Euronext, les Big Four. Aucun recruteur ne monopolise
+          l'édition.
+        </p>
+      </div>
+      <div class="row">
+        <span class="row__num" data-compte="10" data-suffixe="&nbsp;min">10&nbsp;min</span>
+        <h3>Cinq à dix minutes de lecture</h3>
+        <p>
+          Pas de jargon non expliqué, pas de remplissage, et jamais deux fois la
+          même information d'une semaine sur l'autre.
         </p>
       </div>
     </div>
@@ -238,43 +275,58 @@
 
   <section class="preview wrap">
     <h2 class="sectitle">À quoi ça ressemble</h2>
-    <p class="subtitle">Un extrait d'une édition réelle.</p>
+    <p class="subtitle">Un extrait d'une édition réelle, telle qu'elle arrive.</p>
 
     <div class="mock">
-      <div class="mock__top">Semaine du 14 septembre 2026</div>
+      <div class="mock__head">
+        <img src="logo.jpeg" alt="">
+        <div>
+          <b>Sciences Po Finance</b>
+          <span>Newsletter hebdomadaire</span>
+        </div>
+      </div>
+      <div class="mock__band">Semaine du 14 septembre 2026</div>
       <div class="mock__body fade">
-        <h4>4,5 % : la France emprunte comme en pleine crise des subprimes</h4>
         <p>
-          Lundi matin, le taux à dix ans de l'OAT, l'obligation assimilable du
-          Trésor, le titre de dette que l'État français émet pour se financer,
-          a brièvement franchi les 4,5 %. La dernière fois que ce seuil avait
-          été dépassé, c'était en juillet 2008.
+          Une semaine où tout tourne autour d'un seul mot : les taux. La BCE a
+          serré la vis, le rendement américain a franchi un seuil qu'il n'avait
+          plus vu depuis 2007, et les entreprises françaises battaient des
+          records de dividendes.
+        </p>
+        <h4>5,02 % : le taux américain n'avait plus vu ça depuis 2007</h4>
+        <p>
+          Le rendement des bons du Trésor américain à 10 ans, la référence
+          mondiale du marché obligataire, est monté mardi jusqu'à
+          <strong>5,02 %</strong>, son plus haut niveau depuis 2007.
         </p>
         <p>
-          <strong>Pourquoi ça vous concerne</strong>, et pas seulement si vous
-          visez un desk obligataire : le taux souverain à dix ans est le « taux
-          sans risque », le socle sur lequel repose à peu près toute
-          valorisation. Quand il monte d'un point, les profits futurs d'une
-          entreprise valent mécaniquement moins cher aujourd'hui.
+          <strong>Concrètement, pour vous</strong> : quand le taux sans risque
+          passe de 3 % à 5 %, les flux futurs d'une entreprise sont actualisés
+          plus durement, donc sa valeur théorique baisse. C'est le cœur du
+          modèle DCF que vous manipulerez en stage M&amp;A.
         </p>
         <p class="src">Source : Le Figaro</p>
         <h4>Stages de la semaine</h4>
         <p>
-          Six offres, et un éventail qui couvre à peu près tous les points
-          d'entrée du secteur : actuariat, banque privée, conformité,
-          financement de projets, conseil et juridique M&amp;A.
+          Quarante offres, de la banque d'affaires à l'actuariat, réparties sur
+          huit secteurs.
         </p>
       </div>
     </div>
   </section>
 </main>
 
+<footer class="wrap">
+  Newsletter de l'association Sciences&nbsp;Po Finance · Un email par semaine ·
+  Désabonnement en un clic dans chaque envoi.
+</footer>
+
 <script>
   // Vérification de l'adresse avant envoi.
   //
   // Le format seul ne prouve rien : « jean@gmial.com » est parfaitement formé
   // mais la boîte n'existe pas. Sans email de confirmation, c'est la faute de
-  // frappe sur le domaine qui produit l'essentiel des adresses mortes — et
+  // frappe sur le domaine qui produit l'essentiel des adresses mortes, et
   // chaque adresse morte est un rebond qui abîme la réputation d'expéditeur.
   // On la rattrape donc ici, en proposant la correction sans l'imposer.
   (function () {
@@ -288,24 +340,23 @@
       "gmail.com", "hotmail.com", "hotmail.fr", "outlook.com", "outlook.fr",
       "yahoo.com", "yahoo.fr", "orange.fr", "wanadoo.fr", "free.fr",
       "laposte.net", "sfr.fr", "icloud.com", "me.com", "protonmail.com",
-      "proton.me", "sciencespo.fr", "etu.sciencespo.fr",
+      "proton.me", "sciencespo.fr", "etu.sciencespo.fr"
     ];
 
-    // Distance de Levenshtein : combien de corrections séparent deux mots.
     function distance(a, b) {
-      var lignePrecedente = Array.from({ length: b.length + 1 }, function (_, i) { return i; });
+      var precedente = Array.from({ length: b.length + 1 }, function (_, i) { return i; });
       for (var i = 0; i < a.length; i++) {
         var ligne = [i + 1];
         for (var j = 0; j < b.length; j++) {
           ligne.push(Math.min(
-            lignePrecedente[j] + (a[i] === b[j] ? 0 : 1),
-            lignePrecedente[j + 1] + 1,
+            precedente[j] + (a[i] === b[j] ? 0 : 1),
+            precedente[j + 1] + 1,
             ligne[j] + 1
           ));
         }
-        lignePrecedente = ligne;
+        precedente = ligne;
       }
-      return lignePrecedente[b.length];
+      return precedente[b.length];
     }
 
     function suggestion(adresse) {
@@ -314,8 +365,8 @@
       var domaine = partie[1].toLowerCase();
       if (DOMAINES.indexOf(domaine) !== -1) return null;
       for (var i = 0; i < DOMAINES.length; i++) {
-        // Une ou deux corrections : au-delà, ce n'est plus une faute de frappe
-        // mais un domaine légitime que nous ne connaissons pas.
+        // Au-delà de deux corrections, ce n'est plus une faute de frappe mais
+        // un domaine légitime que nous ne connaissons pas.
         if (distance(domaine, DOMAINES[i]) <= 2) return partie[0] + "@" + DOMAINES[i];
       }
       return null;
@@ -325,8 +376,7 @@
       if (!note || !champ.value) return;
       var propose = suggestion(champ.value.trim());
       if (propose) {
-        note.innerHTML =
-          "Vouliez-vous dire <strong><a href=\"#\" id=\"corriger\">" +
+        note.innerHTML = "Vouliez-vous dire <strong><a href=\"#\" id=\"corriger\">" +
           propose.replace(/</g, "&lt;") + "</a></strong> ?";
         document.getElementById("corriger").addEventListener("click", function (e) {
           e.preventDefault();
@@ -339,12 +389,35 @@
     });
   })();
 
-</script>
+  // Les chiffres se comptent à l'entrée dans l'écran. Ils sont déjà écrits à
+  // leur valeur finale dans le HTML : sans JavaScript, la page reste juste.
+  (function () {
+    var compteurs = document.querySelectorAll("[data-compte]");
+    var discret = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (discret || !("IntersectionObserver" in window)) return;
 
-<footer class="wrap">
-  Newsletter de l'association Sciences&nbsp;Po Finance.<br>
-  Un email par semaine · Désabonnement en un clic.
-</footer>
+    function animer(el) {
+      var cible = parseInt(el.dataset.compte, 10);
+      var suffixe = el.dataset.suffixe || "";
+      var debut = performance.now(), duree = 900;
+      (function pas(maintenant) {
+        var t = Math.min(1, (maintenant - debut) / duree);
+        var adouci = 1 - Math.pow(1 - t, 3);
+        el.innerHTML = Math.round(cible * adouci) + suffixe;
+        if (t < 1) requestAnimationFrame(pas);
+      })(debut);
+    }
+
+    var observateur = new IntersectionObserver(function (entrees) {
+      entrees.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        animer(e.target);
+        observateur.unobserve(e.target);
+      });
+    }, { threshold: .5 });
+    compteurs.forEach(function (el) { observateur.observe(el); });
+  })();
+</script>
 
 </body>
 </html>
