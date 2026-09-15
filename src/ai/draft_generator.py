@@ -5,6 +5,7 @@ import logging
 import anthropic
 
 from src.config import ANTHROPIC_API_KEY
+from src.scraper.sectors import group_by_sector
 from src.sanitize import sanitize_html
 
 logger = logging.getLogger(__name__)
@@ -52,10 +53,13 @@ STRUCTURE DE news_html, dans cet ordre :
    plus, aucun chiffre qui n'y figure pas.
 
 STRUCTURE DE stages_html :
-- <h3>Stages de la semaine</h3>, puis un <ul> avec une entrée par offre :
-  intitulé, entreprise, lieu, date limite si connue, et lien.
-- Une phrase d'introduction avant la liste si les offres ont un point commun
-  (un secteur qui recrute, plusieurs offres d'un même type).
+- <h3>Stages de la semaine</h3>, puis une phrase d'introduction qui dit ce
+  que la semaine offre — quel segment recrute, ce qui se distingue.
+- Les offres sont fournies DÉJÀ REGROUPÉES PAR SECTEUR. Respecte ce
+  découpage et cet ordre : un <h4> par secteur, puis un <ul> avec une entrée
+  par offre — intitulé, entreprise, lieu, date limite si connue, et lien.
+  Ne réordonne pas, ne fusionne pas les secteurs, n'en invente aucun.
+- Un secteur d'une seule offre reste un secteur à part entière.
 - Si aucune offre n'est fournie, un court paragraphe le disant.
 
 RÈGLE ABSOLUE SUR LES FAITS
@@ -169,8 +173,9 @@ def _build_user_prompt(news_items: list[dict], stage_items: list[dict]) -> str:
         f"ACTUALITÉS POUR LA SECTION « EN BREF » ({len(breves)}) — titre et "
         "lien seulement, une phrase chacune, aucun chiffre ajouté :\n"
         f"{json.dumps(breves, ensure_ascii=False, indent=2)}\n\n"
-        "OFFRES DE STAGE :\n"
-        f"{json.dumps(stage_items, ensure_ascii=False, indent=2)}"
+        "OFFRES DE STAGE, regroupées par secteur — garde ce découpage et "
+        "cet ordre :\n"
+        f"{json.dumps(group_by_sector(stage_items), ensure_ascii=False, indent=2)}"
     )
 
 

@@ -139,9 +139,22 @@ ce qui figure dans une édition antérieure est exclu de la suivante. L'édition
 en cours ne se bloque pas elle-même, donc régénérer le brouillon de la semaine
 reste possible.
 
-Lancée chaque jour, la collecte porte le stock d'environ 6 offres à une
-quarantaine — sans jamais forcer la limitation du site, au contraire : sept
+Lancée deux fois par jour — 7h15 et 19h15, la fenêtre de limitation du site
+se refermant en quelques heures — la collecte porte le stock d'environ 6 offres
+à une quarantaine — sans jamais forcer la limitation du site, au contraire : sept
 petites visites la ménagent davantage qu'une grosse.
+
+## Classement des stages par secteur
+
+`src/scraper/sectors.py` range chaque offre dans un segment de la finance —
+banque d'affaires et M&A, banque de financement, private equity, gestion
+d'actifs, audit, assurance, corporate finance, fintech, institutions. Le nom
+de l'employeur tranche en premier ; à défaut, l'intitulé du poste. Une offre
+non reconnue va dans « Autres opportunités » plutôt que d'être forcée dans un
+segment faux.
+
+Les offres arrivent au modèle déjà regroupées, et la charte lui interdit de
+réordonner ou de fusionner les segments.
 
 ## Génération automatique chaque lundi (sans clé API)
 

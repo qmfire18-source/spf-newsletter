@@ -65,9 +65,11 @@ cat > "$PLIST" <<PLISTEOF
 </plist>
 PLISTEOF
 
-# Collecte quotidienne des offres : WTTJ coupe le scraper après quelques
-# pages, une seule visite par semaine ne ramènerait qu'une poignée d'offres.
-# Sept petites collectes valent bien mieux qu'une grosse, et ménagent le site.
+# Collecte deux fois par jour : WTTJ coupe le scraper après quelques pages,
+# mais sa fenêtre de limitation se referme en quelques heures. Deux passages
+# espacés ramènent donc le double d'une seule visite, sans jamais forcer —
+# quatorze petites collectes par semaine ménagent le site bien plus qu'une
+# grosse. C'est ce qui porte le stock à une quarantaine d'offres par édition.
 cat > "$PLIST_COLLECTE" <<PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -82,7 +84,10 @@ cat > "$PLIST_COLLECTE" <<PLISTEOF
   </array>
   <key>WorkingDirectory</key><string>$PROJET</string>
   <key>StartCalendarInterval</key>
-  <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+  <array>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+    <dict><key>Hour</key><integer>19</integer><key>Minute</key><integer>15</integer></dict>
+  </array>
   <key>StandardOutPath</key><string>$PROJET/logs/collecte.out.log</string>
   <key>StandardErrorPath</key><string>$PROJET/logs/collecte.err.log</string>
   <key>RunAtLoad</key><false/>
@@ -97,7 +102,7 @@ launchctl bootout "gui/$(id -u)/$COLLECTE" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST_COLLECTE"
 
 printf 'Newsletter : tous les lundis à %dh%02d.\n' "$((10#$HEURE))" "$((10#$MINUTE))"
-echo "Collecte d'offres : tous les jours à 7h15."
+echo "Collecte d'offres : tous les jours à 7h15 et 19h15."
 echo "  vérifier  : launchctl print gui/$(id -u)/$ETIQUETTE | head -20"
 echo "  essayer   : launchctl kickstart -p gui/$(id -u)/$ETIQUETTE"
 echo "  retirer   : ./scripts/install_schedule.sh --retirer"
