@@ -27,9 +27,10 @@ from src.scraper.stage_scraper import run_fetch_stage_offers
 
 logger = logging.getLogger("run_weekly")
 
-# Nombre d'actualités dont on va chercher le texte intégral pour en faire des
-# items développés. Le reste alimente la section « en bref ».
-DEVELOPED_ITEMS = 5
+# On lit plus d'articles qu'on n'en publiera : le modèle choisit ensuite les
+# cinq meilleurs. Lui en donner exactement cinq ne lui laissait aucun
+# arbitrage — il développait ce qu'on lui tendait, important ou non.
+READ_FOR_SELECTION = 9
 
 # Offres puisées dans le stock accumulé par scripts/collect_stages.py.
 STAGE_POOL_DAYS = 7
@@ -122,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
         ]
         # Sans le texte des articles, l'IA ne peut produire qu'une liste de
         # liens : les flux ne livrent qu'un résumé de 86 caractères en médiane.
-        enrich_with_article_text(news, limit=DEVELOPED_ITEMS)
+        enrich_with_article_text(news, limit=READ_FOR_SELECTION)
         # Le stock accumulé jour après jour contient bien plus que ce qu'une
         # visite unique peut ramener : WTTJ nous coupe après quelques pages.
         stages = offer_store.recent_offers(

@@ -174,13 +174,17 @@ class TestFetchNews:
 
     def test_caps_and_sorts_by_recency(self, monkeypatch):
         now = datetime.now(timezone.utc)
-        # Titres volontairement dissemblables : sinon la dédup par similarité
-        # les fusionne avant même le plafonnement.
+        # Chaque titre puise dans sa propre réserve de mots : un tirage dans un
+        # fonds commun laissait deux titres partager assez de mots pour être
+        # regroupés, ce qui décalait l'ordre avant même le plafonnement. Les
+        # mots restent tirés au sort, car des suffixes réguliers rendraient les
+        # titres assez proches, caractère par caractère, pour la déduplication.
         rng = random.Random(0)
-        vocabulaire = [f"mot{i}" for i in range(300)]
+        vocabulaire = [f"mot{i}" for i in range((news_scraper.MAX_NEWS_ITEMS + 10) * 10)]
+        rng.shuffle(vocabulaire)
         articles = [
             {
-                "title": "taux " + " ".join(rng.sample(vocabulaire, 10)),
+                "title": "taux " + " ".join(vocabulaire[n * 10 : (n + 1) * 10]),
                 "url": f"https://a.fr/{n}",
                 "published": (now - timedelta(hours=n)).isoformat(),
             }
@@ -348,3 +352,53 @@ class TestGnewsFiltering:
 
     def test_empty_input(self):
         assert news_scraper._trusted_only([]) == []
+
+
+class TestPriorisation:
+    """Le classement des actualités par importance."""
+
+    # Variantes réellement collectées le même jour sur la même décision.
+    BCE = [
+        "La BCE monte à nouveau ses taux et se prépare à une inflation durable",
+        "La BCE relève ses taux directeurs",
+        "La BCE relève ses taux d'intérêt à 2,5 % face à la flambée de l'inflation",
+        "La BCE hausse le ton et les taux, mais jusqu'où ira-t-elle ?",
+        "Direct - La BCE relève ses taux d'un quart de point comme prévu",
+    ]
+
+    def test_les_variantes_dun_meme_evenement_ne_font_quun_sujet(self):
+        items = [{"title": t, "url": f"https://a.fr/{n}"} for n, t in enumerate(self.BCE)]
+        groupes = news_scraper.grouper_par_sujet(items)
+        assert len(groupes) == 1
+
+    def test_un_seul_mot_commun_ne_suffit_pas_a_rapprocher_deux_sujets(self):
+        # Les deux titres partagent « taux », et rien d'autre : ce sont pourtant
+        # la politique monétaire d'un côté, la dette souveraine de l'autre.
+        items = [
+            {"title": "La BCE relève ses taux directeurs", "url": "https://a.fr/1"},
+            {
+                "title": "Le taux français à 10 ans dépasse 4,5 %",
+                "url": "https://a.fr/2",
+            },
+        ]
+        assert len(news_scraper.grouper_par_sujet(items)) == 2
+
+    def test_les_sigles_comptent_comme_mots_significatifs(self):
+        # « BCE » fait trois lettres : un filtre sur la longueur le jetterait,
+        # alors que c'est lui qui désigne le sujet.
+        assert "bce" in news_scraper._mots_significatifs("La BCE relève ses taux")
+
+    def test_le_poids_editorial_distingue_les_redactions(self):
+        assert news_scraper.poids_source("Les Echos") > news_scraper.poids_source(
+            "Blog anonyme"
+        )
+
+    def test_le_sujet_le_plus_repris_passe_devant(self):
+        repris = [{"title": t, "url": f"https://a.fr/{n}"} for n, t in enumerate(self.BCE)]
+        isole = {
+            "title": "Isatis Capital étoffe son équipe small-cap",
+            "url": "https://a.fr/seul",
+        }
+        classes = news_scraper._classer_par_importance([isole, *repris])
+        assert "BCE" in classes[0]["title"]
+        assert classes[0]["reprises"] == len(self.BCE)

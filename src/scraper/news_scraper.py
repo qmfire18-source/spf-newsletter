@@ -94,6 +94,41 @@ TRUSTED_GNEWS_SOURCES = (
     "fmi", "imf", "commission européenne",
 )
 
+# Poids éditorial : un sujet traité par la presse financière compte davantage
+# pour des étudiants en finance que le même sujet dans un quotidien
+# généraliste. C'est un jugement sur la hiérarchie des titres, pas une vérité.
+POIDS_SOURCES = {
+    3: ("les echos", "investir", "l'agefi", "agefi", "option finance",
+        "reuters", "bloomberg", "financial times", "wall street journal",
+        "revue banque", "l'argus de l'assurance"),
+    2: ("la tribune", "challenges", "capital", "le monde", "le figaro",
+        "le point", "l'opinion", "le temps", "mediapart", "euractiv",
+        "boursorama", "zonebourse", "morningstar", "business immo",
+        "banque de france", "european central bank", "insee"),
+}
+POIDS_PAR_DEFAUT = 1
+
+# Deux titres qui partagent au moins ce quart de leurs mots significatifs
+# parlent du même événement. Mesuré sur une semaine réelle : en dessous, des
+# sujets voisins fusionnaient ; au-dessus, la BCE se scindait en six.
+SEUIL_MEME_SUJET = 1 / 3
+MOTS_COMMUNS_MINIMUM = 2
+
+# Le filtre par longueur jetait « BCE », « FMI », « OPA » — les sigles qui
+# désignent justement l'acteur du sujet — tout en gardant « face » ou « selon ».
+# On écarte donc une liste de mots outils, et on garde les sigles.
+MOTS_VIDES = frozenset(
+    """
+    alors apres aussi autre autres avant avec avoir bien cela ces cet cette ceux
+    chez comme contre dans depuis deux dont elle elles encore entre etre face
+    fait faire fois font hier ils leur leurs mais meme moins nous pour plus pres
+    quand que quel quelle qui quoi sans selon ses son sont sous sur tous tout
+    toute toutes trois tres vers vont vous ans annee annees jour jours semaine
+    mois deja voici voila etait ont une des les aux par est car donc lundi mardi
+    mercredi jeudi vendredi samedi dimanche direct video live
+    """.split()
+)
+
 GNEWS_ENDPOINT = "https://news.google.com/rss/search"
 NEWSAPI_ENDPOINT = "https://newsapi.org/v2/everything"
 
@@ -133,12 +168,12 @@ def fetch_news(sources: list[dict]) -> list[dict]:
             logger.exception("Source injoignable, ignorée : %r", src)
 
     relevant = [item for item in _deduplicate(items) if _is_finance_related(item)]
-    relevant = _spread_across_sources(relevant)
+    classees = _classer_par_importance(relevant)
     logger.info(
-        "Actus : %d collectées, %d pertinentes, %d retenues",
-        len(items), len(relevant), min(len(relevant), MAX_NEWS_ITEMS),
+        "Actus : %d collectées, %d pertinentes, %d sujets distincts, %d retenus",
+        len(items), len(relevant), len(classees), min(len(classees), MAX_NEWS_ITEMS),
     )
-    return relevant[:MAX_NEWS_ITEMS]
+    return classees[:MAX_NEWS_ITEMS]
 
 
 def _fetch_rss(url: str, cutoff: datetime) -> list[dict]:
@@ -332,6 +367,95 @@ def _is_finance_related(item: dict) -> bool:
     if any(token.startswith(FINANCE_KEYWORD_STEMS) for token in tokens):
         return True
     return any(f" {phrase} " in padded for phrase in FINANCE_KEYWORD_PHRASES)
+
+
+def poids_source(source: str | None) -> int:
+    nom = _normalize_title(source or "")
+    if not nom:
+        return POIDS_PAR_DEFAUT
+    compact = nom.replace(" ", "")
+    for poids, connues in POIDS_SOURCES.items():
+        for connue in connues:
+            attendu = _normalize_title(connue)
+            if attendu in nom or attendu.replace(" ", "") in compact:
+                return poids
+    return POIDS_PAR_DEFAUT
+
+
+def _mots_significatifs(titre: str) -> set:
+    """Les mots qui portent le sujet : ni mots outils, ni nombres isolés."""
+    mots = _normalize_title(titre or "").split()
+    return {
+        mot
+        for mot in mots
+        if mot not in MOTS_VIDES and (len(mot) >= 3 or (mot.isdigit() and len(mot) >= 2))
+    }
+
+
+def grouper_par_sujet(items: list[dict]) -> list[list[dict]]:
+    """Rassemble les actus qui racontent le même événement.
+
+    La déduplication exacte ne voit pas que « La BCE relève ses taux » et
+    « La Banque centrale européenne relève de 0,25 point » sont le même
+    sujet : elles comparent des titres, pas des événements. On regroupe donc
+    sur le recouvrement des mots significatifs.
+    """
+    groupes: list[dict] = []
+    for item in items:
+        mots = _mots_significatifs(item.get("title"))
+        for groupe in groupes:
+            if _meme_sujet(mots, groupe["mots"]):
+                groupe["items"].append(item)
+                break
+        else:
+            groupes.append({"mots": mots, "items": [item]})
+    return [groupe["items"] for groupe in groupes]
+
+
+def _meme_sujet(mots: set, reference: set) -> bool:
+    """Deux titres racontent le même événement.
+
+    On rapporte les mots communs au plus court des deux titres, et non à leur
+    réunion : « Direct - La BCE relève ses taux » et une dépêche de vingt mots
+    sur la même décision ont peu de mots en commun rapportés à l'ensemble,
+    beaucoup rapportés au plus court.
+
+    Le minimum de deux mots communs est ce qui empêche la mesure de déborder :
+    sans lui, « Le taux français à 10 ans dépasse 4,5 % » rejoindrait la BCE
+    sur le seul mot « taux ».
+    """
+    commun = mots & reference
+    plus_court = min(len(mots), len(reference))
+    if not plus_court or len(commun) < MOTS_COMMUNS_MINIMUM:
+        return False
+    return len(commun) / plus_court >= SEUIL_MEME_SUJET
+
+
+def _classer_par_importance(items: list[dict]) -> list[dict]:
+    """Un sujet par événement, les plus importants d'abord.
+
+    L'importance se mesure à deux choses : combien de rédactions couvrent le
+    sujet, et lesquelles. Sans ça, l'ordre ne tenait qu'à la fraîcheur et à
+    la rotation des sources — on développait des sujets couverts par une
+    seule rédaction pendant que l'événement de la semaine partait en brève.
+
+    Seul le meilleur article de chaque sujet est conservé : garder les autres
+    reviendrait à proposer six fois la même actualité.
+    """
+    classes = []
+    for groupe in grouper_par_sujet(items):
+        # Représentant : la source la plus qualifiée, la plus récente à égalité.
+        meilleur = max(
+            groupe,
+            key=lambda i: (poids_source(i.get("source")), _published_sort_key(i)),
+        )
+        meilleur["reprises"] = len(groupe)
+        meilleur["poids_source"] = poids_source(meilleur.get("source"))
+        meilleur["importance"] = meilleur["reprises"] * meilleur["poids_source"]
+        classes.append(meilleur)
+
+    classes.sort(key=lambda i: (i["importance"], _published_sort_key(i)), reverse=True)
+    return classes
 
 
 def _spread_across_sources(items: list[dict]) -> list[dict]:

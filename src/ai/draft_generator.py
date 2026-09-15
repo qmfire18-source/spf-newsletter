@@ -71,6 +71,15 @@ STRUCTURE DE news_html, dans cet ordre :
    `full_text` est fourni : lui seul contient la matière. Sans lui, tu
    n'aurais que le titre, et tu inventerais.
 
+   Tu en reçois PLUS que nécessaire : choisis les cinq qui comptent le plus
+   pour un étudiant en finance. Chaque actualité porte un champ `reprises`,
+   le nombre de rédactions qui couvrent le sujet, et `poids_source`, la
+   qualité financière du titre qui le traite. Un sujet repris par dix
+   rédactions est l'événement de la semaine ; un sujet unique peut valoir
+   mieux s'il touche directement un métier de la finance. Ces chiffres
+   éclairent ton choix, ils ne le dictent pas. Les articles non retenus
+   passent en brève.
+
 4. Une section <h3>EN BREF</h3> suivie d'un <ul> : trois à six actualités
    non développées, une phrase chacune, avec leur lien. C'est là que vont
    les sujets sans `full_text`. Une phrase = ce que dit le titre, rien de
@@ -198,8 +207,12 @@ def _build_user_prompt(news_items: list[dict], stage_items: list[dict]) -> str:
     breves = [item for item in news_items if not item.get("full_text")]
 
     return (
-        f"ACTUALITÉS DÉVELOPPABLES ({len(developpables)}) — texte intégral "
-        "fourni, ce sont les seules dont tu peux faire un item développé :\n"
+        f"ACTUALITÉS DÉVELOPPABLES ({len(developpables)}) : texte intégral "
+        "fourni. Ce sont les seules dont tu peux faire un item développé, et "
+        "il y en a plus que les cinq à publier. Choisis, en t'aidant de "
+        "`reprises` (combien de rédactions couvrent le sujet) et de "
+        "`poids_source` (qualité financière du titre). Le reste passe en "
+        "brève.\n"
         f"{json.dumps(developpables, ensure_ascii=False, indent=2)}\n\n"
         f"ACTUALITÉS POUR LA SECTION « EN BREF » ({len(breves)}) — titre et "
         "lien seulement, une phrase chacune, aucun chiffre ajouté :\n"
