@@ -38,6 +38,18 @@ Voir `PLAN.md` pour le détail technique de chaque brique.
 | Envoi email | API Brevo |
 | Orchestration | GitHub Actions (cron hebdomadaire) |
 
+## Où vit le projet
+
+Le dossier est `~/spf-newsletter`, délibérément **hors de `Documents`**.
+macOS protège `Documents`, `Bureau` et `Téléchargements` : un programme lancé
+par le planificateur n'y a pas accès et échoue avec
+`Operation not permitted`, alors que le même script lancé à la main depuis le
+terminal fonctionne. Les tâches automatiques étaient silencieusement cassées
+pour cette seule raison.
+
+Si le projet est déplacé, relancer `./scripts/install_schedule.sh` : les
+chemins enregistrés dans les tâches planifiées sont absolus.
+
 ## Installation
 
 ```bash
