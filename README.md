@@ -395,10 +395,19 @@ newsletter — pas le volume. Trois règles, toutes dans `stage_scraper.py` :
    Une liste d'exclusion écarte les postes IT et RH que leur slug vend comme
    financiers (« développeur services financiers », « analyste fonctionnel SI
    finance », « capital humain »).
-2. **France uniquement** — filtrée sur la ville côté slug, puis confirmée par
-   le champ `addressCountry` du JSON-LD. La langue de l'annonce n'est *pas* un
-   critère : les meilleures offres parisiennes du vivier (Naxicap, Clipperton,
-   iBanFirst) sont publiées en anglais.
+2. **Paris, Île-de-France et international ; pas la province.** L'asso vise
+   les places financières. Une offre à Londres, Luxembourg ou New York est
+   une cible ; une offre à Rodez n'en est pas une. Le slug écarte les villes
+   de province connues pour ne pas dépenser de requête, puis le JSON-LD
+   tranche : une offre française dont le code postal n'est pas francilien
+   (75, 77, 78, 91 à 95) est écartée, l'étranger est conservé. Une donnée
+   absente ne fait jamais rejeter une offre.
+
+   Le filtre précédent ne gardait que la France : il jetait 14 offres par
+   semaine, dont un *Global Investment Banking ECM & M&A* chez CA-CIB.
+
+   La langue de l'annonce n'est pas un critère : plusieurs des meilleures
+   offres parisiennes sont publiées en anglais.
 3. **Rotation entre employeurs** — trois employeurs pèsent à eux seuls un
    tiers du sitemap. On tourne entre entreprises plutôt que de trier par date,
    ce qui garantit autant d'employeurs différents que d'offres récoltées.

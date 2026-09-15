@@ -80,25 +80,43 @@ EXCLUDED_SLUG_MARKERS = (
     "sap", "informatique", "devops", "data-engineer",
     # Maîtrise d'ouvrage SI : le domaine est la finance, le métier non.
     "analyste-fonctionnel", "si-finance", "si-gestion",
+    "outils-collaboratifs", "support-outils",
     # Le vocabulaire RH emprunte celui de la finance.
     "capital-humain", "banquet",
 )
 
-# La langue de l'annonce ne dit rien du lieu : les meilleures offres parisiennes
-# du vivier (Naxicap, Clipperton, iBanFirst) sont publiées en anglais. C'est la
-# ville qui tranche. Le pays est vérifié après visite via le JSON-LD ; ces
-# marqueurs servent seulement à ne pas gaspiller le budget de requêtes, que le
-# site nous coupe après une poignée de pages.
-FOREIGN_CITY_MARKERS = (
-    "san-francisco", "new-york", "chicago", "providence", "boston",
-    "amsterdam", "barcelona", "madrid", "milano", "milan", "berlin",
-    "munich", "london", "casablanca", "luxembourg", "bruxelles",
-    "brussels", "seraing", "geneve", "zurich", "dublin", "lisbon",
-    "lisboa", "montreal", "singapore", "dubai", "tunis",
+# Périmètre géographique : Paris, l'Île-de-France, et l'international. Une
+# offre en province est écartée — l'asso vise les places financières, pas un
+# poste isolé à Rodez. À l'inverse, Londres, Luxembourg ou New York sont
+# exactement la cible : le filtre précédent, qui ne gardait que la France, les
+# jetait (14 offres par semaine, dont un Global Investment Banking ECM/M&A).
+#
+# Ces marqueurs évitent de dépenser une requête sur une offre qu'on écartera :
+# le code postal du JSON-LD tranche ensuite pour de bon.
+PROVINCE_SLUG_MARKERS = (
+    "bordeaux", "talence", "merignac", "lyon", "limonest", "villeurbanne",
+    "marseille", "aix-en-provence", "toulouse", "colomiers", "blagnac",
+    "nantes", "saint-herblain", "lille", "villeneuve-d-ascq", "strasbourg",
+    "rennes", "montpellier", "nice", "sophia-antipolis", "grenoble",
+    "angouleme", "rodez", "tours", "le-mans", "niort", "bessines", "laval",
+    "brest", "dijon", "reims", "metz", "nancy", "orleans", "amiens",
+    "rouen", "le-havre", "caen", "clermont-ferrand", "saint-etienne",
+    "toulon", "perpignan", "besancon", "poitiers", "limoges", "pau",
+    "bayonne", "biarritz", "la-rochelle", "angers", "arras", "valence",
+    "chambery", "annecy", "mulhouse", "troyes", "belfort", "vannes",
+    "quimper", "lorient", "saint-nazaire", "cholet", "saint-brieuc",
+    "coutances", "saint-lo", "mayenne", "ernee", "craon", "segre",
+    "domfront", "flers", "argentan", "pontorson", "soissons", "mousson",
+    "gonfreville", "talant", "bourges", "chartres", "evreux",
+    "la-roche-sur-yon", "mouilleron", "vannes", "cherbourg", "lens",
 )
 
-# Pays acceptés, tels que le JSON-LD les nomme (schema.org addressCountry).
-ACCEPTED_COUNTRIES = {"FR", "FRA", "FRANCE"}
+# Départements franciliens : 75 Paris, 77 Seine-et-Marne, 78 Yvelines,
+# 91 Essonne, 92 Hauts-de-Seine, 93 Seine-Saint-Denis, 94 Val-de-Marne,
+# 95 Val-d'Oise.
+ILE_DE_FRANCE_PREFIXES = ("75", "77", "78", "91", "92", "93", "94", "95")
+
+FRENCH_COUNTRIES = {"FR", "FRA", "FRANCE"}
 
 _LD_JSON_RE = re.compile(
     r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', re.S
@@ -215,7 +233,7 @@ def _looks_like_finance_stage(url: str) -> bool:
     slug = url.lower()
     if any(m in slug for m in EXCLUDED_SLUG_MARKERS):
         return False
-    if any(m in slug for m in FOREIGN_CITY_MARKERS):
+    if any(m in slug for m in PROVINCE_SLUG_MARKERS):
         return False
     return any(m in slug for m in STAGE_SLUG_MARKERS) and any(
         m in slug for m in FINANCE_SLUG_MARKERS
@@ -261,13 +279,17 @@ def _offer_from_jsonld(html: str, url: str) -> dict | None:
     if not any(str(e).upper() in ("INTERN", "INTERNSHIP") for e in employment):
         return None
 
-    # Le slug ne porte pas toujours la ville : le JSON-LD, lui, donne le pays.
-    # Une annonce hors de France n'a pas sa place dans la newsletter d'une
-    # asso parisienne. Un pays absent ne fait pas rejeter l'offre.
+    # Le slug ne porte pas toujours la ville ; le JSON-LD donne le pays et le
+    # code postal. Une offre française hors Île-de-France est écartée ici —
+    # l'étranger, lui, reste le bienvenu. Une donnée absente ne fait jamais
+    # rejeter l'offre : mieux vaut une offre de trop qu'une perdue.
+    address = _first_address(posting.get("jobLocation"))
     country = _first_country(posting.get("jobLocation"))
-    if country and country.upper() not in ACCEPTED_COUNTRIES:
-        logger.info("Offre hors de France (%s), ignorée : %s", country, url)
-        return None
+    if country and country.upper() in FRENCH_COUNTRIES:
+        code = str((address or {}).get("postalCode") or "").strip()
+        if code and not code.startswith(ILE_DE_FRANCE_PREFIXES):
+            logger.info("Offre en province (%s), ignorée : %s", code, url)
+            return None
 
     return {
         "title": (posting.get("title") or "").strip(),

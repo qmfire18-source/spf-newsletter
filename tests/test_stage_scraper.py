@@ -40,12 +40,31 @@ class TestLooksLikeFinanceStage:
 
     @pytest.mark.parametrize("url", [
         "https://w.com/fr/companies/x/jobs/internship-asset-management_london",
-        "https://w.com/en/companies/zipline-1/jobs/strategic-finance-intern-2027_san-francisco",
-        "https://w.com/en/companies/workwize/jobs/finance-intern_amsterdam",
-        "https://w.com/en/companies/bally-s/jobs/fall-spring-finance-internship_providence",
+        "https://w.com/en/companies/ca-cib/jobs/global-investment-banking-ecm-m-a-internship_new-york",
+        "https://w.com/en/companies/deloitte-luxembourg/jobs/intern-audit-investment-funds_luxembourg",
+        "https://w.com/en/companies/clipperton/jobs/technology-m-a-analyst-internship_berlin",
     ])
-    def test_drops_offers_outside_france(self, url):
+    def test_keeps_offers_abroad(self, url):
+        # Les places financières étrangères sont une cible, pas du bruit :
+        # l'ancien filtre « France uniquement » les jetait.
+        assert stage_scraper._looks_like_finance_stage(url)
+
+    @pytest.mark.parametrize("url", [
+        "https://w.com/fr/companies/societe-generale/jobs/stage-banquier-prive_talence",
+        "https://w.com/fr/companies/x/jobs/stage-audit-financier_bordeaux",
+        "https://w.com/fr/companies/x/jobs/stage-analyste-credit_rodez",
+        "https://w.com/fr/companies/x/jobs/stage-m-a_saint-herblain",
+    ])
+    def test_drops_offers_in_the_french_provinces(self, url):
         assert not stage_scraper._looks_like_finance_stage(url)
+
+    @pytest.mark.parametrize("url", [
+        "https://w.com/fr/companies/thales/jobs/stage-legal-m-a_meudon",
+        "https://w.com/fr/companies/bnp/jobs/stage-analyste-financier_puteaux",
+        "https://w.com/fr/companies/x/jobs/stage-m-a_paris",
+    ])
+    def test_keeps_offers_in_the_paris_region(self, url):
+        assert stage_scraper._looks_like_finance_stage(url)
 
     @pytest.mark.parametrize("url", [
         "https://w.com/fr/companies/x/jobs/stage-developpeur-frontend_lyon",
@@ -150,12 +169,28 @@ class TestOfferFromJsonld:
         offer = stage_scraper._offer_from_jsonld(jsonld_page(posting), "u")
         assert offer["deadline"] is None
 
-    def test_drops_offers_whose_country_is_not_france(self):
+    def test_keeps_an_offer_abroad(self):
         posting = {**JOB_POSTING, "jobLocation": {"address": {
-            "addressLocality": "Providence", "addressCountry": "US"}}}
+            "addressLocality": "London", "postalCode": "EC2N 4AY",
+            "addressCountry": "GB"}}}
+        assert stage_scraper._offer_from_jsonld(jsonld_page(posting), "u") is not None
+
+    def test_drops_a_french_offer_outside_the_paris_region(self):
+        # Le code postal tranche là où le slug ne disait rien.
+        posting = {**JOB_POSTING, "jobLocation": {"address": {
+            "addressLocality": "Nantes", "postalCode": "44000",
+            "addressCountry": "FR"}}}
         assert stage_scraper._offer_from_jsonld(jsonld_page(posting), "u") is None
 
-    def test_keeps_offers_in_france(self):
+    @pytest.mark.parametrize("code", ["75008", "92190", "93400", "78000", "95700"])
+    def test_keeps_a_french_offer_in_the_paris_region(self, code):
+        posting = {**JOB_POSTING, "jobLocation": {"address": {
+            "addressLocality": "Paris", "postalCode": code,
+            "addressCountry": "FR"}}}
+        assert stage_scraper._offer_from_jsonld(jsonld_page(posting), "u") is not None
+
+    def test_a_french_offer_without_a_postcode_is_kept(self):
+        # Mieux vaut une offre de trop qu'une offre perdue sur une donnée absente.
         posting = {**JOB_POSTING, "jobLocation": {"address": {
             "addressLocality": "Paris", "addressCountry": "FR"}}}
         assert stage_scraper._offer_from_jsonld(jsonld_page(posting), "u") is not None
