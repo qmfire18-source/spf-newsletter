@@ -25,9 +25,14 @@
              letter-spacing:.05em; }
     .badge__dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
 
+    /* La carte se resserre autour du texte. Dépliée sur toute la largeur,
+       elle laissait deux grandes zones vides de part et d'autre. Le volet
+       HTML, lui, a besoin de place : la carte s'élargit alors. */
     section.block { background:var(--surface); border:1px solid var(--border);
                     border-radius:var(--radius); box-shadow:var(--shadow);
-                    margin-bottom:1.5rem; overflow:hidden; }
+                    margin-bottom:1.5rem; overflow:hidden;
+                    max-width:44rem; margin-inline:auto; }
+    section.block:has(.split[data-html="1"]) { max-width:none; }
     .block__head { display:flex; align-items:center; justify-content:space-between;
                    gap:1rem; padding:.9rem 1.25rem; border-bottom:1px solid var(--border);
                    background:var(--surface-2); }
@@ -63,12 +68,13 @@
     textarea:focus { outline:none; background:var(--surface-2); }
     /* Largeur du gabarit email : relire sur 1160 px donnait des coupures de
        ligne qui n'existent pas dans la boîte de réception. */
-    /* Centré : à gauche, la largeur email laissait la moitié de l'écran vide
-       et donnait l'impression d'une mise en page cassée. */
+    /* 34rem = la colonne de texte réelle de l'email : 600 px de gabarit moins
+       2 × 32 px de marges intérieures. Relire plus large donne des coupures
+       de ligne qui n'existent pas dans la boîte de réception. */
     .preview { padding:.35rem 1.25rem 1.5rem; font-size:.95rem; min-height:18rem;
-               max-width:40rem; margin-inline:auto; }
+               max-width:34rem; margin-inline:auto; }
     .split[data-html="1"] .preview { max-width:none; margin-inline:0; }
-    .pane__label, .pane__hint { max-width:40rem; margin-inline:auto; }
+    .pane__label, .pane__hint { max-width:34rem; margin-inline:auto; }
     .split[data-html="1"] .pane__label,
     .split[data-html="1"] .pane__hint { max-width:none; margin-inline:0; }
     .pane__hint { font-size:.72rem; color:var(--fg-muted); padding:0 1.25rem .6rem;
@@ -197,7 +203,7 @@
     <span class="badge"><span class="badge__dot"></span>En attente de validation</span>
   </div>
 
-  <nav class="toc" aria-label="Sommaire du brouillon">
+  <nav class="toc" aria-label="Sommaire du brouillon" style="max-width:44rem;margin-inline:auto;">
     <a href="#bloc-actus">Actus financières</a>
     <a href="#bloc-stages">Stages</a>
     <span class="toc__sep" aria-hidden="true"></span>

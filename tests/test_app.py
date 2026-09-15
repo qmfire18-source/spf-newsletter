@@ -350,10 +350,11 @@ class TestReviewPageTooling:
             assert compteur in page
 
     def test_the_preview_is_capped_at_the_email_width(self, client, draft):
-        # Relire sur 1160 px donnait des coupures de ligne qui n'existent pas
+        # 34rem = la colonne réelle de l'email (600 px moins 2 × 32 de marge).
+        # Relire plus large donne des coupures de ligne qui n'existent pas
         # dans la boîte de réception.
         login(client)
-        assert "max-width:40rem" in client.get("/").text
+        assert "max-width:34rem" in client.get("/").text
 
     def test_keeps_a_local_copy_scoped_to_the_draft(self, client, draft):
         login(client)

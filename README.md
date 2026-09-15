@@ -326,9 +326,11 @@ Un sommaire en haut permet de sauter entre les actus et les stages, et affiche
 en continu ce que pèse l'édition : nombre d'actualités, nombre d'offres, mots,
 et taille de l'email. Cette dernière compte : Gmail tronque au-delà de 102 Ko.
 
-L'aperçu s'affiche à la **largeur réelle de l'email**. Relire sur toute la
-largeur de l'écran donnait des coupures de ligne qui n'existent pas dans la
-boîte de réception.
+L'aperçu s'affiche à la **largeur réelle de la colonne de texte de l'email**,
+soit 34 rem : 600 px de gabarit moins deux fois 32 px de marge intérieure.
+Relire plus large donnait des coupures de ligne qui n'existent pas dans la
+boîte de réception. La carte se resserre autour, et ne s'élargit que lorsque
+le volet HTML est ouvert.
 
 `Cmd+S` enregistre. Une copie de la relecture est gardée dans le navigateur et
 proposée au retour si l'onglet a été fermé avant l'enregistrement ; elle ne
