@@ -193,3 +193,17 @@ class TestBrandColour:
     def test_the_navy_appears_in_the_rendered_email(self):
         out = brevo_sender.render_newsletter("", "", date(2026, 9, 14))
         assert "#183050" in out
+
+
+class TestWeekBandOnPhones:
+    def test_the_band_shrinks_on_small_screens(self):
+        # Une règle la portait de 14 à 20px, ce qui la coupait en deux lignes.
+        out = brevo_sender.render_newsletter("", "", date(2026, 9, 14))
+        bloc = out[out.index("max-width:620px"):out.index("</style>")]
+        assert ".titre" in bloc
+        assert "font-size:13px" in bloc
+        assert "font-size:20px" not in bloc
+
+    def test_the_week_is_written_on_one_line(self):
+        out = brevo_sender.render_newsletter("", "", date(2026, 9, 14))
+        assert "Semaine du 14 septembre 2026" in out

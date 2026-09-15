@@ -29,6 +29,11 @@ class Draft(Base):
     reviewed_by = Column(String, nullable=True)
     sent_at = Column(DateTime, nullable=True)
 
+    # Trace de l'envoi, pour que l'historique dise à qui et avec quoi.
+    brevo_campaign_id = Column(String, nullable=True)
+    brevo_list_id = Column(Integer, nullable=True)
+    recipient_count = Column(Integer, nullable=True)
+
     news_items = relationship("NewsItem", back_populates="draft")
     stage_offers = relationship("StageOffer", back_populates="draft")
 
@@ -85,5 +90,31 @@ engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine)
 
 
+def _add_missing_columns(engine):
+    """Ajoute les colonnes apparues après la création de la base.
+
+    `create_all` ne touche pas aux tables existantes : sans ça, une base
+    déjà remplie ignorerait les nouvelles colonnes et l'application
+    échouerait à la première lecture. SQLite accepte un ALTER TABLE simple,
+    ce qui suffit à un projet de cette taille.
+    """
+    from sqlalchemy import inspect, text
+
+    inspecteur = inspect(engine)
+    for table in Base.metadata.sorted_tables:
+        if table.name not in inspecteur.get_table_names():
+            continue
+        presentes = {c["name"] for c in inspecteur.get_columns(table.name)}
+        for colonne in table.columns:
+            if colonne.name in presentes:
+                continue
+            type_sql = colonne.type.compile(engine.dialect)
+            with engine.begin() as connexion:
+                connexion.execute(
+                    text(f"ALTER TABLE {table.name} ADD COLUMN {colonne.name} {type_sql}")
+                )
+
+
 def init_db():
     Base.metadata.create_all(engine)
+    _add_missing_columns(engine)

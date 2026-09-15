@@ -1,0 +1,108 @@
+{% extends "_base.html" %}
+{% block title %}Historique des éditions{% endblock %}
+{% block style %}
+    .topbar { background:var(--navy); color:#fff; }
+    .topbar__in { max-width:66rem; margin:0 auto; padding:.85rem 1.25rem;
+                  display:flex; align-items:center; justify-content:space-between;
+                  gap:1rem; flex-wrap:wrap; }
+    .who { display:flex; align-items:center; gap:.75rem; font-size:.88rem; color:#C4D3E8; }
+    .who form { margin:0; }
+    .btn--onnavy { background:transparent; color:#fff; border-color:#ffffff55;
+                   min-height:36px; padding:.35rem .8rem; font-size:.88rem; }
+    .btn--onnavy:hover { background:#ffffff1f; }
+
+    main { max-width:66rem; margin:0 auto; padding:1.75rem 1.25rem 4rem; }
+    h1 { font-family:var(--serif); font-size:1.75rem; font-weight:600;
+         margin:0 0 .3rem; letter-spacing:-.01em; }
+    .sub { color:var(--fg-muted); margin:0 0 1.75rem; max-width:52ch; }
+
+    .edition { background:var(--surface); border:1px solid var(--border);
+               border-radius:var(--radius); box-shadow:var(--shadow);
+               padding:1.1rem 1.25rem; margin-bottom:.85rem;
+               display:grid; grid-template-columns:1fr auto; gap:.8rem 1.5rem;
+               align-items:center; }
+    .edition__titre { font-family:var(--serif); font-size:1.12rem; font-weight:600;
+                      margin:0 0 .25rem; }
+    .meta { display:flex; gap:1.1rem; flex-wrap:wrap; font-size:.86rem;
+            color:var(--fg-muted); }
+    .meta b { color:var(--fg); font-weight:500; font-variant-numeric:tabular-nums; }
+    .actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+
+    .etat { display:inline-flex; align-items:center; gap:.4rem; font-size:.72rem;
+            font-weight:500; padding:.22rem .6rem; border-radius:999px;
+            text-transform:uppercase; letter-spacing:.05em; }
+    .etat__point { width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .etat--sent { background:var(--ok-bg); color:var(--ok); }
+    .etat--pending { background:var(--surface-2); color:var(--fg-muted); }
+
+    .empty { background:var(--surface); border:1px solid var(--border);
+             border-radius:var(--radius); padding:3rem 1.5rem; text-align:center;
+             color:var(--fg-muted); box-shadow:var(--shadow); }
+
+    @media (max-width:640px) {
+      .edition { grid-template-columns:1fr; }
+      .actions .btn { width:100%; }
+    }
+{% endblock %}
+
+{% block body %}
+<header class="topbar">
+  <div class="topbar__in">
+    <div class="brand brand--onnavy">
+      {% include "_brand.html" %}
+      <div>
+        <div class="brand__name">Sciences&nbsp;Po Finance</div>
+        <div class="brand__sub">Historique des éditions</div>
+      </div>
+    </div>
+    <div class="who">
+      <a class="btn btn--onnavy" href="/">Brouillon en cours</a>
+      <form method="post" action="/logout">
+        <button type="submit" class="btn btn--onnavy">Se déconnecter</button>
+      </form>
+    </div>
+  </div>
+</header>
+
+<main>
+  <h1>Historique des éditions</h1>
+  <p class="sub">
+    Chaque édition est conservée, y compris après l'envoi. « Voir l'email »
+    montre exactement ce qui est parti.
+  </p>
+
+  {% if drafts %}
+    {% for d in drafts %}
+    <article class="edition">
+      <div>
+        <h2 class="edition__titre">{{ semaines[d.id] }}</h2>
+        <div class="meta">
+          {% if d.status == "sent" %}
+            <span class="etat etat--sent"><span class="etat__point"></span>Envoyée</span>
+            {% if d.sent_at %}<span>le <b>{{ d.sent_at.strftime("%d/%m/%Y à %H:%M") }}</b></span>{% endif %}
+            {% if d.recipient_count is not none %}<span><b>{{ d.recipient_count }}</b> abonné{{ "s" if d.recipient_count > 1 }}</span>{% endif %}
+            {% if d.brevo_list_id %}<span>liste <b>{{ d.brevo_list_id }}</b></span>{% endif %}
+            {% if d.reviewed_by %}<span>par <b>{{ d.reviewed_by }}</b></span>{% endif %}
+          {% else %}
+            <span class="etat etat--pending"><span class="etat__point"></span>En attente</span>
+            <span>créée le <b>{{ d.created_at.strftime("%d/%m/%Y") }}</b></span>
+          {% endif %}
+          <span><b>{{ d.news_items | length }}</b> actualités</span>
+          <span><b>{{ d.stage_offers | length }}</b> offres</span>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="btn btn--ghost" href="/draft/{{ d.id }}/apercu" target="_blank" rel="noopener">
+          Voir l'email
+        </a>
+        {% if d.status != "sent" %}
+        <a class="btn btn--primary" href="/">Relire</a>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  {% else %}
+  <div class="empty">Aucune édition pour l'instant.</div>
+  {% endif %}
+</main>
+{% endblock %}

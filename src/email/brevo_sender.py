@@ -144,7 +144,10 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
   @media only screen and (max-width:620px) {{
     .enveloppe {{ width:100% !important; }}
     .marges    {{ padding-left:20px !important; padding-right:20px !important; }}
-    .titre     {{ font-size:20px !important; }}
+    /* Le bandeau de semaine fait 14px sur grand écran. Une règle mobile le
+       portait à 20px, ce qui le coupait en deux lignes sur un téléphone :
+       « Semaine du 14 septembre » / « 2026 ». Il rétrécit au contraire. */
+    .titre     {{ font-size:13px !important; letter-spacing:0 !important; }}
     .contenu h3 {{ font-size:17px !important; }}
     .contenu, .contenu p, .contenu li {{ font-size:16px !important; }}
   }}
@@ -235,3 +238,26 @@ def _semaine_en_lettres(week_of) -> str:
         return f"Semaine du {week_of.day} {mois[week_of.month - 1]} {week_of.year}"
     except AttributeError:
         return f"Semaine du {week_of}"
+
+
+def count_recipients(list_id=None) -> int | None:
+    """Nombre d'abonnés de la liste, relevé au moment de l'envoi.
+
+    Sert l'historique : « envoyée à 42 abonnés » n'a de sens que si le
+    chiffre est figé le jour de l'envoi, la liste continuant d'évoluer.
+    Une défaillance ici ne doit jamais empêcher un envoi : on renvoie None.
+    """
+    list_id = list_id if list_id is not None else BREVO_LIST_ID
+    if not BREVO_API_KEY or not list_id:
+        return None
+    try:
+        response = requests.get(
+            f"{BASE_URL}/contacts/lists/{int(list_id)}",
+            headers={"api-key": BREVO_API_KEY, "Accept": "application/json"},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        return response.json().get("totalSubscribers")
+    except (requests.RequestException, ValueError, TypeError):
+        logger.warning("Nombre d'abonnés indisponible pour la liste %s", list_id)
+        return None

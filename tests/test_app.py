@@ -359,3 +359,83 @@ class TestReviewPageTooling:
     def test_keeps_a_local_copy_scoped_to_the_draft(self, client, draft):
         login(client)
         assert f'"spf-brouillon-{draft.id}"' in client.get("/").text
+
+
+class TestHistory:
+    def test_requires_authentication(self, client):
+        assert client.get("/historique").headers["location"] == "/login"
+
+    def test_lists_every_edition(self, client, db_session, draft):
+        from datetime import date as _date
+        ancienne = Draft(week_of=_date(2026, 8, 31), news_content="<p>A</p>",
+                         stages_content="<p>S</p>", status="sent",
+                         created_at=datetime(2026, 8, 31, 9, 0),
+                         sent_at=datetime(2026, 8, 31, 11, 0),
+                         reviewed_by="bureau@sciencespo.fr",
+                         brevo_campaign_id="42", brevo_list_id=4, recipient_count=87)
+        db_session.add(ancienne)
+        db_session.commit()
+
+        login(client)
+        page = client.get("/historique").text
+        assert "Semaine du 31 août 2026" in page
+        assert "Semaine du 7 septembre 2026" in page
+
+    def test_shows_who_what_and_when_for_a_sent_edition(self, client, db_session, draft):
+        draft.status = "sent"
+        draft.sent_at = datetime(2026, 9, 8, 10, 30)
+        draft.reviewed_by = "bureau@sciencespo.fr"
+        draft.recipient_count = 87
+        draft.brevo_list_id = 4
+        db_session.commit()
+
+        login(client)
+        page = client.get("/historique").text
+        assert "Envoyée" in page
+        assert "08/09/2026 à 10:30" in page
+        assert "87" in page
+        assert "bureau@sciencespo.fr" in page
+
+    def test_links_to_the_archived_content(self, client, db_session, draft):
+        draft.status = "sent"
+        db_session.commit()
+        login(client)
+        assert f"/draft/{draft.id}/apercu" in client.get("/historique").text
+
+    def test_a_pending_edition_is_marked_as_such(self, client, draft):
+        login(client)
+        assert "En attente" in client.get("/historique").text
+
+    def test_empty_history(self, client, db_session):
+        login(client)
+        assert "Aucune édition" in client.get("/historique").text
+
+
+class TestSendRecordsTheDelivery:
+    def test_campaign_recipients_and_list_are_kept(
+        self, client, db_session, draft, monkeypatch
+    ):
+        monkeypatch.setattr(main, "send_campaign", lambda subject, html_content: "99")
+        monkeypatch.setattr(main, "count_recipients", lambda: 87)
+        monkeypatch.setattr(main, "BREVO_LIST_ID", "4")
+        login(client)
+        client.post(f"/draft/{draft.id}/send", data=ENVOI)
+
+        db_session.refresh(draft)
+        assert draft.brevo_campaign_id == "99"
+        assert draft.recipient_count == 87
+        assert draft.brevo_list_id == 4
+        assert draft.sent_at is not None
+
+    def test_a_failed_send_records_nothing(self, client, db_session, draft, monkeypatch):
+        def boom(subject, html_content):
+            raise RuntimeError("Brevo indisponible")
+
+        monkeypatch.setattr(main, "send_campaign", boom)
+        login(client)
+        client.post(f"/draft/{draft.id}/send", data=ENVOI)
+
+        db_session.refresh(draft)
+        assert draft.brevo_campaign_id is None
+        assert draft.recipient_count is None
+        assert draft.status == "pending_review"

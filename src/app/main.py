@@ -26,7 +26,13 @@ from src.config import (
     SESSION_MAX_AGE_SECONDS,
 )
 from src.db.models import Draft, SessionLocal, utcnow
-from src.email.brevo_sender import _semaine_en_lettres, render_newsletter, send_campaign
+from src.config import BREVO_LIST_ID
+from src.email.brevo_sender import (
+    _semaine_en_lettres,
+    count_recipients,
+    render_newsletter,
+    send_campaign,
+)
 from src.sanitize import sanitize_html
 
 logger = logging.getLogger(__name__)
@@ -173,6 +179,29 @@ def review_draft(
     )
 
 
+@app.get("/historique", response_class=HTMLResponse)
+def history(
+    request: Request,
+    reviewer: str = Depends(get_current_reviewer),
+    db=Depends(get_db),
+):
+    """Toutes les éditions, envoyées ou non, avec leur trace d'envoi.
+
+    Un brouillon envoyé n'est jamais supprimé : son contenu reste lisible
+    par l'aperçu, qui sert alors d'archive de ce qui est réellement parti.
+    """
+    drafts = db.query(Draft).order_by(Draft.week_of.desc()).all()
+    return templates.TemplateResponse(
+        request,
+        "history.html",
+        {
+            "drafts": drafts,
+            "reviewer": reviewer,
+            "semaines": {d.id: _semaine_en_lettres(d.week_of) for d in drafts},
+        },
+    )
+
+
 @app.get("/draft/{draft_id}/apercu", response_class=HTMLResponse)
 def preview_draft(
     draft_id: int,
@@ -265,8 +294,16 @@ def send_draft(
             error="L'envoi Brevo a échoué. Le brouillon reste modifiable."
         )
 
+    # Le nombre d'abonnés est figé maintenant : la liste continuera
+    # d'évoluer, l'historique doit dire combien de personnes l'ont reçue.
     db.query(Draft).filter(Draft.id == draft_id).update(
-        {"status": "sent", "sent_at": utcnow()}
+        {
+            "status": "sent",
+            "sent_at": utcnow(),
+            "brevo_campaign_id": str(campaign_id),
+            "brevo_list_id": int(BREVO_LIST_ID) if BREVO_LIST_ID else None,
+            "recipient_count": count_recipients(),
+        }
     )
     db.commit()
     logger.info(

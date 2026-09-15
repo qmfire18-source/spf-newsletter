@@ -181,6 +181,20 @@ international, pas la province. TalentSoft ne publie que le pays, pas la
 ville : une annonce française sans ville est conservée, comme partout dans le
 projet une donnée absente ne fait pas rejeter une offre.
 
+## Historique des éditions
+
+`/historique` liste toutes les éditions, envoyées ou non : la semaine, la date
+d'envoi, qui a validé, le nombre d'abonnés au moment de l'envoi et la liste
+visée. « Voir l'email » ouvre l'archive de ce qui est réellement parti.
+
+Le nombre d'abonnés est figé à l'envoi : la liste continue d'évoluer, et
+« envoyée à 42 abonnés » ne veut rien dire si le chiffre est recalculé plus
+tard.
+
+Les colonnes de suivi ont été ajoutées après coup. `init_db()` complète les
+tables existantes plutôt que de laisser une base déjà remplie ignorer les
+nouvelles colonnes.
+
 ## Ponctuation
 
 Le tiret cadratin (—) est la ponctuation signature des textes générés : le
