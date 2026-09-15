@@ -12,7 +12,11 @@
                    min-height:36px; padding:.35rem .8rem; font-size:.88rem; }
     .btn--onnavy:hover { background:#ffffff1f; }
 
-    main { max-width:78rem; margin:0 auto; padding:1.75rem 1.25rem 8rem; }
+    /* La barre d'action est fixe : la place qu'on lui réserve est mesurée
+       en JavaScript, sinon elle recouvre la fin du brouillon ou, sur
+       téléphone, réserve bien plus de vide qu'elle n'occupe. */
+    main { max-width:78rem; margin:0 auto;
+           padding:1.75rem 1.25rem calc(var(--barre-h, 8rem) + 1.5rem); }
     .pagehead { display:flex; align-items:flex-start; justify-content:space-between;
                 gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
     h1 { font-family:var(--serif); font-size:1.75rem; font-weight:600;
@@ -148,7 +152,7 @@
     }
 
     @media (max-width: 640px) {
-      main { padding:1.25rem .9rem 13rem; }
+      main { padding:1.25rem .9rem calc(var(--barre-h, 8rem) + 1rem); }
       .topbar__in, .actionbar__in { padding:.75rem .9rem; }
       .block__head { flex-wrap:wrap; gap:.5rem; }
       .hint { display:none; }
@@ -159,13 +163,21 @@
       .preview, .pane__label { padding-left:.9rem; padding-right:.9rem; }
       .preview { font-size:16px; }
 
-      /* Deux boutons côte à côte deviennent illisibles sur un téléphone :
-         on les empile, pleine largeur, l'envoi en dernier pour éviter le
-         clic réflexe. */
-      .actionbar__in { flex-direction:column; align-items:stretch; gap:.6rem; }
-      .actions { flex-direction:column-reverse; width:100%; gap:.5rem; }
+      /* Empilés pleine largeur, les trois boutons et l'avertissement
+         occupaient près de la moitié de l'écran, par-dessus le texte qu'on
+         vient relire. Les deux actions sans conséquence tiennent donc sur une
+         ligne, l'envoi garde la sienne, en dernier, pour éviter le clic
+         réflexe. L'avertissement disparaît d'ici : la demande de confirmation
+         le redit, au moment où il compte vraiment. */
+      .actionbar__in { flex-direction:column; align-items:stretch; gap:.5rem; }
+      .actions { display:grid; grid-template-columns:1fr 1fr; width:100%; gap:.5rem; }
       .actions .btn { width:100%; }
-      .sendwarn { font-size:.85rem; }
+      .actions .btn--danger { grid-column:1 / -1; }
+      .sendwarn, .saved { display:none; }
+      /* « Enregistrer sans envoyer » repassait sur deux lignes et épaississait
+         toute la rangée : à côté du bouton rouge, « Enregistrer » se comprend. */
+      .hors-tel { display:none; }
+      .barmeta:not(:has(.dirty[data-on="1"])) { display:none; }
     }
 {% endblock %}
 
@@ -331,7 +343,7 @@
     </section>
   <div class="actionbar">
     <div class="actionbar__in">
-      <div>
+      <div class="barmeta">
         <span class="dirty" id="dirty">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/>
@@ -352,7 +364,7 @@
         </a>
         <button type="submit" form="editor" class="btn btn--ghost"
                 formaction="/draft/{{ draft.id }}/save">
-          Enregistrer sans envoyer
+          Enregistrer<span class="hors-tel"> sans envoyer</span>
         </button>
         <button type="submit" form="editor" class="btn btn--danger" id="sendbtn"
                 formaction="/draft/{{ draft.id }}/send">
@@ -553,6 +565,24 @@
       if (dirty) { e.preventDefault(); e.returnValue = ""; }
     });
   })();
+    // La barre d'action flotte au-dessus du brouillon : on reporte sa hauteur
+    // réelle dans la marge basse de la page. Une valeur en dur convenait à une
+    // seule taille d'écran et, sur téléphone, réservait un vide bien plus grand
+    // que la barre elle-même.
+    var barre = document.querySelector(".actionbar");
+    if (barre) {
+      var mesureBarre = function () {
+        document.documentElement.style.setProperty(
+          "--barre-h", barre.offsetHeight + "px"
+        );
+      };
+      mesureBarre();
+      if (window.ResizeObserver) {
+        new ResizeObserver(mesureBarre).observe(barre);
+      } else {
+        window.addEventListener("resize", mesureBarre);
+      }
+    }
 </script>
 {% endif %}
 {% endblock %}
