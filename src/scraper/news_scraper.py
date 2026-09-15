@@ -57,6 +57,43 @@ CONSUMER_NOISE_MARKERS = (
     "changement climatique", "ecologie", "canicule",
 )
 
+# Google News agrège sans filtre éditorial : courtiers en crédit, republieurs
+# de communiqués, sites crypto spéculatifs et agrégateurs sans rédaction y
+# côtoient la presse établie. Une newsletter d'association ne peut pas relayer
+# ça — une seule reprise douteuse coûte plus cher que dix actus manquées.
+#
+# Liste blanche plutôt que liste noire : le bruit se renouvelle, la presse de
+# référence beaucoup moins. Une source inconnue est écartée, pas publiée.
+# Les flux RSS de NEWS_SOURCES ne passent pas par ici : nous les avons
+# choisis un par un, ils sont fiables par construction.
+TRUSTED_GNEWS_SOURCES = (
+    # Presse économique et financière
+    "les echos", "investir", "l'agefi", "agefi", "option finance",
+    "la tribune", "challenges", "capital", "le revenu", "mieux vivre",
+    "l'usine nouvelle", "décideurs", "decideurs", "business immo",
+    "daf-mag", "revue banque", "l'argus de l'assurance",
+    # Quotidiens et hebdomadaires généralistes
+    "le monde", "le figaro", "libération", "liberation", "le point",
+    "l'express", "l'obs", "mediapart", "l'opinion", "la croix",
+    "ouest-france", "sud ouest", "les jours", "alternatives économiques",
+    "le parisien", "les inrocks", "marianne", "touteleurope",
+    # Audiovisuel public et grandes chaînes
+    "franceinfo", "france info", "france 24", "radio france", "france inter",
+    "tf1", "bfm", "europe 1", "rfi", "arte", "lci", "rts.ch", "rtbf",
+    "tv5monde", "france télévisions", "france televisions",
+    # Marchés
+    "boursorama", "boursier", "zonebourse", "morningstar", "investing.com",
+    # Presse internationale de référence
+    "reuters", "bloomberg", "financial times", "wall street journal",
+    "the economist", "le temps", "l'echo", "de tijd", "handelsblatt",
+    "el país", "el pais", "il sole 24 ore", "euractiv", "politico",
+    "associated press", "afp", "the guardian", "cnbc",
+    # Institutions
+    "banque de france", "banque centrale européenne", "european central bank",
+    "autorité des marchés financiers", "insee", "eurostat", "ocde", "oecd",
+    "fmi", "imf", "commission européenne",
+)
+
 GNEWS_ENDPOINT = "https://news.google.com/rss/search"
 NEWSAPI_ENDPOINT = "https://newsapi.org/v2/everything"
 
@@ -86,7 +123,7 @@ def fetch_news(sources: list[dict]) -> list[dict]:
             if src["type"] == "rss":
                 items.extend(_fetch_rss(src["url"], cutoff))
             elif src["type"] == "gnews":
-                items.extend(_fetch_gnews(src["query"], cutoff))
+                items.extend(_trusted_only(_fetch_gnews(src["query"], cutoff)))
             elif src["type"] == "newsapi":
                 items.extend(_fetch_newsapi(src["query"], cutoff))
             else:
@@ -129,6 +166,52 @@ def _fetch_gnews(query: str, cutoff: datetime) -> list[dict]:
             item["title"] = _strip_source_suffix(item["title"], source_name)
             results.append(item)
     return results
+
+
+def _trusted_only(items: list[dict]) -> list[dict]:
+    """Ne garde que les actus issues d'une source de la liste blanche."""
+    gardees = []
+    for item in items:
+        if is_trusted_source(item.get("source")):
+            gardees.append(item)
+        else:
+            logger.info("Source non reconnue, actu écartée : %r", item.get("source"))
+    if len(gardees) != len(items):
+        logger.info(
+            "Google News : %d actus sur %d viennent d'une source de confiance.",
+            len(gardees), len(items),
+        )
+    return gardees
+
+
+def is_trusted_source(source: str | None) -> bool:
+    """Le nom vient parfois sous forme de domaine : « lepoint.fr » pour Le Point.
+
+    On compare donc aussi sans les espaces — sinon « le point » ne
+    reconnaîtrait pas « lepoint fr » une fois la ponctuation retirée.
+
+    Mais pas pour les sigles courts : « rfi » se cache dans
+    « f-rfi-nanceyahoocom », ce qui faisait passer Yahoo Finance pour Radio
+    France Internationale. En dessous de six caractères, le nom doit
+    apparaître comme un mot entier.
+    """
+    nom = _normalize_title(source or "")
+    if not nom:
+        return False
+
+    mots = set(nom.split())
+    compact = nom.replace(" ", "")
+
+    for connue in TRUSTED_GNEWS_SOURCES:
+        attendu = _normalize_title(connue)
+        serre = attendu.replace(" ", "")
+        if len(serre) < 6:
+            # Sigle : mot entier exigé, dans un sens comme dans l'autre.
+            if attendu in mots or serre in mots:
+                return True
+        elif attendu in nom or serre in compact:
+            return True
+    return False
 
 
 def _fetch_newsapi(query: str, cutoff: datetime) -> list[dict]:

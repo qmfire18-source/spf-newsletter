@@ -382,6 +382,17 @@ injoignable vaut refus.
 Les flux économie généralistes ramènent beaucoup de hors-sujet et se répètent.
 Trois garde-fous, mesurés sur une semaine réelle (342 actus collectées) :
 
+0. **Liste blanche de sources.** Google News agrège sans filtre éditorial :
+   courtiers en crédit, republieurs de communiqués, sites crypto spéculatifs
+   et agrégateurs sans rédaction y côtoient la presse établie. Seules les
+   sources reconnues passent ; une source inconnue est écartée, jamais
+   publiée. Les flux RSS de `NEWS_SOURCES` ne sont pas concernés : ils sont
+   choisis un par un.
+
+   La comparaison tolère les noms en forme de domaine (`lepoint.fr`) mais
+   exige un mot entier pour les sigles de moins de six lettres — sans quoi
+   « rfi » se reconnaît dans « f**rfi**nanceyahoocom ».
+
 1. **Préfiltre mots-clés finance**, puis **veto conso/société** — carburants,
    pouvoir d'achat, climat, chômage, logement résidentiel. Ces sujets passaient
    par des formules comme « financer le plan d'aide » ou « taux de chômage »,

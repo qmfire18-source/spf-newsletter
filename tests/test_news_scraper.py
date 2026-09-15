@@ -294,3 +294,57 @@ class TestSpreadAcrossSources:
     def test_tolerates_a_missing_source(self):
         items = [self.item(None, "2026-09-11T10:00:00+00:00")]
         assert len(news_scraper._spread_across_sources(items)) == 1
+
+
+class TestTrustedSources:
+    @pytest.mark.parametrize("source", [
+        "Les Echos", "Investir Les Echos", "L'Agefi", "Option Finance",
+        "Le Monde.fr", "Le Figaro - Economie", "lepoint.fr", "Le Parisien",
+        "Challenges", "La Tribune", "Libération", "mediapart.fr",
+        "franceinfo", "TF1 Info", "BFM Bourse", "RFI", "tv5monde",
+        "Boursorama", "Zonebourse", "Morningstar", "Le Temps",
+        "Reuters", "Bloomberg", "euractiv.com", "Banque de France",
+    ])
+    def test_established_outlets_are_trusted(self, source):
+        assert news_scraper.is_trusted_source(source)
+
+    @pytest.mark.parametrize("source", [
+        "Empruntis", "Pretto", "MySweetImmo", "Selectra",   # courtiers
+        "cointribune.com", "XTB.com",                        # crypto, trading
+        "presseagence.fr", "GlobeNewswire",                  # communiqués
+        "Sika Finance", "Boursenews", "ABC Bourse",          # sans rédaction
+        "moneyvox.fr",
+    ])
+    def test_promotional_and_wire_sources_are_refused(self, source):
+        assert not news_scraper.is_trusted_source(source)
+
+    def test_a_short_acronym_does_not_match_inside_a_word(self):
+        # « rfi » se cachait dans « f-rfi-nanceyahoocom ».
+        assert not news_scraper.is_trusted_source("fr.finance.yahoo.com")
+
+    def test_the_acronym_itself_is_trusted(self):
+        assert news_scraper.is_trusted_source("RFI")
+
+    @pytest.mark.parametrize("vide", [None, "", "   "])
+    def test_a_missing_source_is_refused(self, vide):
+        assert not news_scraper.is_trusted_source(vide)
+
+    def test_an_unknown_source_is_refused_not_published(self):
+        assert not news_scraper.is_trusted_source("Le Blog Finance de Jean-Michel")
+
+
+class TestGnewsFiltering:
+    def test_only_trusted_items_survive(self):
+        items = [
+            {"source": "Les Echos", "title": "a", "url": "u1"},
+            {"source": "Empruntis", "title": "b", "url": "u2"},
+            {"source": "L'Agefi", "title": "c", "url": "u3"},
+        ]
+        gardees = news_scraper._trusted_only(items)
+        assert [i["source"] for i in gardees] == ["Les Echos", "L'Agefi"]
+
+    def test_everything_untrusted_yields_nothing(self):
+        assert news_scraper._trusted_only([{"source": "cointribune.com"}]) == []
+
+    def test_empty_input(self):
+        assert news_scraper._trusted_only([]) == []
