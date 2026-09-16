@@ -8,6 +8,14 @@ set -uo pipefail
 
 PROJET="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 JOURNAL="$PROJET/logs/weekly.log"
+# Sans .env lisible, DATABASE_URL serait absente et le code retomberait
+# silencieusement sur une base SQLite locale et vide : la tâche paraîtrait
+# réussir en n'écrivant nulle part. Mieux vaut s'arrêter bruyamment.
+if ! grep -q '^DATABASE_URL=.' "$PROJET/.env" 2>/dev/null; then
+  echo "DATABASE_URL absente de $PROJET/.env — tâche interrompue." >&2
+  exit 1
+fi
+
 mkdir -p "$(dirname "$JOURNAL")"
 
 notifier() {
@@ -21,7 +29,7 @@ notifier() {
 
 CODE=$?
 if [ $CODE -eq 0 ]; then
-  notifier "Brouillon prêt à relire sur http://127.0.0.1:8000"
+  notifier "Brouillon prêt à relire sur brouillon.sciencespo-finance.fr"
 else
   notifier "Échec de la génération (code $CODE) — voir logs/weekly.log"
 fi
