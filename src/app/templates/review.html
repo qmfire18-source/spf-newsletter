@@ -182,11 +182,15 @@
       .topbar__in, .actionbar__in { padding:.75rem .9rem; }
       .block__head { flex-wrap:wrap; gap:.5rem; }
       .hint { display:none; }
-      /* Une seule ligne sur la barre : les compteurs sont secondaires. */
-      .toc { gap:.35rem; padding:.55rem .7rem; }
+      /* L'en-tête se dédouble faute de largeur : collante, elle mangeait deux
+         rangées en permanence, pour un logo et deux boutons dont on ne se sert
+         qu'au début et à la fin. Elle défile donc, et le sommaire, lui, reste :
+         c'est de celui-là qu'on se sert en relisant. */
+      .topbar { position:static; }
+      .toc { top:0; gap:.35rem; padding:.55rem .7rem; }
       .toc__stats { display:none; }
       .toc__lien { font-size:.85rem; }
-      section.block { scroll-margin-top:7rem; }
+      section.block { scroll-margin-top:3.6rem; }
 
       /* Sous 16px, iOS zoome sur le champ dès qu'on le touche et la mise en
          page saute. Le confort de lecture compte autant que le zoom évité. */
