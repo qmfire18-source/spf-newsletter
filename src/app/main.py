@@ -29,6 +29,7 @@ from src.config import (
     SESSION_MAX_AGE_SECONDS,
 )
 from scripts.run_weekly import current_week_of
+from src.ai.local_generator import find_cli
 from src.db.models import Draft, SessionLocal, utcnow
 from src.config import BREVO_LIST_ID
 from src.email.brevo_sender import (
@@ -212,6 +213,10 @@ def review_draft(
             "semaine": _semaine_en_lettres(draft.week_of) if draft else "",
             "reviewer": reviewer,
             "mode_emploi_url": MODE_EMPLOI_URL,
+            # La rédaction s'appuie sur le CLI Claude Code, installé sur le
+            # poste du responsable et sur lui seul. Proposer le bouton là où
+            # il échouerait promettrait une régénération impossible.
+            "generation_possible": find_cli() is not None,
             "message": message,
             "error": error,
         },

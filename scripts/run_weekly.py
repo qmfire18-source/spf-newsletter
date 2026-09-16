@@ -92,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     db = SessionLocal()
 
     try:
+        a_remplacer = None
         existant = db.query(Draft).filter(Draft.week_of == week_of).first()
         if existant and args.remplacer:
             # Une édition partie ne se réécrit pas : les abonnés l'ont reçue,
@@ -103,9 +104,11 @@ def main(argv: list[str] | None = None) -> int:
                     week_of,
                 )
                 return 1
+            # La suppression n'a lieu qu'une fois le nouveau texte en main :
+            # supprimer d'abord a déjà coûté une édition, le jour où la
+            # rédaction a échoué juste après.
             logger.info("Remplacement du brouillon de la semaine du %s.", week_of)
-            db.delete(existant)
-            db.commit()
+            a_remplacer = existant
         elif existant:
             logger.info(
                 "Un brouillon existe déjà pour la semaine du %s : rien à faire.",
@@ -152,6 +155,11 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
         generated = generate(news, stages)
+
+        # Le texte est là : l'ancien brouillon peut céder la place.
+        if a_remplacer is not None:
+            db.delete(a_remplacer)
+            db.flush()
 
         draft = Draft(
             week_of=week_of,

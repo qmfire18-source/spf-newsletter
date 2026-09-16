@@ -188,6 +188,8 @@
          c'est de celui-là qu'on se sert en relisant. */
       .topbar { position:static; }
       .toc { top:0; gap:.35rem; padding:.55rem .7rem; }
+      /* Les compteurs portaient la marge qui poussait le menu à droite. */
+      .menu { margin-left:auto; }
       .toc__stats { display:none; }
       .toc__lien { font-size:.85rem; }
       section.block { scroll-margin-top:3.6rem; }
@@ -315,10 +317,12 @@
           Aperçu email
         </a>
         <a href="/historique">Historique</a>
+        {% if generation_possible %}
         <form method="post" action="/regenerer"
-              onsubmit="return confirm('Relancer la collecte et la rédaction ?\n\nLe brouillon actuel sera remplacé. Comptez trois à quatre minutes.');">
-          <button type="submit">Rafraîchir l'actu</button>
+              onsubmit="return confirm('Tout réécrire à partir de l\'actualité du jour ?\n\nLe brouillon actuel et TOUTES vos corrections seront perdus. Comptez trois à quatre minutes.');">
+          <button type="submit">Tout réécrire</button>
         </form>
+        {% endif %}
       </div>
     </details>
   </nav>
