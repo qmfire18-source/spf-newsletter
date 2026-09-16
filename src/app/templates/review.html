@@ -281,6 +281,19 @@
       {{ regeneration.depuis.strftime("%H:%M") if regeneration.depuis else "peu" }}.
       La page se rafraîchit toute seule.</span>
   </div>
+  {% endif %}
+
+  {% if demande_en_attente %}
+  <div class="encours" role="status">
+    <span class="tourne" aria-hidden="true"></span>
+    <span>Réécriture demandée par {{ demande_en_attente.requested_by }} à
+      {{ demande_en_attente.requested_at.strftime("%H:%M") }}. Elle se lancera
+      dès que l'ordinateur du responsable sera disponible, et le brouillon se
+      mettra à jour tout seul.</span>
+  </div>
+  {% endif %}
+
+  {% if (regeneration and regeneration.en_cours) or demande_en_attente %}
   <meta http-equiv="refresh" content="20">
   {% elif regeneration and regeneration.erreur %}
   <p class="flash flash--error" role="alert">
@@ -317,12 +330,12 @@
           Aperçu email
         </a>
         <a href="/historique">Historique</a>
-        {% if generation_possible %}
-        <form method="post" action="/regenerer"
-              onsubmit="return confirm('Tout réécrire à partir de l\'actualité du jour ?\n\nLe brouillon actuel et TOUTES vos corrections seront perdus. Comptez trois à quatre minutes.');">
+        {# Double confirmation : le geste est destructeur et le menu se touche
+           du pouce. La première fenêtre explique, la seconde fait décider. #}
+        <form method="post" action="/regenerer" id="reecrire"
+              onsubmit="return confirmerReecriture();">
           <button type="submit">Tout réécrire</button>
         </form>
-        {% endif %}
       </div>
     </details>
   </nav>
@@ -644,6 +657,22 @@
         window.addEventListener("resize", mesureBarre);
       }
     }
+    // Réécrire jette le brouillon et toutes les corrections déjà faites. Une
+    // seule fenêtre se balaie d'un pouce distrait ; la seconde demande de
+    // décider après avoir lu ce qu'on perd.
+    function confirmerReecriture() {
+      if (!confirm(
+        "Tout réécrire à partir de l'actualité du jour ?\n\n" +
+        "Le brouillon actuel et TOUTES les corrections déjà faites seront " +
+        "définitivement perdus."
+      )) { return false; }
+      return confirm(
+        "Confirmer la réécriture complète ?\n\n" +
+        "Cette action est irréversible. Si quelqu'un d'autre a relu cette " +
+        "édition, son travail disparaîtra."
+      );
+    }
+
     // Un <details> reste ouvert tant qu'on ne reclique pas dessus : sans ça,
     // le menu resterait déplié derrière le contenu qu'on vient d'atteindre.
     var menu = document.getElementById("menu");

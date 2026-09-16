@@ -50,6 +50,26 @@ class NewsItem(Base):
     draft = relationship("Draft", back_populates="news_items")
 
 
+class RegenerationRequest(Base):
+    """Une demande de réécriture, déposée par l'interface, exécutée par le Mac.
+
+    La rédaction s'appuie sur le CLI Claude Code, installé sur le poste du
+    responsable : l'hébergement ne peut pas l'exécuter. Plutôt que de réserver
+    le bouton à cette machine, l'interface dépose une demande ici, et le poste
+    la ramasse quand il est allumé. Le bureau retrouve ainsi le bouton depuis
+    son téléphone, au prix d'un délai.
+    """
+
+    __tablename__ = "regeneration_requests"
+    id = Column(Integer, primary_key=True)
+    requested_by = Column(String)
+    requested_at = Column(DateTime, default=utcnow, nullable=False)
+    # en_attente -> en_cours -> faite | echouee
+    status = Column(String, default="en_attente", nullable=False)
+    detail = Column(String, nullable=True)
+    handled_at = Column(DateTime, nullable=True)
+
+
 class StageOffer(Base):
     __tablename__ = "stage_offers"
     id = Column(Integer, primary_key=True)

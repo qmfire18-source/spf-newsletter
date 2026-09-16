@@ -30,7 +30,7 @@ from src.config import (
 )
 from scripts.run_weekly import current_week_of
 from src.ai.local_generator import find_cli
-from src.db.models import Draft, SessionLocal, utcnow
+from src.db.models import Draft, RegenerationRequest, SessionLocal, utcnow
 from src.config import BREVO_LIST_ID
 from src.email.brevo_sender import (
     _semaine_en_lettres,
@@ -216,7 +216,12 @@ def review_draft(
             # La rédaction s'appuie sur le CLI Claude Code, installé sur le
             # poste du responsable et sur lui seul. Proposer le bouton là où
             # il échouerait promettrait une régénération impossible.
-            "generation_possible": find_cli() is not None,
+            "demande_en_attente": (
+                db.query(RegenerationRequest)
+                .filter(RegenerationRequest.status.in_(["en_attente", "en_cours"]))
+                .order_by(RegenerationRequest.requested_at)
+                .first()
+            ),
             "message": message,
             "error": error,
         },
@@ -235,6 +240,28 @@ def regenerate(
         return _redirect_home(
             error="L'édition de cette semaine est déjà envoyée : elle ne peut "
                   "plus être régénérée."
+        )
+
+    # Sur l'hébergement, le CLI qui rédige n'existe pas : la demande est
+    # déposée en base, et le poste du responsable la ramasse. Le bureau garde
+    # ainsi le bouton depuis son téléphone, au prix d'un délai.
+    if find_cli() is None:
+        en_attente = (
+            db.query(RegenerationRequest)
+            .filter(RegenerationRequest.status.in_(["en_attente", "en_cours"]))
+            .first()
+        )
+        if en_attente:
+            return _redirect_home(
+                message="Une réécriture est déjà demandée, elle est en attente."
+            )
+        db.add(RegenerationRequest(requested_by=reviewer))
+        db.commit()
+        logger.info("Réécriture mise en file par %s", reviewer)
+        return _redirect_home(
+            message="Réécriture demandée. Elle sera lancée dès que l'ordinateur "
+                    "du responsable sera disponible, et le brouillon se mettra "
+                    "à jour tout seul."
         )
 
     with _verrou_regeneration:

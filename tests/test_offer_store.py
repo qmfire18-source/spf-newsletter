@@ -81,7 +81,10 @@ class TestRecentOffers:
 
     def test_drops_offers_whose_deadline_has_passed(self, db):
         # Publier une candidature close enverrait les lecteurs dans le mur.
-        hier = (date.today() - timedelta(days=1)).isoformat()
+        # La veille se compte sur la même horloge que le code, en UTC : prise
+        # sur l'heure locale, elle désignait encore aujourd'hui pendant les
+        # deux heures qui séparent Paris d'UTC, et le test échouait la nuit.
+        hier = (utcnow().date() - timedelta(days=1)).isoformat()
         offer_store.store_offers(db, [offre("u1", deadline=hier), offre("u2")])
         assert [o["url"] for o in offer_store.recent_offers(db)] == ["u2"]
 
