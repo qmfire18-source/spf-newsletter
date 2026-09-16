@@ -80,7 +80,23 @@ STRUCTURE DE news_html, dans cet ordre :
    éclairent ton choix, ils ne le dictent pas. Les articles non retenus
    passent en brève.
 
-4. Une section <h3>EN BREF</h3> suivie d'un <ul> : trois à six actualités
+4. Une section <h3>LES DEALS DE LA SEMAINE</h3> suivie d'un <ul> de cinq
+   entrées AU PLUS, classées de la plus importante à la moins importante.
+   Un deal est une opération : fusion, acquisition, cession, introduction
+   en bourse, levée de fonds, émission obligataire majeure.
+   - Une seule ligne par deal, courte : qui achète quoi, pour combien, et
+     le lien. Pas de commentaire, pas d'analyse — c'est une liste, pas un
+     article.
+   - Classe par importance : le montant et la notoriété des parties
+     priment. Une opération à dix milliards passe devant une levée de
+     fonds à vingt millions.
+   - N'y mets QUE des opérations réellement présentes dans les données
+     fournies. Aucun montant qui n'y figure pas. Si tu n'en trouves
+     aucune, omets entièrement la section plutôt que de la remplir.
+   - Une actualité placée ici ne doit pas être reprise en développé ni en
+     bref : chaque sujet n'apparaît qu'une fois.
+
+5. Une section <h3>EN BREF</h3> suivie d'un <ul> : trois à six actualités
    non développées, une phrase chacune, avec leur lien. C'est là que vont
    les sujets sans `full_text`. Une phrase = ce que dit le titre, rien de
    plus, aucun chiffre qui n'y figure pas.
