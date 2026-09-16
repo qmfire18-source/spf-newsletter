@@ -79,7 +79,7 @@
           color:var(--accent-soft);margin:0 0 1.3rem}
   .kicker i{width:7px;height:7px;border-radius:50%;background:var(--accent-soft);
             display:inline-block;animation:pulse 2.4s ease-in-out infinite}
-  h1{font-family:var(--serif);font-weight:600;letter-spacing:-.022em;line-height:1.06;
+  h1{font-family:var(--marque);font-weight:700;letter-spacing:-.028em;line-height:1.08;
      font-size:clamp(2.1rem,6.4vw,4.1rem);margin:0 0 1.1rem;max-width:15ch;
      text-wrap:balance}
   h1 em{font-style:italic;color:var(--accent-soft)}
@@ -87,8 +87,8 @@
         margin:0 0 2.2rem}
 
   /* ---------- formulaire ---------- */
-  .signup{max-width:33rem}
-  form{display:flex;gap:.6rem;flex-wrap:wrap}
+  .signup{max-width:none}
+  form{display:flex;gap:.6rem;flex-wrap:wrap;max-width:33rem}
   input[type=email]{flex:1 1 15rem;min-width:0;min-height:56px;padding:.85rem 1.1rem;
     font:inherit;color:#141B2B;background:#fff;border:1px solid transparent;
     border-radius:9px}
@@ -99,7 +99,9 @@
   button:hover{filter:brightness(1.07);transform:translateY(-2px);
                box-shadow:0 8px 20px rgba(0,0,0,.28)}
   button:active{transform:translateY(0)}
-  .note{font-size:.86rem;color:#9FB4CE;margin:1rem 0 0}
+  /* Sur une seule ligne tant que la place le permet ; elle se replie
+     d'elle-même sur les écrans étroits. */
+  .note{font-size:.86rem;color:#9FB4CE;margin:1rem 0 0;max-width:none}
   .note strong{color:#fff;font-weight:500}
   .note a{color:var(--accent-soft)}
   .note--deja{color:var(--accent-soft)}
@@ -107,16 +109,16 @@
 
   /* ---------- ce que vous recevez ---------- */
   .inside{padding-block:4rem 1rem}
-  .sectitle{font-family:var(--serif);font-size:clamp(1.5rem,3.4vw,2rem);font-weight:600;
+  .sectitle{font-family:var(--marque);font-size:clamp(1.5rem,3.4vw,2rem);font-weight:700;
             margin:0 0 .4rem;letter-spacing:-.015em}
   .subtitle{color:var(--ink-2);margin:0 0 2.4rem;max-width:44ch}
   .rows{display:grid;gap:0;border-top:1px solid var(--rule)}
   .row{display:grid;grid-template-columns:7.5rem 1fr;gap:.35rem 1.8rem;
        padding:1.5rem 0;border-bottom:1px solid var(--rule);align-items:baseline}
-  .row__num{font-family:var(--serif);font-size:2.3rem;font-weight:600;color:var(--accent);
+  .row__num{font-family:var(--marque);font-size:2.3rem;font-weight:700;color:var(--accent);
             line-height:1;grid-row:1/3;text-align:right;font-variant-numeric:tabular-nums;
             white-space:nowrap}
-  .row h3{font-family:var(--serif);font-size:1.16rem;font-weight:600;margin:0 0 .2rem}
+  .row h3{font-family:var(--marque);font-size:1.16rem;font-weight:600;margin:0 0 .2rem}
   .row p{margin:0;color:var(--ink-2);font-size:.99rem;max-width:46ch;grid-column:2}
 
   /* ---------- aperçu ---------- */
