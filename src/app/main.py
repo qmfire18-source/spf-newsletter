@@ -24,6 +24,7 @@ from src.config import (
     ALLOWED_REVIEWER_EMAILS,
     APP_SECRET_KEY,
     COOKIE_SECURE,
+    MODE_EMPLOI_URL,
     REVIEWER_PASSWORD_HASH,
     SESSION_MAX_AGE_SECONDS,
 )
@@ -210,6 +211,7 @@ def review_draft(
             # La même formulation que dans l'email, plutôt qu'une date ISO.
             "semaine": _semaine_en_lettres(draft.week_of) if draft else "",
             "reviewer": reviewer,
+            "mode_emploi_url": MODE_EMPLOI_URL,
             "message": message,
             "error": error,
         },

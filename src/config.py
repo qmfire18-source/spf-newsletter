@@ -22,6 +22,13 @@ SESSION_MAX_AGE_SECONDS = int(os.getenv("SESSION_MAX_AGE_SECONDS", str(12 * 3600
 # Le cookie n'est envoyé qu'en HTTPS ; à passer à false pour un dev en local.
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").strip().lower() != "false"
 
+# Mode d'emploi du bureau, lié depuis l'en-tête de l'interface. Paramétrable :
+# un successeur qui réécrit la page ailleurs n'aura pas à toucher au code.
+MODE_EMPLOI_URL = os.getenv(
+    "MODE_EMPLOI_URL",
+    "https://claude.ai/code/artifact/23ffa434-4663-4d3b-8b10-cc09fc4c79ef",
+)
+
 # Sources par défaut — flux vérifiés le 2026-09-10.
 # Les Echos, Boursorama, Zonebourse, Boursier, AbcBourse et l'AGEFI ont été
 # écartés : leurs flux RSS renvoient 403 (anti-bot) ou 404.

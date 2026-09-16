@@ -203,8 +203,13 @@
       .actionbar__in { flex-direction:column; align-items:stretch; gap:.5rem; }
       .actions { display:grid; grid-template-columns:1fr 1fr; width:100%; gap:.5rem; }
       .actions .btn { width:100%; }
-      .actions .btn--danger { grid-column:1 / -1; }
+      /* « Voir l'email » a rejoint le menu de la barre : le garder ici
+         imposait une rangée de plus pour un doublon. Restent les deux gestes
+         qui comptent, côte à côte. */
+      .actions > a { display:none; }
       .sendwarn, .saved { display:none; }
+      /* Le nom du relecteur s'efface au profit du bouton « Mode d'emploi ». */
+      .who__nom { display:none; }
       /* « Enregistrer sans envoyer » repassait sur deux lignes et épaississait
          toute la rangée : à côté du bouton rouge, « Enregistrer » se comprend. */
       .hors-tel { display:none; }
@@ -223,7 +228,9 @@
       </div>
     </div>
     <div class="who">
-      <span>{{ reviewer }}</span>
+      <a class="btn btn--onnavy" href="{{ mode_emploi_url }}"
+         target="_blank" rel="noopener">Mode d'emploi</a>
+      <span class="who__nom">{{ reviewer }}</span>
       <form method="post" action="/logout">
         <button type="submit" class="btn btn--onnavy">Se déconnecter</button>
       </form>
