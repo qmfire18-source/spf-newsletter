@@ -306,7 +306,7 @@ GitHub Actions, qui n'a personne pour copier-coller.
 ## Page d'abonnement publique
 
 `docs/index.html` est publiée par GitHub Pages sur
-<https://qmfire18-source.github.io/spf-newsletter/> — URL stable, gratuite,
+<https://newsletter.sciencespo-finance.fr> — URL stable, gratuite,
 accessible même quand la machine qui génère la newsletter est éteinte. Un
 `git push` suffit à la mettre à jour.
 

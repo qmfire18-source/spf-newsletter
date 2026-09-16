@@ -44,7 +44,7 @@ LIEN = "#183050"
 # C'est le blason qui figure DANS le message. Le médaillon rond, lui, est
 # destiné à l'icône d'expéditeur affichée par les messageries — un autre
 # usage, sur lequel notre code n'a pas la main.
-LOGO_URL = "https://qmfire18-source.github.io/spf-newsletter/logo.jpeg"
+LOGO_URL = "https://newsletter.sciencespo-finance.fr/logo.jpeg"
 
 BASE_URL = "https://api.brevo.com/v3"
 REQUEST_TIMEOUT_SECONDS = 30
