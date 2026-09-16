@@ -346,3 +346,37 @@ class TestDureeEtDebut:
         # débordait sur la phrase suivante.
         texte = "Duration: 3 months To join us: Please apply online"
         assert self.extraire(texte)[0] == "3 months"
+
+
+class TestCompleterDepuisIntitule:
+    """L'intitulé, disponible pour toutes les sources, sert de second recours."""
+
+    def completer(self, titre, **reste):
+        return stage_scraper.completer_depuis_intitule({"title": titre, **reste})
+
+    def test_reads_a_start_month_and_year(self):
+        offre = self.completer("April 2027 - M&A Internship - Paris")
+        assert offre["start_label"] == "April 2027"
+
+    def test_reads_a_french_period(self):
+        offre = self.completer("STAGE JURIDIQUE Corporate – Janvier à Juin 2028")
+        assert offre["start_label"] == "Janvier à Juin 2028"
+
+    def test_reads_a_season(self):
+        assert self.completer("Intern Summer 2027")["start_label"] == "Summer 2027"
+
+    def test_reads_a_duration(self):
+        assert self.completer("Stage 6 mois - Analyste M&A")["duration"] == "6 mois"
+
+    def test_leaves_a_plain_title_alone(self):
+        offre = self.completer("Stage Analyste financier H/F")
+        assert offre.get("duration") is None and offre.get("start_label") is None
+
+    def test_the_annonce_text_wins_over_the_title(self):
+        # Le texte de l'annonce est plus explicite : il ne doit pas être écrasé.
+        offre = self.completer("Stage - Janvier 2027", start_label="mars 2027")
+        assert offre["start_label"] == "mars 2027"
+
+    def test_a_bare_month_without_a_year_is_not_a_start(self):
+        # « Mars » peut être une entreprise ; sans année, on n'affirme rien.
+        assert self.completer("Stage Finance chez Mars").get("start_label") is None

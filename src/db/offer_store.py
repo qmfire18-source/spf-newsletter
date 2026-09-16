@@ -10,6 +10,7 @@ from datetime import timedelta
 
 from sqlalchemy.exc import IntegrityError
 
+from src.scraper.stage_scraper import completer_depuis_intitule
 from src.db.models import CollectedOffer, utcnow
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ def store_offers(db, offers: list[dict]) -> int:
     """Ajoute les offres inédites. Retourne le nombre réellement ajouté."""
     added = 0
     for offer in offers:
+        completer_depuis_intitule(offer)
         url = offer.get("url")
         if not url:
             continue

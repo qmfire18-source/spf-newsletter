@@ -433,3 +433,37 @@ def run_fetch_stage_offers(
 ) -> list[dict]:
     """Wrapper synchrone pour appel depuis un script non-async."""
     return asyncio.run(fetch_stage_offers(target_sites, known_urls))
+
+
+# L'intitulé est la source la plus rentable : 35 % des offres y annoncent leur
+# date de début, contre 4 % dans le texte des annonces — et il est déjà là,
+# quelle que soit la source, sans une requête de plus. Les API employeurs, qui
+# fournissent les trois quarts du stock, ne renvoient d'ailleurs aucune
+# description exploitable.
+_INTITULE_DUREE = re.compile(
+    r"\b(\d{1,2}\s*(?:à|-|/)\s*\d{1,2}\s*mois|\d{1,2}\s*mois"
+    r"|\d{1,2}[\s-]*months?|\d{1,2}[\s-]*weeks?)\b", re.I)
+_INTITULE_DEBUT = re.compile(
+    rf"\b({_MOIS}\s*(?:à|-|to|–)\s*{_MOIS}\s*\d{{4}}"
+    rf"|{_MOIS}\s*\d{{4}}"
+    r"|Q[1-4]\s*\d{4}"
+    r"|(?:summer|été|fall|spring|automne|printemps)\s*\d{4}"
+    r"|d[ée]but imm[ée]diat|asap)\b", re.I)
+
+
+def completer_depuis_intitule(offre: dict) -> dict:
+    """Complète durée et début à partir de l'intitulé, sans écraser l'existant.
+
+    Le texte de l'annonce reste prioritaire quand il dit quelque chose : il est
+    plus explicite. L'intitulé prend le relais, et il le prend souvent.
+    """
+    titre = offre.get("title") or ""
+    if not offre.get("duration"):
+        trouve = _INTITULE_DUREE.search(titre)
+        if trouve:
+            offre["duration"] = _nettoyer(trouve.group(1))
+    if not offre.get("start_label"):
+        trouve = _INTITULE_DEBUT.search(titre)
+        if trouve:
+            offre["start_label"] = _nettoyer(trouve.group(1))
+    return offre
