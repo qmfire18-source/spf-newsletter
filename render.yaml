@@ -1,0 +1,40 @@
+# Déploiement de l'interface de validation.
+#
+# Seule l'interface est hébergée ici : la rédaction reste sur le Mac, où le CLI
+# Claude Code tourne sur l'abonnement de l'association plutôt que sur une clé
+# API facturée. Les deux se rejoignent par la base Postgres.
+#
+# Les secrets ne figurent pas dans ce fichier : ils sont saisis dans l'interface
+# de Render, et `sync: false` empêche qu'un déploiement les écrase.
+services:
+  - type: web
+    name: spf-brouillon
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /login
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.0"
+      - key: DATABASE_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_LIST_ID
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: newsletter@sciencespo-finance.fr
+      - key: BREVO_SENDER_NAME
+        value: Sciences Po Finance
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: REVIEWER_PASSWORD_HASH
+        sync: false
+      - key: ALLOWED_REVIEWER_EMAILS
+        sync: false
+      # Derrière le HTTPS de Render, le cookie de session ne doit jamais
+      # voyager en clair.
+      - key: COOKIE_SECURE
+        value: "true"

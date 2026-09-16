@@ -92,11 +92,29 @@ class CollectedOffer(Base):
     collected_at = Column(DateTime, default=utcnow, nullable=False)
 
 
+def _url_normalisee(url: str) -> str:
+    """Dirige Postgres vers psycopg 3, le seul pilote installé.
+
+    Les hébergeurs distribuent leur chaîne de connexion en `postgresql://`,
+    que SQLAlchemy confie par défaut à psycopg2, absent du projet : sans ce
+    préfixe explicite, l'application échoue au démarrage sur un pilote
+    manquant, et le message n'aide pas à comprendre pourquoi.
+    """
+    if url.startswith("postgres://"):  # forme héritée, encore servie par certains
+        url = url.replace("postgres://", "postgresql://", 1)
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+
 # FastAPI exécute les routes synchrones dans un pool de threads : sans
 # check_same_thread=False, SQLite refuse la connexion ouverte dans un autre
 # thread. Sans effet sur Postgres en production.
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(DATABASE_URL, connect_args=_connect_args)
+# pool_pre_ping : l'offre gratuite coupe les connexions inactives, et sans lui
+# la première requête après une mise en veille échoue au lieu de se reconnecter.
+_options = {} if DATABASE_URL.startswith("sqlite") else {"pool_pre_ping": True}
+engine = create_engine(_url_normalisee(DATABASE_URL), connect_args=_connect_args, **_options)
 SessionLocal = sessionmaker(bind=engine)
 
 

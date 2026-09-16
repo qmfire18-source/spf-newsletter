@@ -2,6 +2,9 @@ fastapi
 uvicorn[standard]
 jinja2
 sqlalchemy
+# Pilote Postgres : l'hébergement distant n'a pas de disque durable,
+# SQLite y perdrait la base à chaque redémarrage.
+psycopg[binary]
 feedparser
 requests
 httpx
