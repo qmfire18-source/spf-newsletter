@@ -12,7 +12,7 @@
 <link rel="icon" href="logo.jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --navy:#183050; --navy-900:#0E1E35; --navy-300:#7A97BE;
@@ -21,6 +21,7 @@
     --ink:#141B2B; --ink-2:#4E596B; --ink-3:#7A8496; --rule:#DDE3EB;
     --sans:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
     --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --marque:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     color-scheme:light;
   }
@@ -55,7 +56,9 @@
   .top__in{max-width:60rem;margin:0 auto;padding:.9rem 1.75rem;
            display:flex;align-items:center;gap:.8rem}
   .top img{width:38px;height:38px;border-radius:8px;background:#fff;flex:none}
-  .top b{font-family:var(--serif);font-weight:600;font-size:1.02rem;display:block;line-height:1.2}
+  /* Le nom de l'association suit la sans-serif du site Canva. */
+  .top b{font-family:var(--marque);font-weight:600;font-size:1.02rem;display:block;
+         line-height:1.2;letter-spacing:-.01em}
   .top span{font-size:.72rem;color:var(--navy-300);letter-spacing:.09em;text-transform:uppercase}
 
   /* ---------- héros ---------- */
