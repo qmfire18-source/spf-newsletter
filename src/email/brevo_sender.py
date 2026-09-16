@@ -28,6 +28,12 @@ FOND = "#F4F5F7"
 FILET = "#E3E7ED"
 # Or assombri : l'or clair de l'en-tête ne passe pas le contraste sur blanc.
 OR_FONCE = "#8A6B22"
+
+# La sans-serif du site Canva ne peut pas être embarquée : Gmail supprime les
+# @font-face. La pile système en est la plus proche qui s'affiche partout —
+# San Francisco sur iPhone et Mac, Segoe UI sur Windows, Roboto sur Android.
+SANS = ("-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,"
+        "Helvetica,Arial,sans-serif")
 LIEN = "#183050"
 # Un mail ne peut pas pointer vers un fichier local : le blason est servi par
 # GitHub Pages, à une adresse publique et stable.
@@ -222,7 +228,7 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
 <table role="presentation" class="enveloppe" width="600" cellpadding="0" cellspacing="0"
        border="0" style="width:600px;max-width:600px;background:#ffffff;
        border-radius:12px;overflow:hidden;
-       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+       font-family:{SANS};
        color:{ENCRE};line-height:1.6;">
 
   <!-- en-tête -->
@@ -235,8 +241,9 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
                     background:#ffffff;">
       </td>
       <td style="vertical-align:middle;">
-        <div style="font-family:Georgia,'Times New Roman',serif;font-size:19px;
-                    font-weight:600;color:#ffffff;line-height:1.2;">
+        <div style="font-family:{SANS};font-size:20px;
+                    font-weight:600;color:#ffffff;line-height:1.2;
+                    letter-spacing:-.01em;">
           Sciences Po Finance
         </div>
         <div style="font-size:12px;color:#BED0E8;letter-spacing:.06em;
