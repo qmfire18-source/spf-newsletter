@@ -380,3 +380,40 @@ class TestCompleterDepuisIntitule:
     def test_a_bare_month_without_a_year_is_not_a_start(self):
         # « Mars » peut être une entreprise ; sans année, on n'affirme rien.
         assert self.completer("Stage Finance chez Mars").get("start_label") is None
+
+
+class TestDetailsDepuisPage:
+    """Welcome to the Jungle déclare la durée et le début hors du JSON-LD."""
+
+    def page(self, mini, maxi, debut):
+        # Les guillemets sont échappés dans l'état JSON embarqué par la page.
+        return (r'{\"contract_duration_min\":' + mini
+                + r',\"contract_duration_max\":' + maxi
+                + r',\"start_date\":' + debut + r'}')
+
+    def test_reads_a_fixed_duration(self):
+        html = self.page("6", "6", r'\"2027-03-01\"')
+        assert stage_scraper.details_depuis_page(html)[0] == "6 mois"
+
+    def test_reads_a_range(self):
+        html = self.page("4", "6", "null")
+        assert stage_scraper.details_depuis_page(html)[0] == "4 à 6 mois"
+
+    def test_reads_the_start_month(self):
+        html = self.page("6", "6", r'\"2027-03-01\"')
+        assert stage_scraper.details_depuis_page(html)[1] == "mars 2027"
+
+    def test_drops_the_exact_day(self):
+        # Le jour n'apprend rien et donne une fausse précision : les
+        # employeurs le décalent volontiers.
+        html = self.page("null", "null", r'\"2027-03-17\"')
+        assert stage_scraper.details_depuis_page(html)[1] == "mars 2027"
+
+    def test_says_nothing_when_the_page_says_nothing(self):
+        assert stage_scraper.details_depuis_page(self.page("null", "null", "null")) == (
+            None,
+            None,
+        )
+
+    def test_a_page_without_those_fields_is_not_a_crash(self):
+        assert stage_scraper.details_depuis_page("<html>rien</html>") == (None, None)

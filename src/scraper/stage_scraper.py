@@ -291,7 +291,15 @@ def _offer_from_jsonld(html: str, url: str) -> dict | None:
             logger.info("Offre en province (%s), ignorée : %s", code, url)
             return None
 
-    duree, debut = extraire_duree_et_debut(posting.get("description") or "")
+    # Trois sources, de la plus fiable à la moins : l'état JSON de la page, qui
+    # déclare la durée et le début en clair ; le texte de l'annonce ; puis
+    # l'intitulé, ajouté plus loin au moment du stockage. On ne descend d'un
+    # cran que si le précédent n'a rien dit.
+    duree, debut = details_depuis_page(html)
+    if not (duree and debut):
+        texte_duree, texte_debut = extraire_duree_et_debut(posting.get("description") or "")
+        duree = duree or texte_duree
+        debut = debut or texte_debut
     return {
         "title": (posting.get("title") or "").strip(),
         "company": (posting.get("hiringOrganization") or {}).get("name"),
@@ -467,3 +475,54 @@ def completer_depuis_intitule(offre: dict) -> dict:
         if trouve:
             offre["start_label"] = _nettoyer(trouve.group(1))
     return offre
+
+
+# Welcome to the Jungle affiche « Stage (6 mois) » et « Début : 01 mars 2027 »
+# dans son résumé du poste, mais ces champs ne figurent PAS dans le JSON-LD :
+# ils vivent dans l'état JSON que la page embarque pour son application, avec
+# les guillemets échappés. C'est la source la plus fiable des trois, parce
+# qu'elle est structurée — le texte de l'annonce et l'intitulé ne sont que des
+# recours quand elle est absente.
+_MOIS_FR = ("janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+            "août", "septembre", "octobre", "novembre", "décembre")
+
+
+def _champ_embarque(html: str, cle: str) -> str | None:
+    """Lit une valeur de l'état JSON embarqué, échappé ou non."""
+    trouve = re.search(rf'{cle}\\?":\\?"?([^,"\\}}]*)', html or "")
+    if not trouve:
+        return None
+    valeur = trouve.group(1).strip()
+    return None if valeur in ("", "null", "None") else valeur
+
+
+def _duree_en_mois(mini: str | None, maxi: str | None) -> str | None:
+    if mini and maxi and mini != maxi:
+        return f"{mini} à {maxi} mois"
+    valeur = mini or maxi
+    return f"{valeur} mois" if valeur else None
+
+
+def _debut_en_lettres(iso: str | None) -> str | None:
+    """« 2027-03-01 » devient « mars 2027 ».
+
+    Le jour exact n'apprend rien à un étudiant qui cherche un stage, et il
+    donnerait une fausse précision : les employeurs le décalent volontiers.
+    """
+    if not iso:
+        return None
+    trouve = re.match(r"(\d{4})-(\d{2})", iso)
+    if not trouve:
+        return None
+    annee, mois = trouve.groups()
+    index = int(mois)
+    return f"{_MOIS_FR[index - 1]} {annee}" if 1 <= index <= 12 else None
+
+
+def details_depuis_page(html: str) -> tuple[str | None, str | None]:
+    """Durée et début tels que la page les déclare, sans interprétation."""
+    duree = _duree_en_mois(
+        _champ_embarque(html, "contract_duration_min"),
+        _champ_embarque(html, "contract_duration_max"),
+    )
+    return duree, _debut_en_lettres(_champ_embarque(html, "start_date"))
