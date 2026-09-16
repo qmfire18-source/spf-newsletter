@@ -62,6 +62,9 @@ def find_cli() -> str | None:
     return bundled[-1] if bundled else None
 
 
+TENTATIVES = 3
+
+
 def generate_draft_locally(news_items: list[dict], stage_items: list[dict]) -> dict:
     """Même contrat que `generate_draft`, sans clé API.
 
@@ -85,6 +88,21 @@ def generate_draft_locally(news_items: list[dict], stage_items: list[dict]) -> d
         "--disallowed-tools", ",".join(BLOCKED_TOOLS),
     ]
 
+    # Le CLI est instable sur une sortie de cette taille : il lui arrive de
+    # sortir en erreur, ou de produire un JSON mal échappé. Une seule tentative
+    # perdait alors une collecte entière, brouillon supprimé compris, pour un
+    # aléa qu'un second essai suffit à lever.
+    derniere = None
+    for tentative in range(1, TENTATIVES + 1):
+        try:
+            return _un_essai(command, prompt)
+        except DraftGenerationError as erreur:
+            derniere = erreur
+            logger.warning("Tentative %d/%d échouée : %s", tentative, TENTATIVES, erreur)
+    raise DraftGenerationError(f"Le CLI a échoué {TENTATIVES} fois : {derniere}")
+
+
+def _un_essai(command: list[str], prompt: str) -> dict:
     try:
         completed = subprocess.run(
             command,
