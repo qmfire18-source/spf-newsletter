@@ -103,14 +103,40 @@
            border:1px solid var(--border); border-radius:var(--radius);
            box-shadow:var(--shadow); padding:.7rem 1rem; margin-bottom:1.25rem;
            display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; }
-    .toc a { font-size:.88rem; text-decoration:none; color:var(--fg);
-             padding:.25rem .6rem; border-radius:var(--radius-sm); }
-    .toc a:hover { background:var(--surface-2); }
+    .toc__lien { font-size:.88rem; text-decoration:none; color:var(--fg);
+                 padding:.3rem .65rem; border-radius:var(--radius-sm);
+                 transition:background-color .15s ease; }
+    .toc__lien:hover { background:var(--surface-2); }
     .toc__stats { margin-left:auto; display:flex; gap:1.1rem; font-size:.8rem;
-                  color:var(--fg-muted); flex-wrap:wrap; }
+                  color:var(--fg-muted); }
     .toc__stats b { color:var(--fg); font-weight:600;
                     font-variant-numeric:tabular-nums; }
-    .toc__sep { width:1px; height:18px; background:var(--border); }
+
+    /* Menu replié. Le <details> porte l'ouverture ; le panneau se pose
+       au-dessus du contenu sans le pousser. */
+    .menu { position:relative; margin-left:.4rem; }
+    .menu__bouton { display:flex; align-items:center; justify-content:center;
+                    width:34px; height:34px; border-radius:var(--radius-sm);
+                    color:var(--fg-muted); cursor:pointer; list-style:none;
+                    transition:background-color .15s ease, color .15s ease; }
+    .menu__bouton::-webkit-details-marker { display:none; }
+    .menu__bouton:hover { background:var(--surface-2); color:var(--fg); }
+    .menu[open] .menu__bouton { background:var(--navy); color:#fff; }
+    .menu__panneau { position:absolute; right:0; top:calc(100% + .45rem);
+                     min-width:12.5rem; padding:.3rem;
+                     background:var(--surface); border:1px solid var(--border);
+                     border-radius:var(--radius); box-shadow:0 10px 28px rgba(15,23,42,.14);
+                     display:flex; flex-direction:column; gap:.1rem; z-index:40; }
+    .menu__panneau form { margin:0; }
+    .menu__panneau a, .menu__panneau button {
+      display:block; width:100%; text-align:left; font:inherit; font-size:.88rem;
+      color:var(--fg); text-decoration:none; background:transparent; border:0;
+      padding:.55rem .7rem; border-radius:var(--radius-sm); cursor:pointer;
+      transition:background-color .15s ease; }
+    .menu__panneau a:hover, .menu__panneau button:hover { background:var(--surface-2); }
+
+    /* Les ancres sautent sous la barre collante sans cette réserve. */
+    section.block { scroll-margin-top:8.5rem; }
 
     .encours { display:flex; align-items:center; gap:.7rem; padding:.85rem 1.1rem;
                background:var(--surface-2); border:1px solid var(--border);
@@ -156,6 +182,11 @@
       .topbar__in, .actionbar__in { padding:.75rem .9rem; }
       .block__head { flex-wrap:wrap; gap:.5rem; }
       .hint { display:none; }
+      /* Une seule ligne sur la barre : les compteurs sont secondaires. */
+      .toc { gap:.35rem; padding:.55rem .7rem; }
+      .toc__stats { display:none; }
+      .toc__lien { font-size:.85rem; }
+      section.block { scroll-margin-top:7rem; }
 
       /* Sous 16px, iOS zoome sur le champ dès qu'on le touche et la mise en
          page saute. Le confort de lecture compte autant que le zoom évité. */
@@ -248,22 +279,37 @@
   {% endif %}
 
   <nav class="toc" aria-label="Sommaire du brouillon" style="max-width:44rem;margin-inline:auto;">
-    <a href="#bloc-actus">Actus financières</a>
-    <a href="#bloc-stages">Stages</a>
-    <span class="toc__sep" aria-hidden="true"></span>
-    <a href="/draft/{{ draft.id }}/apercu" target="_blank" rel="noopener">Aperçu email</a>
-    <a href="/historique">Historique</a>
-    <span class="toc__sep" aria-hidden="true"></span>
-    <form method="post" action="/regenerer" style="margin:0"
-          onsubmit="return confirm('Relancer la collecte et la rédaction ?\n\nLe brouillon actuel sera remplacé. Comptez trois à quatre minutes.');">
-      <button type="submit" class="tool" style="min-height:28px">Rafraîchir l'actu</button>
-    </form>
+    <a class="toc__lien" href="#bloc-actus">Actus financières</a>
+    <a class="toc__lien" href="#bloc-stages">Stages</a>
+
     <span class="toc__stats">
       <span><b id="stat-items">·</b> actualités</span>
       <span><b id="stat-offres">·</b> offres</span>
       <span><b id="stat-mots">·</b> mots</span>
       <span><b id="stat-taille">·</b> Ko</span>
     </span>
+
+    {# Les trois actions secondaires tenaient sur la barre et la faisaient
+       déborder sur deux lignes au téléphone. Un <details> les replie sans
+       JavaScript : le menu reste utilisable même si un script échoue. #}
+    <details class="menu" id="menu">
+      <summary class="menu__bouton" title="Menu" aria-label="Ouvrir le menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
+      </summary>
+      <div class="menu__panneau">
+        <a href="/draft/{{ draft.id }}/apercu" target="_blank" rel="noopener">
+          Aperçu email
+        </a>
+        <a href="/historique">Historique</a>
+        <form method="post" action="/regenerer"
+              onsubmit="return confirm('Relancer la collecte et la rédaction ?\n\nLe brouillon actuel sera remplacé. Comptez trois à quatre minutes.');">
+          <button type="submit">Rafraîchir l'actu</button>
+        </form>
+      </div>
+    </details>
   </nav>
 
   <form method="post" action="/draft/{{ draft.id }}/save" id="editor">
@@ -582,6 +628,24 @@
       } else {
         window.addEventListener("resize", mesureBarre);
       }
+    }
+    // Un <details> reste ouvert tant qu'on ne reclique pas dessus : sans ça,
+    // le menu resterait déplié derrière le contenu qu'on vient d'atteindre.
+    var menu = document.getElementById("menu");
+    if (menu) {
+      document.addEventListener("click", function (e) {
+        if (menu.open && !menu.contains(e.target)) { menu.open = false; }
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && menu.open) {
+          menu.open = false;
+          menu.querySelector("summary").focus();
+        }
+      });
+      // Une ancre cliquée dans la barre laisse le menu ouvert pour rien.
+      menu.addEventListener("click", function (e) {
+        if (e.target.closest("a")) { menu.open = false; }
+      });
     }
 </script>
 {% endif %}
