@@ -291,13 +291,74 @@ def _offer_from_jsonld(html: str, url: str) -> dict | None:
             logger.info("Offre en province (%s), ignorée : %s", code, url)
             return None
 
+    duree, debut = extraire_duree_et_debut(posting.get("description") or "")
     return {
         "title": (posting.get("title") or "").strip(),
         "company": (posting.get("hiringOrganization") or {}).get("name"),
         "location": _first_locality(posting.get("jobLocation")),
         "deadline": _to_date(posting.get("validThrough")),
+        "duration": duree,
+        "start_label": debut,
         "url": url,
     }
+
+
+# Les descriptions mélangent des champs étiquetés (« Duration: 3 months »), du
+# texte libre (« a 12-week long summer internship ») et des leurres qui
+# ressemblent à une durée sans en être une (« month-end close », « six months
+# on an isolated intern project »). On privilégie donc la précision : mieux
+# vaut ne rien annoncer qu'annoncer faux, comme partout ailleurs ici.
+
+_PIEGES = re.compile(r"month[- ]end|monthly|month's|fin de mois", re.I)
+
+_MOIS = (r"(?:janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|"
+         r"septembre|octobre|novembre|décembre|decembre|january|february|march|"
+         r"april|may|june|july|august|september|october|november|december)")
+
+_DUREE = (
+    # Champ étiqueté : la forme la plus sûre.
+    # On capture une valeur structurée, pas du texte libre : la description
+    # est aplatie sur une seule ligne, donc rien n'arrêterait la capture avant
+    # la phrase suivante.
+    re.compile(r"(?:dur[ée]e|duration)[^:\n]{0,24}[:\-–]\s*"
+               r"((?:[≥><~]\s*|environ\s+|about\s+)?\d+\s*(?:[-–/]|to|à|ou|and)?\s*\d*\s*"
+               r"(?:mois|months?|semaines?|weeks?))", re.I),
+    # Durée rattachée explicitement au stage.
+    re.compile(r"stage\s+(?:de|d['’]une dur[ée]e de)\s+(\d+\s*(?:à|-)?\s*\d*\s*mois)", re.I),
+    re.compile(r"(\d+[\s-]*(?:to|à|-)[\s-]*\d+[\s-]*months?)\s+internship", re.I),
+    re.compile(r"internship\s+of\s+(\d+[\s-]*(?:to|-)?[\s-]*\d*\s*months?)", re.I),
+    re.compile(r"(\d+[\s-]*(?:week|month)s?)[\s-]*(?:long\s+)?(?:summer\s+)?internship", re.I),
+)
+
+_DEBUT = (
+    re.compile(r"(?:start(?:ing)? date|date de d[ée]but|d[ée]but du stage)[^:\n]{0,16}[:\-–]\s*"
+               r"(" + _MOIS + r"(?:\s*/\s*" + _MOIS + r")?(?:\s+\d{4})?)", re.I),
+    re.compile(r"(?:à partir (?:de|du)|starting (?:in|from))\s+"
+               r"(" + _MOIS + r"\s*\d{0,4})", re.I),
+)
+
+
+def _nettoyer(valeur: str) -> str | None:
+    valeur = re.sub(r"\s+", " ", valeur).strip(" .,;:-–—")
+    if not valeur or len(valeur) > 32 or _PIEGES.search(valeur):
+        return None
+    return valeur
+
+
+def extraire_duree_et_debut(description: str) -> tuple[str | None, str | None]:
+    texte = re.sub(r"<[^>]+>", " ", description or "")
+    texte = re.sub(r"\s+", " ", texte)
+
+    def premier(motifs):
+        for motif in motifs:
+            trouve = motif.search(texte)
+            if trouve:
+                propre = _nettoyer(trouve.group(1))
+                if propre:
+                    return propre
+        return None
+
+    return premier(_DUREE), premier(_DEBUT)
 
 
 def _find_job_posting(html: str) -> dict | None:

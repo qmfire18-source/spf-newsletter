@@ -142,6 +142,8 @@ class TestOfferFromJsonld:
             "company": "GreenYellow",
             "location": "Puteaux",
             "deadline": "2026-12-07",
+            "duration": None,
+            "start_label": None,
             "url": "https://w.com/j",
         }
 
@@ -302,3 +304,45 @@ class TestNoForbiddenSource:
         assert not any(
             "jobteaser" in json.dumps(s).lower() for s in config.STAGE_SOURCES
         )
+
+
+class TestDureeEtDebut:
+    """La durée et le début viennent du texte de l'annonce, pas du JSON-LD."""
+
+    def extraire(self, texte):
+        return stage_scraper.extraire_duree_et_debut(texte)
+
+    def test_reads_a_labelled_duration(self):
+        assert self.extraire("Contract: Internship Duration: 3 months")[0] == "3 months"
+
+    def test_reads_a_french_range(self):
+        assert self.extraire("Durée : 4 à 6 mois")[0] == "4 à 6 mois"
+
+    def test_reads_a_labelled_start(self):
+        assert self.extraire("Start Date: September / October 2026")[1] == (
+            "September / October 2026"
+        )
+
+    def test_reads_a_duration_attached_to_the_internship(self):
+        assert self.extraire("a 12-week long summer internship")[0] == "12-week"
+
+    def test_ignores_an_accounting_month_end(self):
+        # « month-end close » n'est pas une durée de stage.
+        assert self.extraire("Gathering data for audits or month-end close") == (
+            None,
+            None,
+        )
+
+    def test_ignores_a_duration_that_is_not_the_internships(self):
+        # « six months on an isolated project » parle du contenu, pas du contrat.
+        texte = "You won't spend six months on an isolated intern project"
+        assert self.extraire(texte)[0] is None
+
+    def test_says_nothing_rather_than_guessing(self):
+        assert self.extraire("Une annonce sans la moindre indication") == (None, None)
+
+    def test_a_labelled_value_stops_before_the_next_field(self):
+        # La description est aplatie sur une ligne : sans borne, la capture
+        # débordait sur la phrase suivante.
+        texte = "Duration: 3 months To join us: Please apply online"
+        assert self.extraire(texte)[0] == "3 months"

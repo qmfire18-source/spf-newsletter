@@ -35,6 +35,8 @@ def store_offers(db, offers: list[dict]) -> int:
             company=offer.get("company"),
             location=offer.get("location"),
             deadline=_as_date(offer.get("deadline")),
+            duration=offer.get("duration"),
+            start_label=offer.get("start_label"),
         )
         db.add(record)
         try:
@@ -73,6 +75,8 @@ def recent_offers(
             "company": row.company,
             "location": row.location,
             "deadline": row.deadline.isoformat() if row.deadline else None,
+            "duration": row.duration,
+            "start_label": row.start_label,
             "url": row.url,
         }
         for row in rows

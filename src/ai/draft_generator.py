@@ -106,7 +106,11 @@ STRUCTURE DE stages_html :
   que la semaine offre — quel segment recrute, ce qui se distingue.
 - Les offres sont fournies DÉJÀ REGROUPÉES PAR SECTEUR. Respecte ce
   découpage et cet ordre : un <h4> par secteur, puis un <ul> avec une entrée
-  par offre — intitulé, entreprise, lieu, date limite si connue, et lien.
+  par offre — intitulé, entreprise, lieu, puis, DANS CET ORDRE et seulement
+  si les champs correspondants sont fournis : la durée (`duration`), la date
+  de début (`start_label`), la date limite de candidature (`deadline`), et
+  le lien. Ces trois champs sont souvent absents : ne les devine jamais, et
+  n'écris pas « durée non précisée » — omets simplement la mention.
   Ne réordonne pas, ne fusionne pas les secteurs, n'en invente aucun.
 - Un secteur d'une seule offre reste un secteur à part entière.
 - Si aucune offre n'est fournie, un court paragraphe le disant.

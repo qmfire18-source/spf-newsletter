@@ -100,7 +100,8 @@ class TestRecentOffers:
     def test_shape_matches_what_the_draft_expects(self, db):
         offer_store.store_offers(db, [offre("u1")])
         assert set(offer_store.recent_offers(db)[0]) == {
-            "title", "company", "location", "deadline", "url"
+            "title", "company", "location", "deadline",
+            "duration", "start_label", "url",
         }
 
 

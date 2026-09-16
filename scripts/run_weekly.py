@@ -199,6 +199,8 @@ def _to_stage_offer(offer: dict) -> StageOffer:
         company=offer.get("company"),
         location=offer.get("location"),
         deadline=_parse_date(offer.get("deadline")),
+        duration=offer.get("duration"),
+        start_label=offer.get("start_label"),
         url=offer.get("url"),
     )
 

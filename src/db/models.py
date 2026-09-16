@@ -58,6 +58,8 @@ class StageOffer(Base):
     company = Column(String)
     location = Column(String)
     deadline = Column(Date, nullable=True)
+    duration = Column(String, nullable=True)
+    start_label = Column(String, nullable=True)
     url = Column(String)
 
     draft = relationship("Draft", back_populates="stage_offers")
@@ -79,6 +81,10 @@ class CollectedOffer(Base):
     company = Column(String)
     location = Column(String)
     deadline = Column(Date, nullable=True)
+    # Ni la durée ni le début ne figurent dans le JSON-LD : ils sont extraits du
+    # texte de l'annonce, qu'on télécharge déjà. Souvent absents, d'où le NULL.
+    duration = Column(String, nullable=True)
+    start_label = Column(String, nullable=True)
     collected_at = Column(DateTime, default=utcnow, nullable=False)
 
 
