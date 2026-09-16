@@ -21,13 +21,16 @@ logger = logging.getLogger(__name__)
 
 # Charte de l'association, reprise de l'interface de validation.
 MARINE = "#183050"
-OR = "#F0E7D4"
+# Bandeau de semaine : un bleu très pâle, qui laisse le marine lisible dessus.
+BLEU_PALE = "#DCE6F2"
 ENCRE = "#141B2B"
 GRIS = "#5A6478"
 FOND = "#F4F5F7"
 FILET = "#E3E7ED"
-# Or assombri : l'or clair de l'en-tête ne passe pas le contraste sur blanc.
-OR_FONCE = "#8A6B22"
+# Étiquettes de rubrique. Le marine pur se confondrait avec l'encre des titres ;
+# ce bleu-ci garde l'écart qui faisait le rôle d'accent de l'ancien doré, tout
+# en passant le contraste sur fond blanc.
+BLEU_RUBRIQUE = "#2E6BB0"
 
 # La sans-serif du site Canva ne peut pas être embarquée : Gmail supprime les
 # @font-face. La pile système en est la plus proche qui s'affiche partout —
@@ -130,12 +133,13 @@ def _post(path: str, headers: dict, json: dict | None = None) -> dict:
 STYLES_CONTENU = {
     "h3": (
         "font-size:13px;letter-spacing:.12em;text-transform:uppercase;"
-        f"color:{OR_FONCE};font-weight:700;margin:32px 0 0;padding-top:16px;"
-        f"border-top:1px solid {FILET};font-family:Helvetica,Arial,sans-serif;"
+        f"color:{BLEU_RUBRIQUE};font-weight:700;margin:32px 0 0;padding-top:16px;"
+        f"border-top:1px solid {FILET};font-family:{SANS};"
     ),
     "h4": (
-        "font-family:Georgia,'Times New Roman',serif;font-size:19px;"
-        f"line-height:1.3;color:{ENCRE};font-weight:600;margin:10px 0 10px;"
+        f"font-family:{SANS};font-size:19px;"
+        f"line-height:1.35;color:{ENCRE};font-weight:600;margin:10px 0 10px;"
+        "letter-spacing:-.01em;"
     ),
     "p": "margin:0 0 14px;",
     "ul": "margin:0 0 16px;padding-left:20px;",
@@ -194,10 +198,10 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
      les blocs. h4 = titre de l'article. Cette hiérarchie remplace le mur de
      titres de même niveau, où l'on ne savait plus ce qui commençait où. */
   .contenu h3 {{ font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-                 color:{OR_FONCE}; margin:34px 0 0; padding-top:18px;
+                 color:{BLEU_RUBRIQUE}; margin:34px 0 0; padding-top:18px;
                  border-top:1px solid {FILET}; font-weight:700; }}
   .contenu h3:first-child {{ margin-top:8px; border-top:0; padding-top:0; }}
-  .contenu h4 {{ font-family:Georgia,'Times New Roman',serif; font-size:19px;
+  .contenu h4 {{ font-family:{SANS}; font-size:19px; letter-spacing:-.01em;
                  line-height:1.3; color:{ENCRE}; margin:10px 0 10px;
                  font-weight:600; }}
   .contenu p  {{ margin:0 0 14px; }}
@@ -256,9 +260,9 @@ def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
   </td></tr>
 
   <!-- bandeau de semaine -->
-  <tr><td class="marges" style="background:{OR};padding:10px 32px;">
-    <div class="titre" style="font-family:Georgia,'Times New Roman',serif;
-                              font-size:14px;color:{MARINE};letter-spacing:.02em;">
+  <tr><td class="marges" style="background:{BLEU_PALE};padding:10px 32px;">
+    <div class="titre" style="font-family:{SANS};font-weight:600;
+                              font-size:14px;color:{MARINE};letter-spacing:.01em;">
       {semaine}
     </div>
   </td></tr>

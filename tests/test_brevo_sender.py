@@ -226,23 +226,26 @@ class TestSectionHierarchy:
         assert "text-transform:uppercase" in regle
         assert "border-top" in regle
 
-    def test_the_article_title_keeps_the_serif(self):
+    def test_the_article_title_uses_the_brand_sans(self):
+        # Les titres suivent la sans-serif du site de l'association.
         bloc = self.rendu()
         regle = bloc[bloc.index(".contenu h4"):bloc.index("@media")]
-        assert "Georgia" in regle
+        assert "Georgia" not in regle
+        assert "-apple-system" in regle
 
     def test_the_first_rubric_has_no_rule_above(self):
         assert ".contenu h3:first-child" in self.rendu()
 
     def test_the_label_colour_reads_on_white(self):
-        # L'or clair de l'en-tête ne passe pas le contraste sur fond blanc.
-        assert brevo_sender.OR_FONCE == "#8A6B22"
+        # Le marine pur se confondrait avec l'encre des titres ; ce bleu-ci
+        # garde l'écart tout en passant le contraste sur blanc.
+        assert brevo_sender.BLEU_RUBRIQUE == "#2E6BB0"
 
 
 class TestInlineStyles:
     def test_every_content_tag_carries_its_own_style(self):
         # Gmail sur mobile supprime le bloc <style> : sans styles en ligne,
-        # l'étiquette dorée redevenait un titre noir ordinaire.
+        # l'étiquette de rubrique redevenait un titre noir ordinaire.
         out = brevo_sender.inline_styles(
             '<h3>MARCHÉS</h3><h4>Titre</h4><p>Texte</p><ul><li>x</li></ul>'
         )
@@ -253,9 +256,9 @@ class TestInlineStyles:
         out = brevo_sender.inline_styles('<h4 id="a1">Titre</h4>')
         assert 'id="a1"' in out and "style=" in out
 
-    def test_the_rubric_is_gold_and_uppercase(self):
+    def test_the_rubric_is_blue_and_uppercase(self):
         out = brevo_sender.inline_styles("<h3>MARCHÉS</h3>")
-        assert brevo_sender.OR_FONCE in out
+        assert brevo_sender.BLEU_RUBRIQUE in out
         assert "text-transform:uppercase" in out
 
     def test_untouched_tags_are_left_alone(self):
@@ -279,7 +282,7 @@ class TestInlineStyles:
         from src.sanitize import sanitize_html
         propre = sanitize_html('<h3 style="color:red">MARCHÉS</h3>')
         assert "red" not in propre
-        assert brevo_sender.OR_FONCE in brevo_sender.inline_styles(propre)
+        assert brevo_sender.BLEU_RUBRIQUE in brevo_sender.inline_styles(propre)
 
 
 class TestPreheaderStaysHidden:
