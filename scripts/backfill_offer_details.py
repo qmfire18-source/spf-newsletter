@@ -27,6 +27,8 @@ from src.db.models import (  # noqa: E402
 from src.scraper.stage_scraper import (  # noqa: E402
     _decode,
     _find_job_posting,
+    completer_depuis_intitule,
+    details_depuis_page,
     extraire_duree_et_debut,
 )
 
@@ -57,11 +59,25 @@ async def traiter(client, offre) -> str:
     # si elle ne dit rien de sa durée.
     offre.details_checked_at = utcnow()
 
-    posting = _find_job_posting(_decode(reponse.content))
-    if not posting:
-        return "sans_donnees"
+    html = _decode(reponse.content)
 
-    duree, debut = extraire_duree_et_debut(posting.get("description") or "")
+    # Mêmes sources et même ordre que la collecte : l'état JSON de la page
+    # d'abord, qui déclare durée et début en clair, puis le texte de l'annonce,
+    # puis l'intitulé. Ce script ne lisait que le texte, et passait donc à côté
+    # de la seule source vraiment fiable.
+    duree, debut = details_depuis_page(html)
+    if not (duree and debut):
+        posting = _find_job_posting(html) or {}
+        texte_duree, texte_debut = extraire_duree_et_debut(posting.get("description") or "")
+        duree = duree or texte_duree
+        debut = debut or texte_debut
+
+    depuis_titre = completer_depuis_intitule(
+        {"title": offre.title, "duration": duree, "start_label": debut}
+    )
+    duree = depuis_titre.get("duration")
+    debut = depuis_titre.get("start_label")
+
     if not (duree or debut):
         return "rien_trouve"
 
