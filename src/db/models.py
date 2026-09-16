@@ -85,6 +85,10 @@ class CollectedOffer(Base):
     # texte de l'annonce, qu'on télécharge déjà. Souvent absents, d'où le NULL.
     duration = Column(String, nullable=True)
     start_label = Column(String, nullable=True)
+    # Marque une offre dont on a déjà lu le texte, qu'on y ait trouvé une durée
+    # ou non : sans elle, les offres muettes seraient revisitées à chaque
+    # passage et consommeraient le quota de pages pour rien.
+    details_checked_at = Column(DateTime, nullable=True)
     collected_at = Column(DateTime, default=utcnow, nullable=False)
 
 
