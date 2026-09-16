@@ -25,8 +25,7 @@ COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").strip().lower() != "false"
 # Mode d'emploi du bureau, lié depuis l'en-tête de l'interface. Paramétrable :
 # un successeur qui réécrit la page ailleurs n'aura pas à toucher au code.
 MODE_EMPLOI_URL = os.getenv(
-    "MODE_EMPLOI_URL",
-    "https://claude.ai/code/artifact/23ffa434-4663-4d3b-8b10-cc09fc4c79ef",
+    "MODE_EMPLOI_URL", "https://newsletter.sciencespo-finance.fr/guide/"
 )
 
 # Sources par défaut — flux vérifiés le 2026-09-10.

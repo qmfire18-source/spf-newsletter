@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Document interne au bureau : utile à qui a le lien, sans intérêt dans
+     les résultats de recherche. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Comment fonctionne la newsletter de Sciences Po Finance : les adresses, le rythme hebdomadaire, ce que le bureau a à faire.">
+<link rel="icon" href="../logo.jpeg">
+<title>Newsletter SPF, mode d'emploi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap">
+</head>
+<body>
+<style>
+  :root{
+    --marine:#183050;
+    --bleu:#2E6BB0;
+    --bleu-clair:#7FB0DE;
+    --bleu-pale:#DCE6F2;
+    --ink:#141B2B;
+    --ink-2:#4E596B;
+    --ink-3:#78839A;
+    --paper:#F4F6FA;
+    --surface:#FFFFFF;
+    --surface-2:#EDF1F7;
+    --rule:#D9E0EA;
+    --ok:#1A6A4C;
+    --ok-bg:#E4F2EC;
+    --alerte:#9A3412;
+    --alerte-bg:#FBEBE3;
+
+    --marque:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --sans:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --mesure:64ch;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --marine:#8FB4DE; --bleu:#7FB0DE; --bleu-clair:#5D8BBE; --bleu-pale:#1C2A3D;
+      --ink:#E7ECF4; --ink-2:#A8B3C6; --ink-3:#7C879C;
+      --paper:#0E141F; --surface:#161E2C; --surface-2:#1D2736; --rule:#2B3648;
+      --ok:#63C79E; --ok-bg:#12291F;
+      --alerte:#E59B76; --alerte-bg:#2A1710;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --marine:#8FB4DE; --bleu:#7FB0DE; --bleu-clair:#5D8BBE; --bleu-pale:#1C2A3D;
+    --ink:#E7ECF4; --ink-2:#A8B3C6; --ink-3:#7C879C;
+    --paper:#0E141F; --surface:#161E2C; --surface-2:#1D2736; --rule:#2B3648;
+    --ok:#63C79E; --ok-bg:#12291F;
+    --alerte:#E59B76; --alerte-bg:#2A1710;
+    color-scheme:dark;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16.5px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:72rem;margin:0 auto;padding-block:0 4rem;padding-left:1.25rem;padding-right:1.25rem}
+  a{color:var(--bleu);text-underline-offset:2px;overflow-wrap:anywhere}
+  a:focus-visible,summary:focus-visible{outline:3px solid var(--bleu);outline-offset:3px;border-radius:3px}
+
+  .top{background:#183050;color:#fff;margin-inline:-1.25rem;
+       padding:2.6rem 1.25rem 2.3rem;margin-bottom:2.8rem}
+  .top .inner{max-width:72rem;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
+           text-transform:uppercase;color:#AECDEB;margin:0 0 .75rem}
+  h1{font-family:var(--marque);font-weight:700;letter-spacing:-.025em;
+     font-size:clamp(1.95rem,4.5vw,3rem);line-height:1.06;margin:0 0 .7rem;
+     text-wrap:balance;color:#fff}
+  .top p{margin:0;color:#C7D6E9;max-width:54ch;font-size:1.03rem}
+
+  section{margin-bottom:3.4rem}
+  h2{font-family:var(--marque);font-weight:700;font-size:1.5rem;line-height:1.2;
+     margin:0 0 .35rem;text-wrap:balance;letter-spacing:-.018em}
+  .sub{color:var(--ink-2);margin:0 0 1.6rem;max-width:62ch}
+  h3{font-family:var(--marque);font-weight:600;font-size:1.08rem;margin:0 0 .35rem;
+     letter-spacing:-.01em}
+  p{margin:0 0 1rem}
+  code{font-family:var(--mono);font-size:.85em;background:var(--surface-2);
+       padding:.14em .42em;border-radius:4px;color:var(--ink);overflow-wrap:anywhere}
+
+  /* adresses */
+  .cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:1rem}
+  .carte{background:var(--surface);border:1px solid var(--rule);border-radius:10px;
+         padding:1.3rem;display:flex;flex-direction:column;gap:.55rem}
+  .carte .url{font-family:var(--mono);font-size:.8rem;line-height:1.5}
+  .carte p{margin:0;font-size:.93rem;color:var(--ink-2)}
+  .etiquette{align-self:flex-start;font-family:var(--mono);font-size:.67rem;
+             letter-spacing:.1em;text-transform:uppercase;padding:.2rem .5rem;
+             border-radius:3px;background:var(--ok-bg);color:var(--ok)}
+
+  /* rythme */
+  .rythme{border-left:2px solid var(--rule);padding-left:1.4rem;display:grid;gap:1.7rem}
+  .rythme > div{position:relative}
+  .rythme > div::before{content:"";position:absolute;left:calc(-1.4rem - 5px);top:.6rem;
+                        width:9px;height:9px;border-radius:50%;background:var(--bleu)}
+  .heure{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;
+         text-transform:uppercase;color:var(--bleu);margin:0 0 .2rem}
+  .rythme p{margin:0;color:var(--ink-2);font-size:.95rem;max-width:60ch}
+
+  /* étapes d'envoi */
+  .etapes{list-style:none;counter-reset:e;padding:0;margin:0;display:grid;gap:1.15rem}
+  .etapes li{counter-increment:e;display:grid;grid-template-columns:auto 1fr;
+             gap:.9rem;align-items:start;max-width:64ch}
+  .etapes li::before{content:counter(e);font-family:var(--mono);font-size:.78rem;
+                     font-weight:500;width:1.65rem;height:1.65rem;border-radius:50%;
+                     background:var(--bleu-pale);color:var(--marine);
+                     display:flex;align-items:center;justify-content:center;
+                     margin-top:.15rem}
+  .etapes strong{display:block;font-family:var(--marque);font-weight:600;
+                 color:var(--ink);letter-spacing:-.01em}
+  .etapes span{color:var(--ink-2);font-size:.95rem}
+
+  /* règles */
+  .regles{list-style:none;padding:0;margin:0;display:grid;gap:.85rem}
+  .regles li{display:grid;grid-template-columns:auto 1fr;gap:.75rem;align-items:start;
+             color:var(--ink-2);font-size:.96rem;max-width:64ch}
+  .regles svg{margin-top:.32rem;flex:none}
+
+  /* comptes */
+  .tableau{width:100%;overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:34rem;font-size:.93rem}
+  th,td{text-align:left;padding:.7rem .8rem;border-bottom:1px solid var(--rule);
+        vertical-align:top}
+  th{font-family:var(--marque);font-weight:600;font-size:.82rem;
+     letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+  td:first-child{font-family:var(--marque);font-weight:600;color:var(--ink);white-space:nowrap}
+  td code{font-size:.82em}
+
+  .alerte{background:var(--alerte-bg);border:1px solid var(--alerte);
+          border-radius:10px;padding:1.35rem}
+  .alerte h2{margin-top:0;color:var(--alerte);font-size:1.3rem}
+  .alerte p{color:var(--ink);max-width:60ch}
+  .alerte p:last-child{margin-bottom:0}
+
+  /* pannes */
+  details.panne{border-bottom:1px solid var(--rule);padding:.15rem 0}
+  details.panne summary{cursor:pointer;padding:.8rem 0;font-family:var(--marque);
+                        font-weight:600;color:var(--ink);list-style:none;
+                        display:flex;align-items:center;gap:.6rem}
+  details.panne summary::-webkit-details-marker{display:none}
+  details.panne summary::before{content:"";width:7px;height:7px;flex:none;
+                                border-right:2px solid var(--bleu);
+                                border-bottom:2px solid var(--bleu);
+                                transform:rotate(-45deg);transition:transform .18s ease}
+  details.panne[open] summary::before{transform:rotate(45deg)}
+  details.panne div{padding:0 0 .9rem 1.3rem;color:var(--ink-2);font-size:.95rem;
+                    max-width:62ch}
+
+  footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--rule);
+         color:var(--ink-3);font-size:.86rem;max-width:64ch}
+
+  @media (max-width:640px){
+    .page{padding-left:1rem;padding-right:1rem}
+    .top{margin-inline:-1rem;padding:2.1rem 1rem 1.9rem}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+
+<div class="top">
+  <div class="inner">
+    <p class="eyebrow">Association Sciences Po Finance</p>
+    <h1>La newsletter, mode d'emploi</h1>
+    <p>
+      Une édition par semaine, écrite toute seule, relue par un humain,
+      envoyée sur décision d'un humain. Voici où vit chaque chose et ce que
+      le bureau a à faire.
+    </p>
+  </div>
+</div>
+
+<div class="page">
+
+  <section>
+    <h2>Les trois adresses à retenir</h2>
+    <p class="sub">
+      Toutes les trois sont permanentes et fonctionnent en continu, y compris
+      la nuit et pendant les vacances.
+    </p>
+
+    <div class="cartes">
+      <div class="carte">
+        <span class="etiquette">Public</span>
+        <h3>Page d'abonnement</h3>
+        <a class="url" href="https://newsletter.sciencespo-finance.fr">newsletter.sciencespo-finance.fr</a>
+        <p>
+          Celle qu'on diffuse aux étudiants, sur Instagram, en amphi ou sur une
+          affiche. Un étudiant y laisse son adresse et reçoit la newsletter dès
+          l'édition suivante.
+        </p>
+      </div>
+
+      <div class="carte">
+        <span class="etiquette">Bureau</span>
+        <h3>Interface de validation</h3>
+        <a class="url" href="https://brouillon.sciencespo-finance.fr">brouillon.sciencespo-finance.fr</a>
+        <p>
+          Là où l'on relit, corrige et envoie. Accès réservé : il faut
+          l'adresse de l'association et le mot de passe du bureau, que le
+          responsable newsletter transmet.
+        </p>
+      </div>
+
+      <div class="carte">
+        <span class="etiquette">Technique</span>
+        <h3>Le code</h3>
+        <a class="url" href="https://github.com/qmfire18-source/spf-newsletter">github.com/qmfire18-source/spf-newsletter</a>
+        <p>
+          Dépôt public, qui sert aussi de sauvegarde du projet. Aucun mot de
+          passe ni clé n'y figure : ils vivent ailleurs, hors de portée.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Ce qui se passe sans personne</h2>
+    <p class="sub">
+      Deux rendez-vous automatiques. Ni l'un ni l'autre n'envoie quoi que ce
+      soit.
+    </p>
+
+    <div class="rythme">
+      <div>
+        <p class="heure">Chaque jour, 7 h 15</p>
+        <h3>Collecte des offres de stage</h3>
+        <p>
+          Les sites d'offres limitent le nombre de pages consultables par
+          passage. Une seule visite hebdomadaire ne verrait qu'une poignée
+          d'offres sur les deux cents publiées. En collectant un peu chaque
+          jour, l'édition du lundi dispose d'une quarantaine d'offres, classées
+          par secteur.
+        </p>
+      </div>
+      <div>
+        <p class="heure">Lundi, 10 h 30</p>
+        <h3>Écriture du brouillon</h3>
+        <p>
+          Les actualités de la semaine sont rassemblées, triées par importance,
+          puis rédigées. Le brouillon apparaît sur l'interface de validation
+          avec la mention « en attente de validation ». Il attend qu'on le
+          relise, sans limite de temps.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Ce que le bureau a à faire</h2>
+    <p class="sub">
+      Comptez un quart d'heure le lundi. C'est le seul moment où une présence
+      humaine est nécessaire.
+    </p>
+
+    <ol class="etapes">
+      <li>
+        <div>
+          <strong>Ouvrir l'interface</strong>
+          <span>
+            Sur <a href="https://brouillon.sciencespo-finance.fr">brouillon.sciencespo-finance.fr</a>,
+            avec l'adresse de l'association et le mot de passe du bureau. La
+            première page peut mettre une trentaine de secondes à répondre,
+            c'est normal : le serveur se réveille.
+          </span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Relire les actualités et les stages</strong>
+          <span>
+            Le texte se corrige directement dans la page, comme dans un
+            traitement de texte. Les deux liens en haut, « Actus financières »
+            et « Stages », mènent droit aux deux sections.
+          </span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Regarder l'aperçu email</strong>
+          <span>
+            Dans le menu à droite de la barre, celui aux trois barres. Il
+            montre le message exactement tel qu'un abonné le recevra, avec
+            l'en-tête et le pied de page. C'est la dernière chose à vérifier.
+          </span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Envoyer</strong>
+          <span>
+            Le bouton rouge en bas expédie immédiatement à tous les abonnés,
+            et c'est irréversible. Une confirmation est demandée avant. En cas
+            de doute, « Enregistrer sans envoyer » garde les corrections pour
+            plus tard.
+          </span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Depuis un téléphone</h2>
+    <p class="sub">
+      Tout fonctionne, et l'interface a été pensée pour ça. Relire dans le
+      métro est un usage prévu, pas un dépannage.
+    </p>
+
+    <div class="cartes">
+      <div class="carte">
+        <h3>Se connecter</h3>
+        <p>
+          Même adresse, même mot de passe que sur ordinateur. Aucune
+          application à installer : ouvrez
+          <a href="https://brouillon.sciencespo-finance.fr">brouillon.sciencespo-finance.fr</a>
+          dans Safari ou Chrome, et ajoutez la page à votre écran d'accueil si
+          vous la consultez souvent.
+        </p>
+      </div>
+      <div class="carte">
+        <h3>Le menu aux trois barres</h3>
+        <p>
+          À droite de la barre grise. Il contient l'aperçu email, l'historique
+          des envois et le bouton pour relancer la collecte. Ces trois actions
+          y sont rangées pour laisser la place au texte.
+        </p>
+      </div>
+      <div class="carte">
+        <h3>Les deux boutons du bas</h3>
+        <p>
+          « Enregistrer » garde vos corrections sans rien expédier. Le bouton
+          rouge envoie à tous les abonnés, après une confirmation. Ils restent
+          visibles en permanence, quel que soit l'endroit du texte où vous
+          êtes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Les garde-fous</h2>
+    <p class="sub">Ce que le système s'interdit, même si personne ne surveille.</p>
+
+    <ul class="regles">
+      <li>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A6A4C" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><strong>Rien ne part sans un clic humain.</strong> Aucune tâche
+        automatique n'a accès à l'envoi. Le programme qui écrit le brouillon
+        ne sait même pas parler au service d'envoi.</span>
+      </li>
+      <li>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A6A4C" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><strong>Jamais deux fois la même chose.</strong> Une actualité ou
+        une offre déjà parue est écartée des éditions suivantes.</span>
+      </li>
+      <li>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A6A4C" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><strong>Aucune candidature close.</strong> Une offre dont la date
+        limite est passée n'est pas publiée.</span>
+      </li>
+      <li>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A6A4C" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><strong>Aucun chiffre inventé.</strong> Une actualité n'est
+        développée que si le texte de l'article a pu être lu. Sinon elle part
+        en brève, avec son titre et son lien, rien de plus.</span>
+      </li>
+      <li>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A6A4C" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><strong>Aucun blocage contourné.</strong> LinkedIn et JobTeaser
+        ne sont jamais interrogés, et chaque site n'est lu que dans la mesure
+        où il l'autorise.</span>
+      </li>
+      <li>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1A6A4C" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><strong>Désabonnement en un clic.</strong> Présent dans chaque
+        envoi, il est traité automatiquement.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Où vivent les comptes</h2>
+    <p class="sub">
+      Le point le plus important de ce document, et celui qui a coûté le plus
+      cher à réparer.
+    </p>
+
+    <div class="alerte">
+      <h2>À lire avant toute passation</h2>
+      <p>
+        L'association possédait déjà deux noms de domaine. Tous deux ont été
+        perdus, non pas faute de paiement, mais parce qu'ils étaient rattachés
+        aux comptes personnels d'anciens membres, devenus injoignables. Il a
+        fallu en racheter un.
+      </p>
+      <p>
+        Tous les comptes ci-dessous sont désormais au nom de l'association, avec
+        son adresse. <strong>Ne créez jamais un compte lié au projet avec une
+        adresse personnelle</strong>, et transmettez les identifiants au bureau
+        suivant en même temps que le reste.
+      </p>
+      <p>
+        Les mots de passe ne figurent pas ici, et ne doivent figurer dans aucune
+        page ni aucun document partagé par lien. Ils vivent dans le gestionnaire
+        de mots de passe de l'association, où l'accès se donne et se retire
+        nommément. Demandez-les au responsable newsletter.
+      </p>
+    </div>
+
+    <div class="tableau" style="margin-top:1.5rem">
+      <table>
+        <thead>
+          <tr><th>Service</th><th>À quoi il sert</th><th>Échéance</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>OVH</td>
+            <td>Le nom de domaine <code>sciencespo-finance.fr</code>, et ses
+                réglages techniques</td>
+            <td>16 septembre 2029</td>
+          </tr>
+          <tr>
+            <td>Neon</td>
+            <td>La base de données : abonnés, brouillons, historique des envois</td>
+            <td>Gratuit, sans échéance</td>
+          </tr>
+          <tr>
+            <td>Render</td>
+            <td>L'hébergement de l'interface de validation</td>
+            <td>Gratuit, sans échéance</td>
+          </tr>
+          <tr>
+            <td>Brevo</td>
+            <td>L'envoi des emails et la liste d'abonnés</td>
+            <td>Gratuit jusqu'à 300 envois par jour</td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td>Le code et la page d'abonnement</td>
+            <td>Gratuit, sans échéance</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Si quelque chose ne va pas</h2>
+    <p class="sub">Les quatre cas les plus probables, et quoi faire.</p>
+
+    <details class="panne">
+      <summary>Le lundi matin, il n'y a pas de nouveau brouillon</summary>
+      <div>
+        L'écriture du brouillon tourne sur l'ordinateur du responsable
+        newsletter, et lui seul. Si la machine était éteinte ou en veille à
+        10 h 30, rien n'a été écrit. Il suffit de le lui signaler : la
+        génération se relance à la demande et prend cinq minutes. Les offres de
+        stage, elles, ne sont pas perdues, elles continuent de s'accumuler.
+      </div>
+    </details>
+
+    <details class="panne">
+      <summary>La page de connexion refuse mon adresse</summary>
+      <div>
+        Seules les adresses explicitement autorisées peuvent entrer, et le mot
+        de passe est commun à tout le bureau. Si votre adresse vient d'être
+        ajoutée, elle doit l'être à deux endroits par le responsable technique,
+        sans quoi seule une partie du système la reconnaît.
+      </div>
+    </details>
+
+    <details class="panne">
+      <summary>Un abonné dit ne rien recevoir</summary>
+      <div>
+        Vérifiez d'abord ses courriers indésirables. Ensuite, dans l'historique
+        des envois, que l'édition est bien partie et à combien de personnes.
+        Enfin, qu'il figure bien dans la liste d'abonnés : une inscription
+        échoue si l'adresse comporte une faute de frappe.
+      </div>
+    </details>
+
+    <details class="panne">
+      <summary>La page met trente secondes à s'ouvrir</summary>
+      <div>
+        C'est normal et sans gravité. L'hébergement gratuit met le service en
+        veille après un quart d'heure sans visite, et le réveille à la première
+        demande. Les visites suivantes sont instantanées.
+      </div>
+    </details>
+  </section>
+
+  <footer>
+    Le fonctionnement ne coûte rien, à l'exception du nom de domaine, réglé
+    jusqu'en 2029. Tout le reste tient dans des offres gratuites. Ce document
+    décrit l'état du projet au 16 septembre 2026.
+  </footer>
+</div>
+
+</body>
+</html>
