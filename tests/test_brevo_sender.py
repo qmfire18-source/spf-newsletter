@@ -296,3 +296,21 @@ class TestPreheaderStaysHidden:
         bloc = bloc[:bloc.index("</div>")]
         assert "display:none" in bloc
         assert "max-height:0" in bloc
+
+
+class TestSommaireAnchors:
+    """Le sommaire doit rester cliquable dans Gmail."""
+
+    def test_the_title_carries_a_named_anchor(self):
+        # Gmail retire les attributs id : sans <a name>, cliquer sur une
+        # entrée du sommaire ne faisait rien.
+        out = brevo_sender.inline_styles('<h4 id="a1">Titre</h4>')
+        assert '<a name="a1"></a>' in out
+
+    def test_the_id_is_kept_for_the_other_clients(self):
+        out = brevo_sender.inline_styles('<h4 id="a2">Titre</h4>')
+        assert 'id="a2"' in out
+
+    def test_titles_without_an_anchor_are_left_alone(self):
+        out = brevo_sender.inline_styles("<h4>Titre</h4>")
+        assert "<a name=" not in out

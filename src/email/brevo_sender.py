@@ -149,6 +149,20 @@ STYLES_CONTENU = {
 }
 
 _BALISE_OUVRANTE = re.compile(r"<(h3|h4|p|ul|ol|li|a)(\s[^>]*)?>")
+_TITRE_ANCRE = re.compile(r'<h4([^>]*\bid="(a\d+)"[^>]*)>')
+
+
+def _ancres_nommees(fragment: str) -> str:
+    """Double chaque ancre de titre d'une balise <a name>.
+
+    Gmail retire les attributs `id` du HTML qu'il affiche : le sommaire
+    pointait alors vers des cibles qui n'existaient plus, et cliquer ne
+    faisait rien. L'attribut `name` sur une balise <a>, lui, survit. On garde
+    les deux, les autres clients se servant de l'un ou de l'autre.
+    """
+    return _TITRE_ANCRE.sub(
+        lambda m: f'<h4{m.group(1)}><a name="{m.group(2)}"></a>', fragment or ""
+    )
 
 
 def inline_styles(fragment: str) -> str:
@@ -159,7 +173,7 @@ def inline_styles(fragment: str) -> str:
         attributs = trouve.group(2) or ""
         return f'<{balise}{attributs} style="{STYLES_CONTENU[balise]}">'
 
-    return _BALISE_OUVRANTE.sub(remplacer, fragment or "")
+    return _ancres_nommees(_BALISE_OUVRANTE.sub(remplacer, fragment or ""))
 
 
 def render_newsletter(news_html: str, stages_html: str, week_of) -> str:
