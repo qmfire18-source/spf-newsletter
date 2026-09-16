@@ -42,6 +42,12 @@ NEWS_SOURCES = [
     {"type": "gnews", "query": "finance marchés"},
     {"type": "gnews", "query": '"M&A" OR "fusion-acquisition"'},
     {"type": "gnews", "query": 'BCE OR "banque centrale" taux'},
+    # Requêtes dédiées aux opérations : sans elles, la liste des deals de la
+    # semaine tombait à deux entrées faute de matière, alors que ces trois-là
+    # ramènent des IPO, des rachats et des levées de fonds chaque semaine.
+    {"type": "gnews", "query": "acquisition OR rachat OR cession entreprise"},
+    {"type": "gnews", "query": '"introduction en bourse" OR IPO'},
+    {"type": "gnews", "query": '"levée de fonds" OR "tour de table"'},
 ]
 
 # JobTeaser est écarté : 403 sur toute requête automatisée (voir stage_scraper).

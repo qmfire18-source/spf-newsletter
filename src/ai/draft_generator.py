@@ -47,7 +47,7 @@ STRUCTURE DE news_html, dans cet ordre :
 
      MARCHÉS              taux, obligations, actions, matières premières
      MACRO                banques centrales, croissance, dette, inflation
-     ENTREPRISES ET DEALS M&A, introductions en bourse, levées, résultats
+     ENTREPRISES M&A, introductions en bourse, levées, résultats
      RÉGULATION           autorités, normes, fiscalité, ESG contraignant
      MÉTIER ET CARRIÈRE   recrutement, rémunérations, évolution des métiers
 
@@ -80,8 +80,9 @@ STRUCTURE DE news_html, dans cet ordre :
    éclairent ton choix, ils ne le dictent pas. Les articles non retenus
    passent en brève.
 
-4. Une section <h3>LES DEALS DE LA SEMAINE</h3> suivie d'un <ul> de cinq
-   entrées AU PLUS, classées de la plus importante à la moins importante.
+4. Une section <h3>LES DEALS DE LA SEMAINE</h3> suivie d'un <ul> de CINQ entrées,
+   classées de la plus importante à la moins importante. Vise cinq : les
+   données en contiennent, cherche-les avant de conclure qu'il n'y en a pas.
    Un deal est une opération : fusion, acquisition, cession, introduction
    en bourse, levée de fonds, émission obligataire majeure.
    - Une seule ligne par deal, courte : qui achète quoi, pour combien, et
