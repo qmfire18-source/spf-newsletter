@@ -351,7 +351,7 @@
                   aria-label="Gras"><strong>G</strong></button>
           <button type="button" class="tool" data-cmd="italic" title="Italique"
                   aria-label="Italique"><em>I</em></button>
-          <button type="button" class="tool" data-cmd="createLink" title="Insérer un lien"
+          <button type="button" class="tool" data-cmd="createLink" title="Ajouter, corriger ou retirer un lien"
                   aria-label="Insérer un lien">Lien</button>
           <span class="tool tool--sep" aria-hidden="true"></span>
           <button type="button" class="tool" data-block="h3" title="Sous-titre"
@@ -388,7 +388,7 @@
                   aria-label="Gras"><strong>G</strong></button>
           <button type="button" class="tool" data-cmd="italic" title="Italique"
                   aria-label="Italique"><em>I</em></button>
-          <button type="button" class="tool" data-cmd="createLink" title="Insérer un lien"
+          <button type="button" class="tool" data-cmd="createLink" title="Ajouter, corriger ou retirer un lien"
                   aria-label="Insérer un lien">Lien</button>
           <span class="tool tool--sep" aria-hidden="true"></span>
           <button type="button" class="tool" data-block="h3" title="Sous-titre"
@@ -511,8 +511,7 @@
         if (button.dataset.block) {
           document.execCommand("formatBlock", false, button.dataset.block);
         } else if (button.dataset.cmd === "createLink") {
-          var url = prompt("Adresse du lien :", "https://");
-          if (url) document.execCommand("createLink", false, url);
+          modifierLien(pane);
         } else {
           document.execCommand(button.dataset.cmd, false, null);
         }
@@ -657,6 +656,60 @@
         window.addEventListener("resize", mesureBarre);
       }
     }
+    // ---------- liens ----------
+    // Le texte d'un lien ne dit pas où il mène, et une adresse fausse ne se
+    // voit qu'une fois l'email parti. On expose donc l'adresse : au survol
+    // pour la lire, par le bouton pour la corriger.
+
+    function lienSousLeCurseur(pane) {
+      var selection = window.getSelection();
+      if (!selection || !selection.anchorNode) return null;
+      var noeud = selection.anchorNode;
+      while (noeud && noeud !== pane) {
+        if (noeud.nodeName === "A") return noeud;
+        noeud = noeud.parentNode;
+      }
+      return null;
+    }
+
+    function etiqueter(lien) {
+      if (lien) lien.setAttribute("title", lien.getAttribute("href") || "");
+    }
+
+    function modifierLien(pane) {
+      var existant = lienSousLeCurseur(pane);
+      var adresse = prompt(
+        existant
+          ? "Adresse du lien.\n\nVidez le champ pour retirer le lien en gardant le texte."
+          : "Adresse du lien :",
+        existant ? existant.getAttribute("href") : "https://"
+      );
+      if (adresse === null) return;          // annulé
+      adresse = adresse.trim();
+
+      if (existant) {
+        if (!adresse) {
+          document.execCommand("unlink");
+        } else {
+          existant.setAttribute("href", adresse);
+          etiqueter(existant);
+        }
+      } else if (adresse) {
+        document.execCommand("createLink", false, adresse);
+        etiqueter(lienSousLeCurseur(pane));
+      }
+    }
+
+    // Les liens déjà écrits par la rédaction n'ont pas d'infobulle : on la
+    // pose au chargement, puis à chaque frappe pour les liens nouveaux.
+    function etiqueterTout() {
+      document.querySelectorAll(".preview a").forEach(etiqueter);
+    }
+    etiqueterTout();
+    document.querySelectorAll(".preview[contenteditable]").forEach(function (pane) {
+      pane.addEventListener("input", etiqueterTout);
+    });
+
     // Réécrire jette le brouillon et toutes les corrections déjà faites. Une
     // seule fenêtre se balaie d'un pouce distrait ; la seconde demande de
     // décider après avoir lu ce qu'on perd.
