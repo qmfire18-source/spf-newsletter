@@ -25,6 +25,7 @@ from src.config import (
     APP_SECRET_KEY,
     COOKIE_SECURE,
     MODE_EMPLOI_URL,
+    PAGE_ABONNEMENT_URL,
     REVIEWER_PASSWORD_HASH,
     SESSION_MAX_AGE_SECONDS,
 )
@@ -213,6 +214,7 @@ def review_draft(
             "semaine": _semaine_en_lettres(draft.week_of) if draft else "",
             "reviewer": reviewer,
             "mode_emploi_url": MODE_EMPLOI_URL,
+            "page_abonnement_url": PAGE_ABONNEMENT_URL,
             # La rédaction s'appuie sur le CLI Claude Code, installé sur le
             # poste du responsable et sur lui seul. Proposer le bouton là où
             # il échouerait promettrait une régénération impossible.

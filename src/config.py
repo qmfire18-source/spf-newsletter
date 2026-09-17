@@ -27,6 +27,10 @@ COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").strip().lower() != "false"
 MODE_EMPLOI_URL = os.getenv(
     "MODE_EMPLOI_URL", "https://newsletter.sciencespo-finance.fr/guide/"
 )
+# La page publique d'abonnement, celle qu'on diffuse aux étudiants.
+PAGE_ABONNEMENT_URL = os.getenv(
+    "PAGE_ABONNEMENT_URL", "https://newsletter.sciencespo-finance.fr"
+)
 
 # Sources par défaut — flux vérifiés le 2026-09-10.
 # Les Echos, Boursorama, Zonebourse, Boursier, AbcBourse et l'AGEFI ont été

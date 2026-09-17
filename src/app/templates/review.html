@@ -341,6 +341,11 @@
           Aperçu email
         </a>
         <a href="/historique">Historique</a>
+        {# La page qu'on diffuse aux étudiants : on y renvoie souvent, et
+           retrouver son adresse de mémoire n'a aucun intérêt. #}
+        <a href="{{ page_abonnement_url }}" target="_blank" rel="noopener">
+          Page d'abonnement
+        </a>
         {# Double confirmation : le geste est destructeur et le menu se touche
            du pouce. La première fenêtre explique, la seconde fait décider. #}
         <form method="post" action="/regenerer" id="reecrire"
