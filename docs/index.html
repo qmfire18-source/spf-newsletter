@@ -184,6 +184,40 @@
       opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
     .mock,button{transition:none}
   }
+
+  /* ---------- curseur ----------
+     Un point qui colle au pointeur, un anneau qui le rattrape avec un temps
+     de retard et s'élargit quand la main va vite. Réservé aux souris : sur
+     un écran tactile il n'y a pas de pointeur à suivre, et quand l'animation
+     est refusée par le système, le curseur natif reprend sa place. */
+  .curseur, .curseur__anneau { display:none; }
+  @media (pointer:fine) and (prefers-reduced-motion:no-preference) {
+    html.curseur-actif, html.curseur-actif * { cursor:none; }
+    /* Le champ garde le sien : viser une zone de saisie sans repère est
+       désagréable, et le gain esthétique n'en vaut pas la peine. */
+    html.curseur-actif input { cursor:text; }
+
+    .curseur, .curseur__anneau {
+      display:block; position:fixed; top:0; left:0; z-index:9999;
+      pointer-events:none; border-radius:50%;
+      transform:translate3d(-100px,-100px,0);
+    }
+    .curseur { width:7px; height:7px; margin:-3.5px 0 0 -3.5px;
+               background:var(--accent); }
+    .curseur__anneau { width:34px; height:34px; margin:-17px 0 0 -17px;
+                       border:1.5px solid var(--accent);
+                       opacity:.55;
+                       transition:width .22s ease, height .22s ease,
+                                  margin .22s ease, opacity .22s ease,
+                                  background-color .22s ease; }
+    .curseur__anneau.survol { width:52px; height:52px; margin:-26px 0 0 -26px;
+                              opacity:.9; background:color-mix(in srgb,
+                              var(--accent) 12%, transparent); }
+    /* Sur le marine du bandeau, le bleu d'accent se fond dans le fond : le
+       curseur s'éclaircit le temps de le traverser. */
+    .curseur.sur-marine { background:var(--accent-soft); }
+    .curseur__anneau.sur-marine { border-color:var(--accent-soft); opacity:.75; }
+  }
 </style>
 </head>
 <body>
@@ -489,5 +523,67 @@
   })();
 </script>
 
+<script>
+  // Curseur : un point exact, un anneau qui traîne. Le retard se calcule à
+  // chaque image plutôt qu'en CSS, pour que l'anneau s'élargisse à la vitesse
+  // du geste et non à l'arrivée.
+  (function () {
+    var finePointer = window.matchMedia("(pointer:fine)").matches;
+    var animationOk = window.matchMedia("(prefers-reduced-motion:no-preference)").matches;
+    if (!finePointer || !animationOk) return;
+
+    var point = document.createElement("div");
+    var anneau = document.createElement("div");
+    point.className = "curseur";
+    anneau.className = "curseur__anneau";
+    document.body.append(point, anneau);
+    document.documentElement.classList.add("curseur-actif");
+
+    var sourisX = 0, sourisY = 0, anneauX = 0, anneauY = 0, vitesse = 0;
+
+    document.addEventListener("mousemove", function (e) {
+      var dx = e.clientX - sourisX, dy = e.clientY - sourisY;
+      vitesse = Math.min(Math.hypot(dx, dy), 60);
+      sourisX = e.clientX; sourisY = e.clientY;
+      point.style.transform = "translate3d(" + sourisX + "px," + sourisY + "px,0)";
+    });
+
+    (function suivre() {
+      // Un sixième de la distance restante par image : assez lent pour qu'on
+      // voie l'anneau courir derrière, assez vif pour ne pas sembler mou.
+      anneauX += (sourisX - anneauX) / 6;
+      anneauY += (sourisY - anneauY) / 6;
+      vitesse *= 0.9;
+      var echelle = 1 + Math.min(vitesse / 60, 1) * 0.6;
+      anneau.style.transform =
+        "translate3d(" + anneauX + "px," + anneauY + "px,0) scale(" + echelle + ")";
+      requestAnimationFrame(suivre);
+    })();
+
+    var heros = document.querySelector(".hero");
+    if (heros) {
+      document.addEventListener("mousemove", function (e) {
+        var bornes = heros.getBoundingClientRect();
+        var dedans = e.clientY >= bornes.top && e.clientY <= bornes.bottom;
+        point.classList.toggle("sur-marine", dedans);
+        anneau.classList.toggle("sur-marine", dedans);
+      });
+    }
+
+    document.querySelectorAll("a, button, input, summary").forEach(function (el) {
+      el.addEventListener("mouseenter", function () { anneau.classList.add("survol"); });
+      el.addEventListener("mouseleave", function () { anneau.classList.remove("survol"); });
+    });
+
+    // Sorti de la fenêtre, le curseur natif revient : sans ça, la page voisine
+    // hérite d'un pointeur invisible le temps d'un aller-retour.
+    document.addEventListener("mouseleave", function () {
+      point.style.opacity = anneau.style.opacity = "0";
+    });
+    document.addEventListener("mouseenter", function () {
+      point.style.opacity = ""; anneau.style.opacity = "";
+    });
+  })();
+</script>
 </body>
 </html>
