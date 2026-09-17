@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -81,21 +81,21 @@ class TestDeduplicate:
 
 class TestEntryToItem:
     def test_drops_entries_older_than_cutoff(self):
-        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
-        entry = make_entry(published=datetime.now(timezone.utc) - timedelta(days=30))
+        cutoff = datetime.now(UTC) - timedelta(days=7)
+        entry = make_entry(published=datetime.now(UTC) - timedelta(days=30))
         assert news_scraper._entry_to_item(entry, "Source", cutoff) is None
 
     def test_keeps_recent_entries(self):
-        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
-        entry = make_entry(published=datetime.now(timezone.utc) - timedelta(days=1))
+        cutoff = datetime.now(UTC) - timedelta(days=7)
+        entry = make_entry(published=datetime.now(UTC) - timedelta(days=1))
         assert news_scraper._entry_to_item(entry, "Source", cutoff) is not None
 
     def test_keeps_undated_entries(self):
-        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        cutoff = datetime.now(UTC) - timedelta(days=7)
         assert news_scraper._entry_to_item(make_entry(), "Source", cutoff) is not None
 
     def test_drops_entries_without_title_or_link(self):
-        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        cutoff = datetime.now(UTC) - timedelta(days=7)
         assert news_scraper._entry_to_item(make_entry(title=""), "Source", cutoff) is None
         assert news_scraper._entry_to_item(make_entry(link=None), "Source", cutoff) is None
 
@@ -173,7 +173,7 @@ class TestFetchNews:
         assert [i["url"] for i in result] == ["https://a.fr/1"]
 
     def test_caps_and_sorts_by_recency(self, monkeypatch):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Chaque titre puise dans sa propre réserve de mots : un tirage dans un
         # fonds commun laissait deux titres partager assez de mots pour être
         # regroupés, ce qui décalait l'ordre avant même le plafonnement. Les
@@ -196,7 +196,7 @@ class TestFetchNews:
         assert result[0]["url"] == "https://a.fr/0"
 
     def test_undated_articles_sort_last(self, monkeypatch):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         monkeypatch.setattr(
             news_scraper,
             "_fetch_rss",
@@ -216,7 +216,7 @@ class TestFetchNews:
 class TestFetchNewsapi:
     def test_returns_empty_without_key(self, monkeypatch):
         monkeypatch.setattr(news_scraper, "NEWSAPI_KEY", None)
-        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        cutoff = datetime.now(UTC) - timedelta(days=7)
         assert news_scraper._fetch_newsapi("finance", cutoff) == []
 
 

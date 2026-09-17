@@ -138,8 +138,9 @@ class TestNoRepeatBetweenEditions:
         assert len(offer_store.recent_offers(db, exclude_urls=None)) == 1
 
     def test_published_urls_cover_news_and_offers(self, db):
-        from src.db.models import Draft, NewsItem, StageOffer
         from datetime import date
+
+        from src.db.models import Draft, NewsItem, StageOffer
 
         draft = Draft(week_of=date(2026, 9, 7))
         draft.news_items = [NewsItem(title="a", url="https://actu/1")]
@@ -153,8 +154,9 @@ class TestNoRepeatBetweenEditions:
 
     def test_the_edition_being_written_does_not_block_itself(self, db):
         # Régénérer le brouillon de la semaine ne doit pas vider la newsletter.
-        from src.db.models import Draft, NewsItem
         from datetime import date
+
+        from src.db.models import Draft, NewsItem
 
         ancienne = Draft(week_of=date(2026, 9, 7))
         ancienne.news_items = [NewsItem(title="a", url="https://actu/ancienne")]
@@ -168,8 +170,9 @@ class TestNoRepeatBetweenEditions:
         ) == {"https://actu/ancienne"}
 
     def test_ignores_rows_without_url(self, db):
-        from src.db.models import Draft, NewsItem
         from datetime import date
+
+        from src.db.models import Draft, NewsItem
 
         draft = Draft(week_of=date(2026, 9, 7))
         draft.news_items = [NewsItem(title="sans lien", url=None)]

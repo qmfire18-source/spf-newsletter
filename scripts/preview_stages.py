@@ -16,7 +16,7 @@ import asyncio
 import logging
 import sys
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -29,7 +29,7 @@ from src.scraper import stage_scraper as scraper
 
 async def _collect_candidates(site: dict) -> tuple[list, list]:
     """Retourne (tous les candidats du sitemap, ceux retenus par le filtre)."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    cutoff = datetime.now(UTC) - timedelta(days=7)
     async with httpx.AsyncClient(
         headers={"User-Agent": scraper.USER_AGENT},
         timeout=scraper.REQUEST_TIMEOUT_SECONDS,

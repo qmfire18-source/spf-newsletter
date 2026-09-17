@@ -8,9 +8,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import run_weekly  # noqa: E402
+import run_weekly
 
-from src.db.models import Base, Draft, NewsItem, StageOffer  # noqa: E402
+from src.db.models import Base, Draft, NewsItem, StageOffer
 
 NEWS = [{
     "title": "La BCE relève ses taux",

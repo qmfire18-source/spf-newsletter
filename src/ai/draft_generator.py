@@ -5,8 +5,8 @@ import logging
 import anthropic
 
 from src.config import ANTHROPIC_API_KEY
-from src.scraper.sectors import group_by_sector
 from src.sanitize import remove_dashes, sanitize_html
+from src.scraper.sectors import group_by_sector
 
 logger = logging.getLogger(__name__)
 

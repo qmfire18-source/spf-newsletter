@@ -16,12 +16,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from scripts.run_weekly import DEVELOPED_ITEMS
 from src.ai.draft_generator import SYSTEM_PROMPT, _build_user_prompt
 from src.config import NEWS_SOURCES, STAGE_SOURCES
 from src.scraper.article_fetcher import enrich_with_article_text
 from src.scraper.news_scraper import fetch_news
 from src.scraper.stage_scraper import run_fetch_stage_offers
-from scripts.run_weekly import DEVELOPED_ITEMS
 
 OUTPUT = Path("brouillon_prompt.txt")
 

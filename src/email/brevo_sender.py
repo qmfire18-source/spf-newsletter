@@ -54,7 +54,7 @@ class BrevoError(Exception):
     pass
 
 
-def send_campaign(subject: str, html_content: str, list_id: int = None) -> str:
+def send_campaign(subject: str, html_content: str, list_id: int | None = None) -> str:
     """
     Crée puis envoie une campagne Brevo. Retourne l'ID de la campagne créée.
     Le lien de désabonnement est ajouté automatiquement par Brevo.
@@ -72,8 +72,10 @@ def send_campaign(subject: str, html_content: str, list_id: int = None) -> str:
         raise BrevoError("BREVO_LIST_ID manquante : aucune liste destinataire.")
     try:
         list_id = int(list_id)
-    except (TypeError, ValueError):
-        raise BrevoError(f"BREVO_LIST_ID invalide : {list_id!r} n'est pas un entier.")
+    except (TypeError, ValueError) as erreur:
+        raise BrevoError(
+            f"BREVO_LIST_ID invalide : {list_id!r} n'est pas un entier."
+        ) from erreur
 
     headers = {"api-key": BREVO_API_KEY, "Content-Type": "application/json"}
     payload = {

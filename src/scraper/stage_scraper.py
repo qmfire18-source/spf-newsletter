@@ -24,7 +24,7 @@ import gzip
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -135,7 +135,7 @@ async def fetch_stage_offers(
         que de redépenser le budget de requêtes sur les mêmes pages.
     Retourne : [{"title", "company", "location", "deadline", "url"}]
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    cutoff = datetime.now(UTC) - timedelta(days=7)
     results = []
 
     async with httpx.AsyncClient(
@@ -249,7 +249,7 @@ def _prioritise(candidates: list[tuple]) -> list[str]:
     récoltées.
     """
     by_company: dict[str, list] = {}
-    for modified, url in sorted(candidates, reverse=True):
+    for _modified, url in sorted(candidates, reverse=True):
         by_company.setdefault(_company_slug(url), []).append(url)
 
     # Les employeurs les plus fraîchement actifs passent en premier.
@@ -332,14 +332,19 @@ _DUREE = (
                r"((?:[≥><~]\s*|environ\s+|about\s+)?\d+\s*(?:[-–/]|to|à|ou|and)?\s*\d*\s*"
                r"(?:mois|months?|semaines?|weeks?))", re.I),
     # Durée rattachée explicitement au stage.
-    re.compile(r"stage\s+(?:de|d['’]une dur[ée]e de)\s+(\d+\s*(?:à|-)?\s*\d*\s*mois)", re.I),
+    re.compile(
+        r"stage\s+(?:de|d['’]une dur[ée]e de)\s+(\d+\s*(?:à|-)?\s*\d*\s*mois)",
+        re.I),
     re.compile(r"(\d+[\s-]*(?:to|à|-)[\s-]*\d+[\s-]*months?)\s+internship", re.I),
     re.compile(r"internship\s+of\s+(\d+[\s-]*(?:to|-)?[\s-]*\d*\s*months?)", re.I),
-    re.compile(r"(\d+[\s-]*(?:week|month)s?)[\s-]*(?:long\s+)?(?:summer\s+)?internship", re.I),
+    re.compile(
+        r"(\d+[\s-]*(?:week|month)s?)[\s-]*(?:long\s+)?(?:summer\s+)?internship",
+        re.I),
 )
 
 _DEBUT = (
-    re.compile(r"(?:start(?:ing)? date|date de d[ée]but|d[ée]but du stage)[^:\n]{0,16}[:\-–]\s*"
+    re.compile(r"(?:start(?:ing)? date|date de d[ée]but|d[ée]but du stage)"
+               r"[^:\n]{0,16}[:\-–]\s*"
                r"(" + _MOIS + r"(?:\s*/\s*" + _MOIS + r")?(?:\s+\d{4})?)", re.I),
     re.compile(r"(?:à partir (?:de|du)|starting (?:in|from))\s+"
                r"(" + _MOIS + r"\s*\d{0,4})", re.I),
@@ -416,7 +421,7 @@ def _parse_datetime(value) -> datetime | None:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
 def _deduplicate(offers: list[dict]) -> list[dict]:

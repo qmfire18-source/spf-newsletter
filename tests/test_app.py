@@ -474,7 +474,6 @@ class TestRegenerate:
 
     def test_refuses_to_replace_a_sent_edition(self, client, db_session, draft, monkeypatch):
         # Les abonnés l'ont reçue : on ne réécrit pas ce qui est parti.
-        from datetime import date as _date
         draft.week_of = main.current_week_of()
         draft.status = "sent"
         db_session.commit()

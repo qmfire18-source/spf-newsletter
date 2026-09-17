@@ -15,9 +15,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy.exc import IntegrityError
 
+from scripts.run_weekly import current_week_of
 from src.db.models import Draft, SessionLocal, init_db
 from src.sanitize import sanitize_html
-from scripts.run_weekly import current_week_of
 
 logger = logging.getLogger("import_draft")
 
@@ -42,7 +42,9 @@ def extract_draft(raw: str) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("fichier", help="réponse de Claude.ai (JSON, éventuellement bavard)")
+    parser.add_argument(
+    "fichier", help="réponse de Claude.ai (JSON, éventuellement bavard)"
+)
     parser.add_argument(
         "--remplacer",
         action="store_true",

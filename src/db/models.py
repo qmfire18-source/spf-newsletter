@@ -1,7 +1,18 @@
 """Modèles SQLAlchemy — voir PLAN.md §0 pour le détail des champs."""
-from datetime import datetime, timezone
-from sqlalchemy import create_engine, Column, Integer, String, Date, DateTime, ForeignKey, Text
+from datetime import UTC, datetime
+
+from sqlalchemy import (
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+
 from src.config import DATABASE_URL
 
 Base = declarative_base()
@@ -12,7 +23,7 @@ def utcnow() -> datetime:
 
     Remplace datetime.utcnow(), déprécié depuis Python 3.12.
     """
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class Draft(Base):
@@ -134,7 +145,9 @@ _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite"
 # pool_pre_ping : l'offre gratuite coupe les connexions inactives, et sans lui
 # la première requête après une mise en veille échoue au lieu de se reconnecter.
 _options = {} if DATABASE_URL.startswith("sqlite") else {"pool_pre_ping": True}
-engine = create_engine(_url_normalisee(DATABASE_URL), connect_args=_connect_args, **_options)
+engine = create_engine(
+    _url_normalisee(DATABASE_URL), connect_args=_connect_args, **_options
+)
 SessionLocal = sessionmaker(bind=engine)
 
 

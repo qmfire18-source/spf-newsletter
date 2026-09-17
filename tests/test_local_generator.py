@@ -3,8 +3,8 @@ import subprocess
 
 import pytest
 
-from src.ai.draft_generator import DraftGenerationError
 from src.ai import local_generator
+from src.ai.draft_generator import DraftGenerationError
 
 VALIDE = {"news_html": "<p>actu</p>", "stages_html": "<p>stage</p>"}
 

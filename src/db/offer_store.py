@@ -10,8 +10,8 @@ from datetime import timedelta
 
 from sqlalchemy.exc import IntegrityError
 
-from src.scraper.stage_scraper import completer_depuis_intitule
 from src.db.models import CollectedOffer, utcnow
+from src.scraper.stage_scraper import completer_depuis_intitule
 
 logger = logging.getLogger(__name__)
 

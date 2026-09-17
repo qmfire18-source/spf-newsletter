@@ -1,0 +1,27 @@
+[tool.ruff]
+line-length = 92
+target-version = "py313"
+
+[tool.ruff.lint]
+# Au-delà des erreurs et des imports inutilisés, trois familles qui attrapent
+# de vraies étourderies : les comparaisons et retours douteux (B), les
+# simplifications évidentes (SIM), et l'ordre des imports (I).
+select = ["E", "F", "I", "B", "SIM", "UP"]
+ignore = [
+    # Les scripts insèrent la racine du projet dans sys.path avant d'importer
+    # le paquet : l'import ne peut donc pas remonter en tête de fichier.
+    "E402",
+    # FastAPI déclare ses dépendances par des appels en valeur par défaut :
+    # c'est l'usage de la bibliothèque, pas une étourderie.
+    "B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Les tests importent parfois au plus près de ce qu'ils vérifient, pour que
+# chaque cas se lise seul.
+# Les jeux d'essai portent des URL entières : les couper nuirait à la lecture
+# sans rien apprendre.
+"tests/*" = ["E402", "E501"]
+# Gabarit HTML de l'email : couper une ligne y insère une espace dans le
+# message rendu, ce qui se voit dans la boîte de réception.
+"src/email/brevo_sender.py" = ["E501"]

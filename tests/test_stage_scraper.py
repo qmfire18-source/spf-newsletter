@@ -1,6 +1,6 @@
 import gzip
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -94,7 +94,7 @@ class TestLooksLikeFinanceStage:
 
 class TestPrioritise:
     def moment(self, day):
-        return datetime(2026, 9, day, tzinfo=timezone.utc)
+        return datetime(2026, 9, day, tzinfo=UTC)
 
     def url(self, company, slug):
         return f"https://w.com/fr/companies/{company}/jobs/{slug}"

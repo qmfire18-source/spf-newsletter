@@ -16,7 +16,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.db.models import RegenerationRequest, SessionLocal, init_db, utcnow  # noqa: E402
+from src.db.models import (
+    RegenerationRequest,
+    SessionLocal,
+    init_db,
+    utcnow,
+)
 
 logger = logging.getLogger("demandes")
 PROJET = Path(__file__).resolve().parent.parent

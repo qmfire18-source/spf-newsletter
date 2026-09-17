@@ -14,17 +14,16 @@ import sys
 from pathlib import Path
 
 import httpx
-import sqlalchemy as sa
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.db.models import (  # noqa: E402
+from src.db.models import (
     CollectedOffer,
     SessionLocal,
     init_db,
     utcnow,
 )
-from src.scraper.stage_scraper import (  # noqa: E402
+from src.scraper.stage_scraper import (
     _decode,
     _find_job_posting,
     completer_depuis_intitule,

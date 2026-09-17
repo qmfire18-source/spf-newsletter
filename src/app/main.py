@@ -19,20 +19,20 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
+from scripts.run_weekly import current_week_of
+from src.ai.local_generator import find_cli
 from src.app import security
 from src.config import (
     ALLOWED_REVIEWER_EMAILS,
     APP_SECRET_KEY,
+    BREVO_LIST_ID,
     COOKIE_SECURE,
     MODE_EMPLOI_URL,
     PAGE_ABONNEMENT_URL,
     REVIEWER_PASSWORD_HASH,
     SESSION_MAX_AGE_SECONDS,
 )
-from scripts.run_weekly import current_week_of
-from src.ai.local_generator import find_cli
 from src.db.models import Draft, RegenerationRequest, SessionLocal, utcnow
-from src.config import BREVO_LIST_ID
 from src.email.brevo_sender import (
     _semaine_en_lettres,
     count_recipients,
@@ -129,8 +129,8 @@ def get_current_reviewer(request: Request) -> str:
         raise NotAuthenticated
     try:
         email = _serializer().loads(cookie, max_age=SESSION_MAX_AGE_SECONDS)
-    except (BadSignature, SignatureExpired, RuntimeError):
-        raise NotAuthenticated
+    except (BadSignature, SignatureExpired, RuntimeError) as erreur:
+        raise NotAuthenticated from erreur
     # La liste blanche est revérifiée à chaque requête : retirer quelqu'un du
     # .env doit le déconnecter, sans attendre l'expiration de son cookie.
     if not isinstance(email, str) or email.lower() not in ALLOWED_REVIEWER_EMAILS:

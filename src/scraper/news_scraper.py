@@ -8,7 +8,7 @@ import logging
 import re
 import time
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from difflib import SequenceMatcher
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -117,17 +117,20 @@ MOTS_COMMUNS_MINIMUM = 2
 # Le filtre par longueur jetait « BCE », « FMI », « OPA » — les sigles qui
 # désignent justement l'acteur du sujet — tout en gardant « face » ou « selon ».
 # On écarte donc une liste de mots outils, et on garde les sigles.
-MOTS_VIDES = frozenset(
-    """
-    alors apres aussi autre autres avant avec avoir bien cela ces cet cette ceux
-    chez comme contre dans depuis deux dont elle elles encore entre etre face
-    fait faire fois font hier ils leur leurs mais meme moins nous pour plus pres
-    quand que quel quelle qui quoi sans selon ses son sont sous sur tous tout
-    toute toutes trois tres vers vont vous ans annee annees jour jours semaine
-    mois deja voici voila etait ont une des les aux par est car donc lundi mardi
-    mercredi jeudi vendredi samedi dimanche direct video live
-    """.split()
-)
+MOTS_VIDES = frozenset([
+    "alors", "annee", "annees", "ans", "apres", "aussi", "autre", "autres",
+    "aux", "avant", "avec", "avoir", "bien", "car", "cela", "ces", "cet",
+    "cette", "ceux", "chez", "comme", "contre", "dans", "deja", "depuis",
+    "des", "deux", "dimanche", "direct", "donc", "dont", "elle", "elles",
+    "encore", "entre", "est", "etait", "etre", "face", "faire", "fait",
+    "fois", "font", "hier", "ils", "jeudi", "jour", "jours", "les", "leur",
+    "leurs", "live", "lundi", "mais", "mardi", "meme", "mercredi", "moins",
+    "mois", "nous", "ont", "par", "plus", "pour", "pres", "quand", "que",
+    "quel", "quelle", "qui", "quoi", "samedi", "sans", "selon", "semaine",
+    "ses", "son", "sont", "sous", "sur", "tous", "tout", "toute", "toutes",
+    "tres", "trois", "une", "vendredi", "vers", "video", "voici", "voila",
+    "vont", "vous",
+])
 
 GNEWS_ENDPOINT = "https://news.google.com/rss/search"
 NEWSAPI_ENDPOINT = "https://newsapi.org/v2/everything"
@@ -149,7 +152,7 @@ def fetch_news(sources: list[dict]) -> list[dict]:
     [{"title": ..., "source": ..., "url": ..., "raw_summary": ..., "published": ...}]
     """
     items = []
-    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    cutoff = datetime.now(UTC) - timedelta(days=7)
 
     for index, src in enumerate(sources):
         if index:
@@ -317,14 +320,14 @@ def _entry_datetime(entry) -> datetime | None:
     for key in ("published_parsed", "updated_parsed"):
         parsed = entry.get(key)
         if parsed:
-            return datetime(*parsed[:6], tzinfo=timezone.utc)
+            return datetime(*parsed[:6], tzinfo=UTC)
     return None
 
 
 def _strip_source_suffix(title: str, source_name: str) -> str:
     """Google News suffixe le titre par le média : "Titre de l'article - Le Monde"."""
     suffix = f" - {source_name}"
-    return title[: -len(suffix)] if title.endswith(suffix) else title
+    return title.removesuffix(suffix)
 
 
 def _clean_html(text: str) -> str:
@@ -487,7 +490,7 @@ def _published_sort_key(item: dict) -> datetime:
         except ValueError:
             pass
     # Sans date exploitable, l'actu passe en fin de liste plutôt qu'en tête.
-    return datetime.min.replace(tzinfo=timezone.utc)
+    return datetime.min.replace(tzinfo=UTC)
 
 
 def _titles_match(a: str, b: str) -> bool:
