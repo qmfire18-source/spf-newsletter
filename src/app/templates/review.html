@@ -366,7 +366,7 @@
                   data-preview="news_preview">{{ draft.news_content }}</textarea>
         <div class="pane">
           <p class="pane__label" id="news_preview_label">Contenu, modifiable directement</p>
-          <p class="pane__hint">Affiché à la largeur réelle de l'email.</p>
+          <p class="pane__hint">Affiché à la largeur réelle de l'email. Cmd+clic sur un lien pour l'ouvrir.</p>
           <div class="preview" id="news_preview" contenteditable="true"
                role="textbox" aria-multiline="true"
                aria-labelledby="news_preview_label">{{ draft.news_content | safe }}</div>
@@ -405,7 +405,7 @@
                   data-preview="stages_preview">{{ draft.stages_content }}</textarea>
         <div class="pane">
           <p class="pane__label" id="stages_preview_label">Contenu, modifiable directement</p>
-          <p class="pane__hint">Affiché à la largeur réelle de l'email.</p>
+          <p class="pane__hint">Affiché à la largeur réelle de l'email. Cmd+clic sur un lien pour l'ouvrir.</p>
           <div class="preview" id="stages_preview" contenteditable="true"
                role="textbox" aria-multiline="true"
                aria-labelledby="stages_preview_label">{{ draft.stages_content | safe }}</div>
@@ -682,7 +682,22 @@
     }
 
     function etiqueter(lien) {
-      if (lien) lien.setAttribute("title", lien.getAttribute("href") || "");
+      if (!lien) return;
+      var cible = lien.getAttribute("href") || "";
+      // Les entrées du sommaire pointent vers une ancre interne : afficher
+      // « #a1 » ne dit rien. On montre le titre de l'article visé, qui est
+      // l'information que le relecteur cherche vraiment.
+      if (cible.charAt(0) === "#") {
+        var vise = lien.closest(".preview");
+        var titre = vise && vise.querySelector('[id="' + cible.slice(1) + '"]');
+        lien.setAttribute(
+          "title",
+          titre ? "Va à : " + titre.textContent.trim()
+                : "Ancre " + cible + " — aucun article ne porte ce repère"
+        );
+        return;
+      }
+      lien.setAttribute("title", cible);
     }
 
     function modifierLien(pane) {
@@ -708,6 +723,25 @@
         etiqueter(lienSousLeCurseur(pane));
       }
     }
+
+    // Dans une zone éditable, cliquer un lien pose le curseur au lieu de
+    // l'ouvrir : on ne peut donc pas vérifier où il mène sans envoyer
+    // l'email. Cmd+clic, ou Ctrl+clic, l'ouvre dans un onglet ; une ancre
+    // interne fait défiler jusqu'à l'article visé.
+    document.querySelectorAll(".preview").forEach(function (pane) {
+      pane.addEventListener("click", function (event) {
+        var lien = event.target.closest("a");
+        if (!lien || !(event.metaKey || event.ctrlKey)) return;
+        event.preventDefault();
+        var cible = lien.getAttribute("href") || "";
+        if (cible.charAt(0) === "#") {
+          var vise = pane.querySelector('[id="' + cible.slice(1) + '"]');
+          if (vise) vise.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        window.open(cible, "_blank", "noopener");
+      });
+    });
 
     // Les liens déjà écrits par la rédaction n'ont pas d'infobulle : on la
     // pose au chargement, puis à chaque frappe pour les liens nouveaux.
