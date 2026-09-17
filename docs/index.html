@@ -191,7 +191,7 @@
      un écran tactile il n'y a pas de pointeur à suivre, et quand l'animation
      est refusée par le système, le curseur natif reprend sa place. */
   .curseur, .curseur__anneau { display:none; }
-  @media (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  @media (pointer:fine) {
     html.curseur-actif, html.curseur-actif * { cursor:none; }
     /* Le champ garde le sien : viser une zone de saisie sans repère est
        désagréable, et le gain esthétique n'en vaut pas la peine. */
@@ -528,9 +528,10 @@
   // chaque image plutôt qu'en CSS, pour que l'anneau s'élargisse à la vitesse
   // du geste et non à l'arrivée.
   (function () {
-    var finePointer = window.matchMedia("(pointer:fine)").matches;
+    if (!window.matchMedia("(pointer:fine)").matches) return;
+    // Le réglage d'accessibilité supprime le retard et l'élan, pas le
+    // curseur : c'est le mouvement qui gêne, pas la forme.
     var animationOk = window.matchMedia("(prefers-reduced-motion:no-preference)").matches;
-    if (!finePointer || !animationOk) return;
 
     var point = document.createElement("div");
     var anneau = document.createElement("div");
@@ -551,10 +552,11 @@
     (function suivre() {
       // Un sixième de la distance restante par image : assez lent pour qu'on
       // voie l'anneau courir derrière, assez vif pour ne pas sembler mou.
-      anneauX += (sourisX - anneauX) / 6;
-      anneauY += (sourisY - anneauY) / 6;
+      var inertie = animationOk ? 6 : 1;   // 1 = l'anneau colle au point
+      anneauX += (sourisX - anneauX) / inertie;
+      anneauY += (sourisY - anneauY) / inertie;
       vitesse *= 0.9;
-      var echelle = 1 + Math.min(vitesse / 60, 1) * 0.6;
+      var echelle = animationOk ? 1 + Math.min(vitesse / 60, 1) * 0.6 : 1;
       anneau.style.transform =
         "translate3d(" + anneauX + "px," + anneauY + "px,0) scale(" + echelle + ")";
       requestAnimationFrame(suivre);

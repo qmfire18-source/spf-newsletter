@@ -702,21 +702,37 @@
 
     function modifierLien(pane) {
       var existant = lienSousLeCurseur(pane);
+      // prompt() vide la sélection : sans la mémoriser, execCommand n'a plus
+      // rien sur quoi agir au retour, le lien ne se crée pas, et « Annuler »
+      // n'a donc rien à défaire.
+      var selection = window.getSelection();
+      var plage = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
       var adresse = prompt(
         existant
           ? "Adresse du lien.\n\nVidez le champ pour retirer le lien en gardant le texte."
           : "Adresse du lien :",
         existant ? existant.getAttribute("href") : "https://"
       );
+      pane.focus();
+      if (plage) {
+        selection.removeAllRanges();
+        selection.addRange(plage);
+      }
       if (adresse === null) return;          // annulé
       adresse = adresse.trim();
 
       if (existant) {
-        if (!adresse) {
-          document.execCommand("unlink");
-        } else {
-          existant.setAttribute("href", adresse);
-          etiqueter(existant);
+        // On sélectionne le lien entier, puis on le défait et le refait par
+        // execCommand : changer l'attribut directement échappe à la pile
+        // d'annulation du navigateur, et « Annuler » restait sans effet.
+        var entier = document.createRange();
+        entier.selectNodeContents(existant);
+        selection.removeAllRanges();
+        selection.addRange(entier);
+        document.execCommand("unlink");
+        if (adresse) {
+          document.execCommand("createLink", false, adresse);
+          etiqueter(lienSousLeCurseur(pane));
         }
       } else if (adresse) {
         document.execCommand("createLink", false, adresse);
