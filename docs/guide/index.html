@@ -68,7 +68,10 @@
   a{color:var(--bleu);text-underline-offset:2px;overflow-wrap:anywhere}
   a:focus-visible,summary:focus-visible{outline:3px solid var(--bleu);outline-offset:3px;border-radius:3px}
 
-  .top{background:#183050;color:#fff;margin-inline:-1.25rem;
+  /* Le bandeau vit hors du conteneur .page : lui donner les marges
+     négatives qui compensent le retrait de celui-ci le faisait déborder de
+     toute leur largeur, et la page défilait latéralement. */
+  .top{background:#183050;color:#fff;
        padding:2.6rem 1.25rem 2.3rem;margin-bottom:2.8rem}
   .top .inner{max-width:72rem;margin:0 auto}
   .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
@@ -160,8 +163,11 @@
          color:var(--ink-3);font-size:.86rem;max-width:64ch}
 
   @media (max-width:640px){
-    .page{padding-left:1rem;padding-right:1rem}
-    .top{margin-inline:-1rem;padding:2.1rem 1rem 1.9rem}
+    /* 1 rem laissait le texte trop près du bord : la marge minimale suffit à
+       ne pas déborder, pas à se lire confortablement. */
+    .page{padding-left:1.4rem;padding-right:1.4rem}
+    .top{padding:2.1rem 1.4rem 1.9rem}
+    h1{font-size:clamp(1.75rem,7vw,2.2rem)}
   }
   @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
 </style>
