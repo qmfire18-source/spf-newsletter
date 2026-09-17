@@ -93,9 +93,88 @@
       *,*::before,*::after { transition-duration:.01ms !important; animation-duration:.01ms !important; }
     }
     {% block style %}{% endblock %}
+
+    /* ---------- curseur ----------
+       Le même que sur la page d'abonnement. Les zones où l'on écrit gardent
+       leur barre de saisie : perdre le point d'insertion en corrigeant un
+       texte coûterait bien plus que l'effet ne rapporte. */
+    .curseur, .curseur__anneau { display:none; }
+    @media (pointer:fine) {
+      html.curseur-actif, html.curseur-actif * { cursor:none; }
+      html.curseur-actif [contenteditable="true"],
+      html.curseur-actif input, html.curseur-actif textarea { cursor:text; }
+
+      .curseur, .curseur__anneau {
+        display:block; position:fixed; top:0; left:0; z-index:9999;
+        pointer-events:none; border-radius:50%;
+        transform:translate3d(-100px,-100px,0);
+      }
+      .curseur { width:7px; height:7px; margin:-3.5px 0 0 -3.5px;
+                 background:#2E6BB0; }
+      .curseur__anneau { width:34px; height:34px; margin:-17px 0 0 -17px;
+                         border:1.5px solid #2E6BB0; opacity:.55;
+                         transition:width .22s ease, height .22s ease,
+                                    margin .22s ease, opacity .22s ease,
+                                    background-color .22s ease; }
+      .curseur__anneau.survol { width:52px; height:52px; margin:-26px 0 0 -26px;
+                                opacity:.9; background:rgba(46,107,176,.12); }
+      /* Sur le bandeau marine, le bleu se fond dans le fond. */
+      .curseur.sur-marine { background:#AECDEB; }
+      .curseur__anneau.sur-marine { border-color:#AECDEB; opacity:.75; }
+    }
   </style>
 </head>
 <body>
 {% block body %}{% endblock %}
+<script>
+  // Curseur : un point exact, un anneau qui traîne. Le retard se calcule à
+  // chaque image plutôt qu'en CSS, pour que l'anneau s'élargisse à la vitesse
+  // du geste et non à son arrivée.
+  (function () {
+    if (!window.matchMedia("(pointer:fine)").matches) return;
+    // Le réglage d'accessibilité supprime le retard et l'élan, pas le
+    // curseur : c'est le mouvement qui gêne, pas la forme.
+    var animationOk = window.matchMedia("(prefers-reduced-motion:no-preference)").matches;
+
+    var point = document.createElement("div");
+    var anneau = document.createElement("div");
+    point.className = "curseur";
+    anneau.className = "curseur__anneau";
+    document.body.append(point, anneau);
+    document.documentElement.classList.add("curseur-actif");
+
+    var sourisX = 0, sourisY = 0, anneauX = 0, anneauY = 0, vitesse = 0;
+    var bandeau = document.querySelector(".topbar");
+
+    document.addEventListener("mousemove", function (e) {
+      var dx = e.clientX - sourisX, dy = e.clientY - sourisY;
+      vitesse = Math.min(Math.hypot(dx, dy), 60);
+      sourisX = e.clientX; sourisY = e.clientY;
+      point.style.transform = "translate3d(" + sourisX + "px," + sourisY + "px,0)";
+      if (bandeau) {
+        var bornes = bandeau.getBoundingClientRect();
+        var dedans = e.clientY >= bornes.top && e.clientY <= bornes.bottom;
+        point.classList.toggle("sur-marine", dedans);
+        anneau.classList.toggle("sur-marine", dedans);
+      }
+    });
+
+    (function suivre() {
+      var inertie = animationOk ? 6 : 1;   // 1 = l'anneau colle au point
+      anneauX += (sourisX - anneauX) / inertie;
+      anneauY += (sourisY - anneauY) / inertie;
+      vitesse *= 0.9;
+      var echelle = animationOk ? 1 + Math.min(vitesse / 60, 1) * 0.6 : 1;
+      anneau.style.transform =
+        "translate3d(" + anneauX + "px," + anneauY + "px,0) scale(" + echelle + ")";
+      requestAnimationFrame(suivre);
+    })();
+
+    document.querySelectorAll("a, button, summary, .tool").forEach(function (el) {
+      el.addEventListener("mouseenter", function () { anneau.classList.add("survol"); });
+      el.addEventListener("mouseleave", function () { anneau.classList.remove("survol"); });
+    });
+  })();
+</script>
 </body>
 </html>
