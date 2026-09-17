@@ -110,7 +110,7 @@
         transform:translate3d(-100px,-100px,0);
       }
       .curseur { width:7px; height:7px; margin:-3.5px 0 0 -3.5px;
-                 background:#2E6BB0; }
+                 background:#2E6BB0; transition:opacity .15s ease; }
       .curseur__anneau { width:34px; height:34px; margin:-17px 0 0 -17px;
                          border:1.5px solid #2E6BB0; opacity:.55;
                          transition:width .22s ease, height .22s ease,
@@ -121,6 +121,9 @@
       /* Sur le bandeau marine, le bleu se fond dans le fond. */
       .curseur.sur-marine { background:#AECDEB; }
       .curseur__anneau.sur-marine { border-color:#AECDEB; opacity:.75; }
+      /* Au-dessus d'un texte qu'on écrit, les ronds s'effacent : seule la
+         barre d'insertion compte, et deux repères concurrents se gênent. */
+      .curseur.efface, .curseur__anneau.efface { opacity:0; }
     }
   </style>
 </head>
@@ -151,6 +154,12 @@
       vitesse = Math.min(Math.hypot(dx, dy), 60);
       sourisX = e.clientX; sourisY = e.clientY;
       point.style.transform = "translate3d(" + sourisX + "px," + sourisY + "px,0)";
+
+      var zoneTexte = e.target.closest(
+        '[contenteditable="true"], input, textarea'
+      );
+      point.classList.toggle("efface", !!zoneTexte);
+      anneau.classList.toggle("efface", !!zoneTexte);
       if (bandeau) {
         var bornes = bandeau.getBoundingClientRect();
         var dedans = e.clientY >= bornes.top && e.clientY <= bornes.bottom;
