@@ -34,11 +34,16 @@
        HTML, lui, a besoin de place : la carte s'élargit alors. */
     section.block { background:var(--surface); border:1px solid var(--border);
                     border-radius:var(--radius); box-shadow:var(--shadow);
-                    margin-bottom:1.5rem; overflow:hidden;
+                    margin-bottom:1.5rem;
                     max-width:44rem; margin-inline:auto; }
-    .block__head { display:flex; align-items:center; justify-content:space-between;
+    /* La barre d'outils suit la lecture : remonter en haut de la section pour
+       mettre un mot en gras, sur un texte de plusieurs écrans, décourage la
+       correction. Elle se pose sous le sommaire, qui est déjà collant. */
+    .block__head { position:sticky; top:var(--sous-sommaire, 7.3rem); z-index:20;
+                   display:flex; align-items:center; justify-content:space-between;
                    gap:1rem; padding:.9rem 1.25rem; border-bottom:1px solid var(--border);
-                   background:var(--surface-2); }
+                   background:var(--surface-2);
+                   border-radius:var(--radius) var(--radius) 0 0; }
     h2 { font-family:var(--serif); font-size:1.1rem; font-weight:600; margin:0; }
     .hint { font-size:.8rem; color:var(--fg-muted); }
 
@@ -131,7 +136,7 @@
     .menu__panneau a:hover, .menu__panneau button:hover { background:var(--surface-2); }
 
     /* Les ancres sautent sous la barre collante sans cette réserve. */
-    section.block { scroll-margin-top:8.5rem; }
+    section.block { scroll-margin-top:12rem; }
 
     .encours { display:flex; align-items:center; gap:.7rem; padding:.85rem 1.1rem;
                background:var(--surface-2); border:1px solid var(--border);
@@ -185,7 +190,20 @@
       .menu { margin-left:auto; }
       .toc__stats { display:none; }
       .toc__lien { font-size:.85rem; }
-      section.block { scroll-margin-top:3.6rem; }
+      /* L'en-tête de page défile ici : seuls le sommaire et la barre
+         d'outils restent au-dessus. */
+      :root { --sous-sommaire:2.9rem; }
+      /* Le titre de section répète le lien du sommaire juste au-dessus :
+         le masquer ramène les outils sur une seule rangée, et rend une
+         centaine de pixels au texte. */
+      .block__head h2 { display:none; }
+      .block__head { padding:.5rem .7rem; justify-content:center; }
+      .toolbar { justify-content:center; gap:.1rem; }
+      /* Les séparateurs n'aèrent que le regard : les sept outils tiennent
+         sur une rangée une fois qu'ils cèdent leur place. */
+      .toolbar .tool--sep { display:none; }
+      .tool { padding:.3rem .4rem; font-size:.8rem; min-width:30px; }
+      section.block { scroll-margin-top:7rem; }
 
       /* Sous 16px, iOS zoome sur le champ dès qu'on le touche et la mise en
          page saute. Le confort de lecture compte autant que le zoom évité. */
