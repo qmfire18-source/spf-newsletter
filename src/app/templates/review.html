@@ -36,7 +36,6 @@
                     border-radius:var(--radius); box-shadow:var(--shadow);
                     margin-bottom:1.5rem; overflow:hidden;
                     max-width:44rem; margin-inline:auto; }
-    section.block:has(.split[data-html="1"]) { max-width:none; }
     .block__head { display:flex; align-items:center; justify-content:space-between;
                    gap:1rem; padding:.9rem 1.25rem; border-bottom:1px solid var(--border);
                    background:var(--surface-2); }
@@ -56,14 +55,13 @@
                  background:var(--border); margin:0 .35rem; pointer-events:none; }
 
     .split { display:grid; grid-template-columns:1fr; }
-    .split[data-html="1"] { grid-template-columns:1fr 1fr; }
-    .pane--editor { display:none; }
-    .split[data-html="1"] .pane--editor { display:block; }
     .split > * { min-width:0; }
     .pane__label { font-size:.72rem; font-weight:500; letter-spacing:.07em;
                    text-transform:uppercase; color:var(--fg-muted);
                    padding:.7rem 1.25rem .35rem; }
-    .pane--editor { border-right:1px solid var(--border); }
+    /* L'attribut hidden se fait battre par la règle d'affichage ci-dessous :
+       sans cette précision, le champ de transport réapparaît en clair. */
+    textarea[hidden] { display:none; }
     textarea {
       display:block; width:100%; min-height:22rem; resize:vertical;
       padding:0 1.25rem 1.25rem; border:0; background:transparent;
@@ -77,10 +75,7 @@
        de ligne qui n'existent pas dans la boîte de réception. */
     .preview { padding:.35rem 1.25rem 1.5rem; font-size:.95rem; min-height:18rem;
                max-width:34rem; margin-inline:auto; }
-    .split[data-html="1"] .preview { max-width:none; margin-inline:0; }
     .pane__label, .pane__hint { max-width:34rem; margin-inline:auto; }
-    .split[data-html="1"] .pane__label,
-    .split[data-html="1"] .pane__hint { max-width:none; margin-inline:0; }
     .pane__hint { font-size:.72rem; color:var(--fg-muted); padding:0 1.25rem .6rem;
                   font-style:italic; }
     .preview[contenteditable="true"]:focus { outline:none; background:var(--surface-2); }
@@ -171,8 +166,6 @@
     .empty p { color:var(--fg-muted); margin:0 auto; max-width:32rem; }
 
     @media (max-width: 900px) {
-      .split[data-html="1"] { grid-template-columns:1fr; }
-      .pane--editor { border-right:0; border-bottom:1px solid var(--border); }
       textarea { min-height:16rem; }
       h1 { font-size:1.4rem; }
     }
@@ -359,16 +352,18 @@
           <button type="button" class="tool" data-cmd="insertUnorderedList" title="Liste à puces"
                   aria-label="Liste à puces">Liste</button>
           <span class="tool tool--sep" aria-hidden="true"></span>
-          <button type="button" class="tool" data-toggle-html title="Afficher le HTML"
-                  aria-pressed="false">HTML</button>
+          <button type="button" class="tool" data-cmd="undo" title="Annuler (Cmd+Z)"
+                  aria-label="Annuler la dernière modification">Annuler</button>
+          <button type="button" class="tool" data-cmd="redo" title="Rétablir (Cmd+Maj+Z)"
+                  aria-label="Rétablir la modification annulée">Rétablir</button>
         </div>
       </div>
-      <div class="split" data-html="0">
-        <div class="pane pane--editor">
-          <label class="pane__label" for="news_content">Source HTML</label>
-          <textarea id="news_content" name="news_content" spellcheck="false"
-                    data-preview="news_preview">{{ draft.news_content }}</textarea>
-        </div>
+      <div class="split">
+        {# Le champ que le formulaire envoie. Il n'est plus montré : le
+           texte se corrige directement dans le volet de droite, qui le
+           recopie ici à chaque frappe. #}
+        <textarea id="news_content" name="news_content" hidden
+                  data-preview="news_preview">{{ draft.news_content }}</textarea>
         <div class="pane">
           <p class="pane__label" id="news_preview_label">Contenu, modifiable directement</p>
           <p class="pane__hint">Affiché à la largeur réelle de l'email.</p>
@@ -396,16 +391,18 @@
           <button type="button" class="tool" data-cmd="insertUnorderedList" title="Liste à puces"
                   aria-label="Liste à puces">Liste</button>
           <span class="tool tool--sep" aria-hidden="true"></span>
-          <button type="button" class="tool" data-toggle-html title="Afficher le HTML"
-                  aria-pressed="false">HTML</button>
+          <button type="button" class="tool" data-cmd="undo" title="Annuler (Cmd+Z)"
+                  aria-label="Annuler la dernière modification">Annuler</button>
+          <button type="button" class="tool" data-cmd="redo" title="Rétablir (Cmd+Maj+Z)"
+                  aria-label="Rétablir la modification annulée">Rétablir</button>
         </div>
       </div>
-      <div class="split" data-html="0">
-        <div class="pane pane--editor">
-          <label class="pane__label" for="stages_content">Source HTML</label>
-          <textarea id="stages_content" name="stages_content" spellcheck="false"
-                    data-preview="stages_preview">{{ draft.stages_content }}</textarea>
-        </div>
+      <div class="split">
+        {# Le champ que le formulaire envoie. Il n'est plus montré : le
+           texte se corrige directement dans le volet de droite, qui le
+           recopie ici à chaque frappe. #}
+        <textarea id="stages_content" name="stages_content" hidden
+                  data-preview="stages_preview">{{ draft.stages_content }}</textarea>
         <div class="pane">
           <p class="pane__label" id="stages_preview_label">Contenu, modifiable directement</p>
           <p class="pane__hint">Affiché à la largeur réelle de l'email.</p>
@@ -494,18 +491,10 @@
 
     document.querySelectorAll(".toolbar").forEach(function (bar) {
       var pane = document.getElementById(bar.dataset.for);
-      var split = pane.closest(".split");
 
       bar.addEventListener("click", function (event) {
         var button = event.target.closest("button");
         if (!button) return;
-
-        if (button.hasAttribute("data-toggle-html")) {
-          var shown = split.dataset.html === "1";
-          split.dataset.html = shown ? "0" : "1";
-          button.setAttribute("aria-pressed", String(!shown));
-          return;
-        }
 
         pane.focus();
         if (button.dataset.block) {
@@ -517,6 +506,26 @@
         }
         // execCommand ne déclenche pas d'événement input.
         pane.dispatchEvent(new Event("input"));
+        refleterEtat();
+      });
+
+      // Sans ce retour, on ignore si le texte sous le curseur est déjà en
+      // gras : on clique pour le mettre, et on l'enlève.
+      function refleterEtat() {
+        bar.querySelectorAll("button[data-cmd]").forEach(function (bouton) {
+          var commande = bouton.dataset.cmd;
+          if (commande !== "bold" && commande !== "italic") return;
+          var actif = false;
+          try { actif = document.queryCommandState(commande); } catch (e) {}
+          bouton.setAttribute("aria-pressed", String(actif));
+        });
+      }
+
+      document.addEventListener("selectionchange", function () {
+        var selection = document.getSelection();
+        if (selection && selection.anchorNode && pane.contains(selection.anchorNode)) {
+          refleterEtat();
+        }
       });
     });
 
