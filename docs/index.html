@@ -63,6 +63,12 @@
   .top b{font-family:var(--marque);font-weight:600;font-size:1.02rem;display:block;
          line-height:1.2;letter-spacing:-.01em}
   .top span{font-size:.72rem;color:var(--navy-300);letter-spacing:.09em;text-transform:uppercase}
+  /* Renvoie vers le site de l'asso : la newsletter n'est qu'une porte
+     d'entrée parmi d'autres, elle ne doit pas isoler le visiteur. */
+  .top__lien{margin-left:auto;color:#fff;font-size:.86rem;font-weight:500;
+             text-decoration:none;border-bottom:1px solid #ffffff55;
+             padding-bottom:.15rem;white-space:nowrap}
+  .top__lien:hover{border-bottom-color:#fff}
 
   /* ---------- héros ---------- */
   .hero{position:relative;background:var(--navy);color:#fff;overflow:hidden;
@@ -153,6 +159,8 @@
   @media (max-width:640px){
     body{font-size:16px}
     .wrap,.hero__in,.top__in{padding-inline:1.35rem}
+    .top__in{flex-wrap:wrap;row-gap:.4rem}
+    .top__lien{font-size:.78rem;margin-left:calc(38px + .8rem)}
     .hero{padding-block:2.8rem 4.5rem}
     .courbe{height:30%;opacity:.38}
     h1{max-width:none;line-height:1.1;margin-bottom:.85rem}
@@ -229,6 +237,9 @@
       <b>Sciences&nbsp;Po Finance</b>
       <span>Newsletter hebdomadaire</span>
     </div>
+    <a class="top__lien" href="https://sciencespo-finance.fr/index.html">
+      Site de l'association
+    </a>
   </div>
 </header>
 
