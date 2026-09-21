@@ -476,10 +476,40 @@
     </svg>
     <h2>Aucun brouillon en attente</h2>
     <p style="margin-bottom:1rem"><a href="/historique">Voir l'historique des éditions</a></p>
-    <p>
-      Le prochain brouillon sera généré automatiquement lundi matin, ou
-      immédiatement en lançant <code>python scripts/run_weekly.py</code>.
+
+    {% if regeneration and regeneration.en_cours %}
+    <div class="encours" role="status">
+      <span class="tourne" aria-hidden="true"></span>
+      <span>Génération en cours depuis
+        {{ regeneration.depuis.strftime("%H:%M") if regeneration.depuis else "peu" }}.
+        La page se rafraîchit toute seule.</span>
+    </div>
+    <meta http-equiv="refresh" content="20">
+    {% elif demande_en_attente %}
+    <div class="encours" role="status">
+      <span class="tourne" aria-hidden="true"></span>
+      <span>Génération demandée par {{ demande_en_attente.requested_by }} à
+        {{ demande_en_attente.requested_at.strftime("%H:%M") }}. Elle se lancera
+        dès que l'ordinateur du responsable sera disponible, et le brouillon
+        apparaîtra ici tout seul.</span>
+    </div>
+    <meta http-equiv="refresh" content="20">
+    {% else %}
+    {% if regeneration and regeneration.erreur %}
+    <p class="flash flash--error" role="alert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/>
+        <path d="M12 8v5M12 16.5v.01"/></svg>
+      <span>La dernière génération a échoué : {{ regeneration.erreur }}</span>
     </p>
+    {% endif %}
+    <form method="post" action="/regenerer">
+      <button type="submit" class="btn btn--primary">Générer le brouillon maintenant</button>
+    </form>
+    <p style="margin-top:1rem">
+      Sinon, le prochain brouillon sera généré automatiquement lundi matin.
+    </p>
+    {% endif %}
   </div>
   {% endif %}
 </main>
