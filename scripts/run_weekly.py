@@ -89,10 +89,13 @@ def main(argv: list[str] | None = None) -> int:
     logger.info("Moteur de rédaction : %s", engine)
     init_db()
     week_of = current_week_of()
-    db = SessionLocal()
 
+    # Phase de lecture : dédoublonnage, scraping, collecte. Chaque requête
+    # DB a lieu ici, et la session referme derrière elle avant l'étape
+    # longue qui suit — voir plus bas pourquoi.
+    db = SessionLocal()
     try:
-        a_remplacer = None
+        a_remplacer_id = None
         existant = db.query(Draft).filter(Draft.week_of == week_of).first()
         if existant and args.remplacer:
             # Une édition partie ne se réécrit pas : les abonnés l'ont reçue,
@@ -108,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
             # supprimer d'abord a déjà coûté une édition, le jour où la
             # rédaction a échoué juste après.
             logger.info("Remplacement du brouillon de la semaine du %s.", week_of)
-            a_remplacer = existant
+            a_remplacer_id = existant.id
         elif existant:
             logger.info(
                 "Un brouillon existe déjà pour la semaine du %s : rien à faire.",
@@ -149,17 +152,30 @@ def main(argv: list[str] | None = None) -> int:
             sum(1 for item in news if item.get("full_text")),
             len(stages),
         )
+    finally:
+        db.close()
 
-        if not news and not stages:
-            logger.error("Aucune source n'a répondu : pas de brouillon généré.")
-            return 1
+    if not news and not stages:
+        logger.error("Aucune source n'a répondu : pas de brouillon généré.")
+        return 1
 
-        generated = generate(news, stages)
+    # La rédaction prend plusieurs minutes et ne touche pas la base : aucune
+    # session n'est ouverte pendant ce temps. Neon coupe les connexions
+    # restées inactives en transaction, et une session ouverte avant cet
+    # appel s'est déjà fait tuer juste avant le commit final, perdant tout
+    # le travail de collecte et de rédaction.
+    generated = generate(news, stages)
 
+    # Phase d'écriture : nouvelle session, ouverte seulement une fois le
+    # texte en main.
+    db = SessionLocal()
+    try:
         # Le texte est là : l'ancien brouillon peut céder la place.
-        if a_remplacer is not None:
-            db.delete(a_remplacer)
-            db.flush()
+        if a_remplacer_id is not None:
+            a_remplacer = db.get(Draft, a_remplacer_id)
+            if a_remplacer is not None:
+                db.delete(a_remplacer)
+                db.flush()
 
         draft = Draft(
             week_of=week_of,
