@@ -12,9 +12,13 @@ une réécriture prend plusieurs minutes, et rien ne presse.
 import logging
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from src.db.models import (
     RegenerationRequest,
@@ -27,10 +31,42 @@ logger = logging.getLogger("demandes")
 PROJET = Path(__file__).resolve().parent.parent
 DELAI_MAXIMUM_SECONDES = 15 * 60
 
+# Le planificateur peut se déclencher pile au réveil de la machine, avant que
+# le Wi-Fi n'ait fini de se reconnecter : sans nouvelle tentative, ce seul
+# instant suffit à faire échouer la connexion et bloque la demande jusqu'au
+# passage suivant, une heure plus tard.
+TENTATIVES_CONNEXION = 4
+DELAI_ENTRE_TENTATIVES_SECONDES = 15
+
+
+def _connecter_avec_reprise():
+    derniere_erreur = None
+    for tentative in range(1, TENTATIVES_CONNEXION + 1):
+        try:
+            init_db()
+            db = SessionLocal()
+            db.execute(text("SELECT 1"))
+            return db
+        except OperationalError as erreur:
+            derniere_erreur = erreur
+            if tentative < TENTATIVES_CONNEXION:
+                logger.warning(
+                    "Connexion à la base impossible (tentative %d/%d) : %s",
+                    tentative, TENTATIVES_CONNEXION, erreur,
+                )
+                time.sleep(DELAI_ENTRE_TENTATIVES_SECONDES)
+    raise derniere_erreur
+
 
 def traiter_une_demande() -> int:
-    init_db()
-    db = SessionLocal()
+    try:
+        db = _connecter_avec_reprise()
+    except OperationalError as erreur:
+        logger.error(
+            "Base injoignable après %d tentatives, abandon pour ce passage : %s",
+            TENTATIVES_CONNEXION, erreur,
+        )
+        return 1
     try:
         demande = (
             db.query(RegenerationRequest)
